@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, StatusBar, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, StatusBar, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import {
@@ -21,6 +21,7 @@ import {
 import { AuthScreen } from './screens/AuthScreen';
 import { OnboardingQuizScreen } from './screens/OnboardingQuizScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { PwaWelcomeGate } from './components/PwaWelcomeGate';
 import { OnboardingAnswers } from './types/onboarding';
 import { colors } from './theme/colors';
 import { supabase } from './lib/supabase';
@@ -29,9 +30,37 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_PROFILE_KEY = '@fortywell_completed_profile';
 const STORAGE_ONBOARDING_COMPLETED_KEY = '@fortywell_onboarding_completed';
 
+function checkIsStandalone(): boolean {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return true; // Native apps are always standalone
+  }
+  try {
+    const isStandaloneMatch = window.matchMedia && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches
+    );
+    if (isStandaloneMatch) return true;
+
+    if ((window.navigator as any)?.standalone === true) return true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'standalone' || params.get('pwa') === '1' || params.get('app') === 'true') {
+      return true;
+    }
+
+    if (sessionStorage.getItem('fortywell_web_bypass') === 'true') {
+      return true;
+    }
+  } catch (_) {}
+
+  return false;
+}
+
 type AppScreen = 'loading' | 'auth' | 'quiz' | 'home';
 
 export default function App() {
+  const [isInstalledApp, setIsInstalledApp] = useState<boolean>(() => checkIsStandalone());
   const [activeScreen, setActiveScreen] = useState<AppScreen>('loading');
   const [userFirstName, setUserFirstName] = useState<string>('');
   // Flag: once checkAuthSession has navigated away from loading, the auth listener
@@ -274,6 +303,16 @@ export default function App() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
+
+  // If user is on standard web browser and hasn't installed/unlocked yet, show welcome gate
+  if (!isInstalledApp) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+        <PwaWelcomeGate onEnterApp={() => setIsInstalledApp(true)} />
+      </SafeAreaProvider>
     );
   }
 

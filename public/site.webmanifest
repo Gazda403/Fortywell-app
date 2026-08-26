@@ -1,0 +1,30 @@
+{
+  "name": "FortyWell: Hormonal Vitality",
+  "short_name": "FortyWell",
+  "description": "Holistic hormone balance, daily rituals, and vitality workouts.",
+  "start_url": "/?mode=standalone",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A0D0A",
+  "theme_color": "#0A0D0A",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
