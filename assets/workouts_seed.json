@@ -1,0 +1,2013 @@
+[
+  {
+    "slug": "w01-knee-safe-core-glute",
+    "title": "Knee-Safe Core & Glute Ignition",
+    "description": "High-tension glute and core bracing routine designed to fire up the posterior chain without placing sheer force on the knee joints. Uses isometric holds and anti-extension patterns to build functional strength.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 15,
+    "target_focus": [
+      "safe_strength",
+      "posterior_chain"
+    ],
+    "joint_sensitivities_safe": [
+      "knees"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Cat-Cow Segmental Mobility",
+        "duration": "60s",
+        "notes": "Move one vertebra at a time. Inhale on cow, exhale on cat.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cat_Stretch/0.jpg"
+      },
+      {
+        "name": "Lying Hip Circles",
+        "duration": "30s each side",
+        "notes": "Draw large circles with the knee to mobilize the hip capsule.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Hip_Circles/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Posterior Chain Bracing",
+        "exercises": [
+          {
+            "name": "Iso-Hold Glute Bridge with Heel Drive",
+            "sets": 3,
+            "reps": "10 reps (5-sec hold at top)",
+            "tempo": "2-1-5-1",
+            "rest": "45s",
+            "coaching_cue": "Drive through heels, brace abs, squeeze glutes at the top. Do NOT arch lower back.",
+            "exercise_db_id": "Butt_Lift_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/1.jpg"
+          },
+          {
+            "name": "Deadbug with Opposite Arm/Leg Reach",
+            "sets": 3,
+            "reps": "8 per side",
+            "tempo": "3-1-3",
+            "rest": "45s",
+            "coaching_cue": "Lower back must stay flat against the floor the entire time. Breathe out on extension.",
+            "exercise_db_id": "Dead_Bug",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dead_Bug/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dead_Bug/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Lateral Glute & Hip Stability",
+        "exercises": [
+          {
+            "name": "Lying Clamshells",
+            "sets": 3,
+            "reps": "15 per side",
+            "tempo": "2-1-2",
+            "rest": "30s",
+            "coaching_cue": "Keep hips stacked. Only rotate at the hip — do not roll the pelvis back.",
+            "exercise_db_id": "Side_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/1.jpg"
+          },
+          {
+            "name": "Bird-Dog Hold",
+            "sets": 3,
+            "reps": "10 per side (3-sec hold)",
+            "tempo": "1-3-1",
+            "rest": "45s",
+            "coaching_cue": "Spine stays neutral. Do not let the lower back arch or rotate.",
+            "exercise_db_id": "Bent-Knee_Hip_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Anti-Rotation Finisher",
+        "exercises": [
+          {
+            "name": "Side-Lying Hip Abduction",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-1-3",
+            "rest": "30s",
+            "coaching_cue": "Raise leg to hip height only. Squeeze glute med at the top.",
+            "exercise_db_id": "Side_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Lying Figure-4 Glute Stretch",
+        "duration": "90s per side",
+        "notes": "Keep head flat on mat. Pull thigh gently toward chest.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg"
+      },
+      {
+        "name": "Supine Spinal Twist",
+        "duration": "60s per side",
+        "notes": "Let gravity do the work. Keep both shoulders on the floor.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Russian_Twist/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w02-posture-thoracic-reset",
+    "title": "Posture & Thoracic Reset",
+    "description": "Targeted thoracic mobilization and posterior shoulder chain activation to reverse desk-hunch posture. All movements are shoulder and neck safe — no overhead pressing, no cervical strain.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 20,
+    "target_focus": [
+      "posture_correction",
+      "thoracic_mobility"
+    ],
+    "joint_sensitivities_safe": [
+      "shoulders",
+      "neck"
+    ],
+    "energy_level": "low",
+    "warmup": [
+      {
+        "name": "Thoracic Foam Roll",
+        "duration": "90s",
+        "notes": "Roll from mid to upper back. Pause on tight segments for 5–10s.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lower_Back-SMR/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Thoracic Rotation & Extension",
+        "exercises": [
+          {
+            "name": "Open Book Stretch (Side-Lying)",
+            "sets": 3,
+            "reps": "10 per side",
+            "tempo": "2-2-2",
+            "rest": "30s",
+            "coaching_cue": "Keep hips stacked. Follow top hand with eyes. Let the chest open fully.",
+            "exercise_db_id": "Side-Lying_Floor_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side-Lying_Floor_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side-Lying_Floor_Stretch/1.jpg"
+          },
+          {
+            "name": "Prone Cobra (Arms at Sides)",
+            "sets": 3,
+            "reps": "8 reps",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "Arms low beside hips. Lift chest by squeezing mid-back, not pushing with hands. Chin tucks slightly.",
+            "exercise_db_id": "Lower_Back-SMR",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lower_Back-SMR/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lower_Back-SMR/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Posterior Shoulder Activation",
+        "exercises": [
+          {
+            "name": "Wall Angels (Elbows Low)",
+            "sets": 3,
+            "reps": "10 reps",
+            "tempo": "3-1-3",
+            "rest": "45s",
+            "coaching_cue": "Keep elbows at 90° below shoulder height. Maintain constant wall contact — ribs, back, arms.",
+            "exercise_db_id": "Overhead_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Overhead_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Overhead_Stretch/1.jpg"
+          },
+          {
+            "name": "Prone Y-T-W Hold",
+            "sets": 3,
+            "reps": "6 of each shape",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "Thumbs up on Y and W. Squeeze mid-back, not neck.",
+            "exercise_db_id": "Middle_Back_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Middle_Back_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Middle_Back_Stretch/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Core Integration",
+        "exercises": [
+          {
+            "name": "Quadruped Shoulder Tap",
+            "sets": 3,
+            "reps": "10 per side",
+            "tempo": "2-1-2",
+            "rest": "30s",
+            "coaching_cue": "Keep hips level and square. Move arm slowly to challenge anti-rotation.",
+            "exercise_db_id": "Plank",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Child's Pose with Diaphragmatic Breathing",
+        "duration": "2 min",
+        "notes": "Arms long in front. With each exhale, let chest sink lower.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg"
+      },
+      {
+        "name": "Seated Neck Side Stretch",
+        "duration": "45s per side",
+        "notes": "Let weight of hand gently traction side of neck. No forcing.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Neck_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w03-full-body-low-impact-strength",
+    "title": "Full-Body Low-Impact Strength",
+    "description": "30-minute zero-equipment full-body session built around compound bodyweight patterns — squat, hinge, push, pull — at a joint-safe tempo with zero plyometric impact.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 30,
+    "target_focus": [
+      "full_body_strength",
+      "compound_patterns"
+    ],
+    "joint_sensitivities_safe": [
+      "knees",
+      "lower_back"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "High-Knee March in Place",
+        "duration": "60s",
+        "notes": "Arms pump opposite to legs.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Step-up_with_Knee_Raise/0.jpg"
+      },
+      {
+        "name": "Leg Swing (Forward/Back)",
+        "duration": "30s per leg",
+        "notes": "Hold wall for balance. Keep swing controlled.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Lower Body Push",
+        "exercises": [
+          {
+            "name": "Bodyweight Box Squat",
+            "sets": 4,
+            "reps": "12 reps",
+            "tempo": "3-1-2",
+            "rest": "60s",
+            "coaching_cue": "Sit back to chair height. Chest tall, knees track over toes. Stand fully at top.",
+            "exercise_db_id": "Box_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Box_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Box_Squat/1.jpg"
+          },
+          {
+            "name": "Reverse Lunge (Slow Eccentric)",
+            "sets": 3,
+            "reps": "8 per side",
+            "tempo": "3-1-2",
+            "rest": "45s",
+            "coaching_cue": "Step BACK not forward. Front shin stays vertical. Less knee stress than forward lunge.",
+            "exercise_db_id": "Crossover_Reverse_Lunge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crossover_Reverse_Lunge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crossover_Reverse_Lunge/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Upper Body Push & Pull",
+        "exercises": [
+          {
+            "name": "Incline Push-Up on Counter",
+            "sets": 3,
+            "reps": "10–12 reps",
+            "tempo": "3-1-2",
+            "rest": "45s",
+            "coaching_cue": "Straight plank from heels to head. Lower to chest level. Elbows at 45°, not flared wide.",
+            "exercise_db_id": "Incline_Push-Up",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Push-Up/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Push-Up/1.jpg"
+          },
+          {
+            "name": "Doorframe Row (Bodyweight Pull)",
+            "sets": 3,
+            "reps": "10 reps",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Hold door frame, walk feet forward, lean back. Pull chest toward door leading with elbows.",
+            "exercise_db_id": "Bodyweight_Mid_Row",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Mid_Row/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Mid_Row/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Hip Hinge & Core",
+        "exercises": [
+          {
+            "name": "Single-Leg Romanian Deadlift Touch-Down",
+            "sets": 3,
+            "reps": "8 per side",
+            "tempo": "3-1-2",
+            "rest": "45s",
+            "coaching_cue": "Hinge at hip, send one leg back as counterweight. Touch floor with opposite hand. Back stays flat.",
+            "exercise_db_id": "Romanian_Deadlift",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/1.jpg"
+          },
+          {
+            "name": "Forearm Plank with Hip Dip",
+            "sets": 3,
+            "reps": "30s",
+            "tempo": "Controlled hip dip each side",
+            "rest": "30s",
+            "coaching_cue": "Rigid torso. Rotate hips slowly side to side. Do not sag at lower back.",
+            "exercise_db_id": "Plank",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Standing Hip Flexor Stretch",
+        "duration": "60s per side",
+        "notes": "Posterior pelvic tilt first, then lunge gently.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Intermediate_Hip_Flexor_and_Quad_Stretch/0.jpg"
+      },
+      {
+        "name": "Seated Forward Fold",
+        "duration": "90s",
+        "notes": "Hinge from hips. Let hamstrings release passively.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Floor_Hamstring_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w04-si-joint-pelvic-stability",
+    "title": "SI-Joint & Pelvic Stability Flow",
+    "description": "15-minute protocol to stabilize the sacroiliac joint and surrounding pelvic musculature. Bilateral, symmetrical positions only — no asymmetrical loading.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 15,
+    "target_focus": [
+      "joint_stability",
+      "pelvic_control"
+    ],
+    "joint_sensitivities_safe": [
+      "hips",
+      "si_joint",
+      "lower_back"
+    ],
+    "energy_level": "low",
+    "warmup": [
+      {
+        "name": "90/90 Hip Rotation (Seated)",
+        "duration": "90s",
+        "notes": "Shift between both sides. Spine tall. No pain.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Pelvic Control & Glute Activation",
+        "exercises": [
+          {
+            "name": "Pelvic Tilts",
+            "sets": 3,
+            "reps": "15 reps",
+            "tempo": "2-2-2",
+            "rest": "20s",
+            "coaching_cue": "Flatten lower back into floor, hold 2s. Return to neutral. Tiny movement, maximum attention.",
+            "exercise_db_id": "Pelvic_Tilt_Into_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pelvic_Tilt_Into_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pelvic_Tilt_Into_Bridge/1.jpg"
+          },
+          {
+            "name": "Bilateral Glute Bridge (Slow)",
+            "sets": 3,
+            "reps": "12 reps (2-sec hold at top)",
+            "tempo": "2-2-2",
+            "rest": "45s",
+            "coaching_cue": "Use both legs equally. No hip shift — stay symmetrical. Brace abs before lifting.",
+            "exercise_db_id": "Butt_Lift_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Hip Stabilizers",
+        "exercises": [
+          {
+            "name": "Bird-Dog (Anti-Rotation Focus)",
+            "sets": 3,
+            "reps": "10 per side (4-sec hold)",
+            "tempo": "1-4-1",
+            "rest": "45s",
+            "coaching_cue": "Move like you are balancing a glass of water on your lower back. Zero pelvic rotation.",
+            "exercise_db_id": "Bent-Knee_Hip_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/1.jpg"
+          },
+          {
+            "name": "Clamshell (Controlled)",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-2-3",
+            "rest": "30s",
+            "coaching_cue": "Feet together, top knee opens like clamshell. Do not roll pelvis backward.",
+            "exercise_db_id": "Side_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Lying Knee-to-Chest Hug (Both Legs)",
+        "duration": "90s",
+        "notes": "Both knees pulled gently to chest. Rock side to side slowly.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Knee_Across_The_Body/0.jpg"
+      },
+      {
+        "name": "Supported Child's Pose",
+        "duration": "60s",
+        "notes": "Knees wide, big toes touch. Sink hips back. Deep exhales.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w05-knee-safe-posterior-chain",
+    "title": "Knee-Safe Posterior Chain & Glutes",
+    "description": "20-minute dumbbell and band session laser-focused on the posterior chain. Heavy glute work and RDL patterns build real strength without loaded knee flexion.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 20,
+    "target_focus": [
+      "posterior_chain",
+      "glute_strength"
+    ],
+    "joint_sensitivities_safe": [
+      "knees"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Banded Side Steps (Monster Walk)",
+        "duration": "60s",
+        "notes": "Band above knees. Wide stance. Keep tension throughout.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Monster_Walk/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Hip Hinge Power",
+        "exercises": [
+          {
+            "name": "Dumbbell Romanian Deadlift",
+            "sets": 4,
+            "reps": "10 reps",
+            "tempo": "3-1-2",
+            "rest": "75s",
+            "coaching_cue": "Hinge at hips, not spine. Dumbbells trace the legs down. Feel hamstring stretch. Squeeze glutes to rise.",
+            "exercise_db_id": "Romanian_Deadlift",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/1.jpg"
+          },
+          {
+            "name": "Dumbbell Kickback (Hip Extension)",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "On all fours with dumbbell behind knee. Drive heel to ceiling. Squeeze glute at top. No hip tilt.",
+            "exercise_db_id": "One-Legged_Cable_Kickback",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Banded Glute Finisher",
+        "exercises": [
+          {
+            "name": "Banded Glute Bridge with Dumbbell on Hips",
+            "sets": 4,
+            "reps": "15 reps",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "Band above knees adds lateral challenge. Hold dumbbell on hip bones. Squeeze at top like cracking a walnut.",
+            "exercise_db_id": "Butt_Lift_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/1.jpg"
+          },
+          {
+            "name": "Banded Hip Abduction (Standing)",
+            "sets": 3,
+            "reps": "15 per side",
+            "tempo": "2-2-3",
+            "rest": "30s",
+            "coaching_cue": "Band around ankles. Lift lateral leg to 45°. Do not lean to opposite side.",
+            "exercise_db_id": "Standing_Hip_Circles",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Hip_Circles/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Hip_Circles/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Pigeon Pose (or Figure-4 if Knee Sensitive)",
+        "duration": "90s per side",
+        "notes": "Let gravity open the hip. No forcing.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w06-upper-body-strength-posture",
+    "title": "Upper Body Strength & Posture Fix",
+    "description": "30-minute dumbbell pressing and pulling session prioritizing posterior shoulder development, scapular retraction, and anti-rounding patterns to counteract desk posture.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 30,
+    "target_focus": [
+      "upper_body_strength",
+      "posture_correction"
+    ],
+    "joint_sensitivities_safe": [
+      "lower_back"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Band Pull-Apart (Chest Level)",
+        "duration": "2x15 reps",
+        "notes": "Arms straight, pull band to chest height. Squeeze shoulder blades.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Band_Pull_Apart/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Horizontal Pull Dominance",
+        "exercises": [
+          {
+            "name": "Dumbbell Bent-Over Row",
+            "sets": 4,
+            "reps": "10 per side",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Brace core, hinge 45°. Elbow drives back and up. Squeeze mid-back at top.",
+            "exercise_db_id": "Bent_Over_Two-Dumbbell_Row",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg"
+          },
+          {
+            "name": "Chest-Supported Dumbbell Row",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Lie prone on incline surface. Chest supported eliminates lower back compensation. Pull elbows back.",
+            "exercise_db_id": "Bent_Over_Two-Dumbbell_Row",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Press & Posture",
+        "exercises": [
+          {
+            "name": "Dumbbell Floor Press",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "3-1-2",
+            "rest": "60s",
+            "coaching_cue": "Lying flat. Press straight up. Elbows at 45° from body. Shoulder-safe pressing alternative.",
+            "exercise_db_id": "Dumbbell_Floor_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Floor_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Floor_Press/1.jpg"
+          },
+          {
+            "name": "Banded Face Pull (Chest Height)",
+            "sets": 3,
+            "reps": "15 reps",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Band at face height. Pull to forehead, elbows high. Externally rotate shoulders at end of pull.",
+            "exercise_db_id": "Face_Pull",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Shoulder Stability",
+        "exercises": [
+          {
+            "name": "Dumbbell External Rotation (Lying)",
+            "sets": 3,
+            "reps": "15 per side",
+            "tempo": "2-1-3",
+            "rest": "30s",
+            "coaching_cue": "Elbow fixed at 90° against ribs. Rotate forearm toward ceiling. Light weight, maximum control.",
+            "exercise_db_id": "External_Rotation",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/External_Rotation/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/External_Rotation/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Doorway Pec Stretch",
+        "duration": "60s per side",
+        "notes": "Forearm on door frame. Gentle lean forward. No pain in shoulder front.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Behind_Head_Chest_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w07-anti-extension-core-unilateral",
+    "title": "Anti-Extension Core & Unilateral Legs",
+    "description": "30-minute session combining anti-extension core training with unilateral leg work for symmetrical strength and injury prevention.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 30,
+    "target_focus": [
+      "core_stability",
+      "unilateral_strength",
+      "injury_prevention"
+    ],
+    "joint_sensitivities_safe": [
+      "lower_back"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Cat-Cow + Thread-the-Needle",
+        "duration": "90s",
+        "notes": "Combine spinal articulation with thoracic rotation.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cat_Stretch/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Anti-Extension Core",
+        "exercises": [
+          {
+            "name": "McGill Modified Curl-Up",
+            "sets": 3,
+            "reps": "10 reps (2-sec hold)",
+            "tempo": "1-2-3",
+            "rest": "45s",
+            "coaching_cue": "One knee bent, one leg straight. Hands under lower back. Lift ONLY head and upper shoulders. Zero lumbar flexion.",
+            "exercise_db_id": "Crunches",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crunches/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crunches/1.jpg"
+          },
+          {
+            "name": "Pallof Press (Band Anti-Rotation)",
+            "sets": 3,
+            "reps": "10 per side",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "Band anchored to side. Press out and hold — resist rotation. The harder you brace, the better this works.",
+            "exercise_db_id": "Pallof_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pallof_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pallof_Press/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Unilateral Leg Strength",
+        "exercises": [
+          {
+            "name": "Dumbbell Bulgarian Split Squat",
+            "sets": 3,
+            "reps": "8 per side",
+            "tempo": "3-1-2",
+            "rest": "75s",
+            "coaching_cue": "Rear foot elevated. Front knee tracks over 2nd toe. Torso upright. Queen of unilateral leg work.",
+            "exercise_db_id": "Dumbbell_Lunges",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/1.jpg"
+          },
+          {
+            "name": "Single-Leg Glute Bridge",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "One leg extended to ceiling. Drive through grounded heel only. Level hips throughout.",
+            "exercise_db_id": "Single_Leg_Glute_Bridge",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Single_Leg_Glute_Bridge/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Single_Leg_Glute_Bridge/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Lateral Chain",
+        "exercises": [
+          {
+            "name": "Copenhagen Adductor Plank (Modified from Knee)",
+            "sets": 3,
+            "reps": "20s per side",
+            "tempo": "Hold",
+            "rest": "45s",
+            "coaching_cue": "Bottom knee on floor. Top foot on chair. Lift hips. Targets inner thigh powerfully.",
+            "exercise_db_id": "Adductor",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "90/90 Hip Stretch",
+        "duration": "90s per side",
+        "notes": "Sit with both knees at 90°. Lean forward over front shin.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w08-full-body-hypertrophy-bone-builder",
+    "title": "Full-Body Hypertrophy & Bone Builder",
+    "description": "45-minute dumbbell hypertrophy session for bone density in peri/post-menopausal women. Emphasizes mechanical tension through compound lifts with slow eccentrics and longer rest to avoid cortisol spike.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 45,
+    "target_focus": [
+      "bone_density",
+      "hypertrophy",
+      "full_body_strength"
+    ],
+    "joint_sensitivities_safe": [],
+    "energy_level": "high",
+    "warmup": [
+      {
+        "name": "Brisk March in Place",
+        "duration": "3 min",
+        "notes": "Gradually elevate heart rate. Swing arms.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Step-up_with_Knee_Raise/0.jpg"
+      },
+      {
+        "name": "Dynamic Leg Swings",
+        "duration": "30s per leg",
+        "notes": "Forward, backward, and cross-body patterns.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Lower Body Heavy (Bone Loading)",
+        "exercises": [
+          {
+            "name": "Dumbbell Goblet Squat (Heavy)",
+            "sets": 4,
+            "reps": "8 reps",
+            "tempo": "4-1-2",
+            "rest": "2 min",
+            "coaching_cue": "Hold heaviest dumbbell at chest. Squat to parallel, elbows inside knees. Axial load stimulates femoral bone density.",
+            "exercise_db_id": "Goblet_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/1.jpg"
+          },
+          {
+            "name": "Dumbbell Romanian Deadlift (Heavy)",
+            "sets": 4,
+            "reps": "8 reps",
+            "tempo": "4-1-2",
+            "rest": "2 min",
+            "coaching_cue": "Maximum tension through posterior chain. Feel every inch of the eccentric. Spine absolutely neutral.",
+            "exercise_db_id": "Romanian_Deadlift",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Upper Body Strength",
+        "exercises": [
+          {
+            "name": "Dumbbell Bent-Over Row (Heavy)",
+            "sets": 4,
+            "reps": "8 reps",
+            "tempo": "2-2-3",
+            "rest": "90s",
+            "coaching_cue": "Pull elbows back hard. Mid-back should be burning by rep 8.",
+            "exercise_db_id": "Bent_Over_Two-Dumbbell_Row",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg"
+          },
+          {
+            "name": "Dumbbell Overhead Press (Seated)",
+            "sets": 3,
+            "reps": "10 reps",
+            "tempo": "2-1-3",
+            "rest": "90s",
+            "coaching_cue": "Seated removes lumbar risk. Press to lockout. Do not arch lower back. Axial shoulder loading builds clavicle density.",
+            "exercise_db_id": "Seated_Dumbbell_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Dumbbell_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Dumbbell_Press/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Loaded Carry & Core",
+        "exercises": [
+          {
+            "name": "Farmer's Carry (Bilateral)",
+            "sets": 3,
+            "reps": "45s walking",
+            "tempo": "Controlled walk",
+            "rest": "90s",
+            "coaching_cue": "Heaviest pair you can carry with tall posture. Bracing core against load is phenomenal for spinal density.",
+            "exercise_db_id": "Farmers_Walk",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Farmers_Walk/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Farmers_Walk/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Static Hip Flexor Stretch",
+        "duration": "90s per side",
+        "notes": "After heavy squatting, hip flexors need release.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Intermediate_Hip_Flexor_and_Quad_Stretch/0.jpg"
+      },
+      {
+        "name": "Lying Hamstring Stretch",
+        "duration": "90s per side",
+        "notes": "Leg straight toward ceiling. Use a band to assist.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w09-micro-dose-dumbbell-express",
+    "title": "Micro-Dose Dumbbell Express",
+    "description": "15-minute full-body dumbbell EMOM for the time-poor woman who refuses to compromise on quality. Compound movements only, no fluff, maximum hormonal benefit per minute.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 15,
+    "target_focus": [
+      "full_body_strength",
+      "time_efficiency"
+    ],
+    "joint_sensitivities_safe": [],
+    "energy_level": "high",
+    "warmup": [
+      {
+        "name": "1-Min High-Knee March",
+        "duration": "60s",
+        "notes": "Pump the arms. Get blood moving.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Step-up_with_Knee_Raise/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "EMOM — Every Minute on the Minute (12 Minutes)",
+        "exercises": [
+          {
+            "name": "Dumbbell Goblet Squat",
+            "sets": 4,
+            "reps": "10 reps (Minute 1, 4, 7, 10)",
+            "tempo": "2-1-2",
+            "rest": "Remainder of minute",
+            "coaching_cue": "Heavy dumbbell at chest. Full depth. Explode up.",
+            "exercise_db_id": "Goblet_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/1.jpg"
+          },
+          {
+            "name": "Dumbbell Push Press",
+            "sets": 4,
+            "reps": "8 reps (Minute 2, 5, 8, 11)",
+            "tempo": "Explosive press, 3-sec lower",
+            "rest": "Remainder of minute",
+            "coaching_cue": "Slight knee dip, drive dumbbells overhead. Lower slowly under control.",
+            "exercise_db_id": "Push_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push_Press/1.jpg"
+          },
+          {
+            "name": "Dumbbell Romanian Deadlift",
+            "sets": 4,
+            "reps": "10 reps (Minute 3, 6, 9, 12)",
+            "tempo": "3-1-2",
+            "rest": "Remainder of minute",
+            "coaching_cue": "Pure hip hinge. Load the hamstrings. Drive hips forward to stand.",
+            "exercise_db_id": "Romanian_Deadlift",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Standing Forward Fold",
+        "duration": "2 min",
+        "notes": "Shake the head yes/no gently to release the neck.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w10-wrist-free-arm-shoulder",
+    "title": "Wrist-Free Arm & Shoulder Builder",
+    "description": "30-minute upper body session for women with wrist, carpal tunnel, or hand arthritis. All exercises use forearm pads, bands, or neutral grips to eliminate wrist compression.",
+    "equipment": "home_dumbbells_bands",
+    "duration_minutes": 30,
+    "target_focus": [
+      "upper_body_strength",
+      "shoulder_stability"
+    ],
+    "joint_sensitivities_safe": [
+      "wrists",
+      "hands"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Arm Circles + Thoracic Rotation",
+        "duration": "90s",
+        "notes": "Small to large circles. No weight. Warm up the rotator cuff.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Arm_Circles/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Band-Based Press & Pull",
+        "exercises": [
+          {
+            "name": "Band Chest Press (Forearm Loop)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-1-3",
+            "rest": "60s",
+            "coaching_cue": "Loop band around your back, hold ends with forearm neutral (thumbs up). Press forward. No wrist extension.",
+            "exercise_db_id": "Pushups",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/1.jpg"
+          },
+          {
+            "name": "Band Lateral Raise (Ankle Cuff on Wrist)",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Strap ankle cuff to wrist/forearm. Step on band. Raise arm to shoulder height. Zero wrist engagement.",
+            "exercise_db_id": "Side_Lateral_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Forearm Plank & Core",
+        "exercises": [
+          {
+            "name": "Forearm Plank",
+            "sets": 3,
+            "reps": "40s",
+            "tempo": "Hold",
+            "rest": "45s",
+            "coaching_cue": "Elbows directly under shoulders. Fists together or forearms flat. Squeeze glutes, abs, quads.",
+            "exercise_db_id": "Plank",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/1.jpg"
+          },
+          {
+            "name": "Band Face Pull (Elbows High)",
+            "sets": 3,
+            "reps": "15 reps",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Thumb-up grip. Pull to forehead. Elbows high and wide. Works rear deltoids and external rotators.",
+            "exercise_db_id": "Face_Pull",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Arms (Wrist Neutral)",
+        "exercises": [
+          {
+            "name": "Hammer Curl (Neutral Grip)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-1-3",
+            "rest": "45s",
+            "coaching_cue": "Thumbs up grip keeps wrist neutral the entire movement. Minimizes wrist and forearm strain.",
+            "exercise_db_id": "Hammer_Curls",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hammer_Curls/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hammer_Curls/1.jpg"
+          },
+          {
+            "name": "Overhead Tricep Extension (Band)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-1-3",
+            "rest": "45s",
+            "coaching_cue": "Hold band loop with closed fist or forearm. Extend arms overhead. Elbow stays close to head.",
+            "exercise_db_id": "Standing_Dumbbell_Triceps_Extension",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Triceps_Extension/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Forearm Stretch (Both Directions)",
+        "duration": "45s per position",
+        "notes": "Extend arm, flex wrist up then down with opposite hand.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wrist_Circles/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w11-heavy-bone-density-squat-hinge",
+    "title": "Heavy Bone Density — Squat & Hinge Focus",
+    "description": "45-minute gym session around the most powerful bone density stimuli: axial loading through barbell squats, RDLs, and leg press. Heavy weight, long rest, zero cortisol spike.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 45,
+    "target_focus": [
+      "bone_density",
+      "lower_body_strength"
+    ],
+    "joint_sensitivities_safe": [],
+    "energy_level": "high",
+    "warmup": [
+      {
+        "name": "5-Min Incline Treadmill Walk",
+        "duration": "5 min",
+        "notes": "15% incline, 3.0–3.5 mph. Loads femur and hip without impact.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Walking_Treadmill/0.jpg"
+      },
+      {
+        "name": "Dynamic Hip Mobilization Leg Swings",
+        "duration": "30s per leg",
+        "notes": "Forward/back, side/side. Hold a wall.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Primary Squat (Axial Loading)",
+        "exercises": [
+          {
+            "name": "Barbell Back Squat",
+            "sets": 4,
+            "reps": "6–8 reps",
+            "tempo": "4-1-2",
+            "rest": "2.5 min",
+            "coaching_cue": "Bar on traps. Sit back and down. Knees track over toes. This is the #1 bone density exercise for women.",
+            "exercise_db_id": "Barbell_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Squat/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Hinge & Posterior Chain",
+        "exercises": [
+          {
+            "name": "Barbell Romanian Deadlift",
+            "sets": 4,
+            "reps": "8 reps",
+            "tempo": "4-1-2",
+            "rest": "2 min",
+            "coaching_cue": "Bar stays close to legs. Feel glutes and hamstrings loading eccentrically. Squeeze through hips at top.",
+            "exercise_db_id": "Romanian_Deadlift",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/1.jpg"
+          },
+          {
+            "name": "Leg Press (Foot High = Glute Focus)",
+            "sets": 3,
+            "reps": "10 reps",
+            "tempo": "4-1-2",
+            "rest": "90s",
+            "coaching_cue": "Feet high on platform. Do NOT lock out knees. Slow 4-sec eccentric loads quads and bones.",
+            "exercise_db_id": "Leg_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Cable Accessory",
+        "exercises": [
+          {
+            "name": "Cable Pull-Through (Glute Hinge)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Cable through legs. Hinge back, feel glute stretch. Drive hips forward. Glutes do all the work.",
+            "exercise_db_id": "Pull_Through",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pull_Through/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pull_Through/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Static Hamstring Stretch",
+        "duration": "90s per side",
+        "notes": "Leg on bench, hinge from hips.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring_Stretch/0.jpg"
+      },
+      {
+        "name": "Kneeling Hip Flexor Stretch",
+        "duration": "90s per side",
+        "notes": "After heavy squatting, extend hip back and breathe.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kneeling_Hip_Flexor/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w12-spine-neutral-machine-strength",
+    "title": "Spine-Neutral Machine Strength",
+    "description": "30-minute gym session using machines to keep the spine supported throughout. Zero free-weight spinal loading. Perfect for lower back history.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 30,
+    "target_focus": [
+      "full_body_strength",
+      "spine_protection"
+    ],
+    "joint_sensitivities_safe": [
+      "lower_back"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "McGill Big 3 (Bird-Dog, Side Plank, Modified Curl-Up)",
+        "duration": "5 min",
+        "notes": "Pre-activate spinal stabilizers before loading.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Supported Lower Body",
+        "exercises": [
+          {
+            "name": "Leg Press (Back Fully Supported)",
+            "sets": 4,
+            "reps": "12 reps",
+            "tempo": "3-1-2",
+            "rest": "90s",
+            "coaching_cue": "Full back contact with pad at all times. Do not lift lower back off seat. Spine-neutral pressing.",
+            "exercise_db_id": "Leg_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/1.jpg"
+          },
+          {
+            "name": "Seated Hamstring Curl Machine",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-2-4",
+            "rest": "60s",
+            "coaching_cue": "Curl heels toward glutes under control. The 4-second return is where the real work happens.",
+            "exercise_db_id": "Seated_Hamstring",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Hamstring/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Hamstring/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Supported Upper Body",
+        "exercises": [
+          {
+            "name": "Seated Cable Row",
+            "sets": 4,
+            "reps": "12 reps",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Sit upright. Pull elbows past torso. No spine rocking — core braced, back tall.",
+            "exercise_db_id": "Seated_Cable_Rows",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/1.jpg"
+          },
+          {
+            "name": "Chest Press Machine",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-1-3",
+            "rest": "60s",
+            "coaching_cue": "Seat adjusted so handles are at chest level. Press out, return slow. Back never leaves the pad.",
+            "exercise_db_id": "Leverage_Chest_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leverage_Chest_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leverage_Chest_Press/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Passive Spinal Hang (Chin-Up Bar, Light Grip)",
+        "duration": "30s x 2",
+        "notes": "Gentle lumbar traction after loaded session.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Chin-Up/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w13-upper-body-pull-push-complex",
+    "title": "Upper Body Pull & Push Complex",
+    "description": "45-minute gym session built on compound pulling and pressing patterns. Rear deltoid and lat development create a strong, pain-free shoulder ecosystem.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 45,
+    "target_focus": [
+      "upper_body_strength",
+      "lat_development"
+    ],
+    "joint_sensitivities_safe": [],
+    "energy_level": "high",
+    "warmup": [
+      {
+        "name": "Band Pull-Apart (Chest Height)",
+        "duration": "3x15 reps",
+        "notes": "External rotation warm-up. Elbows straight.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Band_Pull_Apart/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Vertical Pull",
+        "exercises": [
+          {
+            "name": "Lat Pulldown (Wide Grip)",
+            "sets": 4,
+            "reps": "10 reps",
+            "tempo": "2-2-4",
+            "rest": "90s",
+            "coaching_cue": "Initiate by depressing shoulder blades DOWN before bending elbows. Pull to upper chest. Squeeze lats at bottom.",
+            "exercise_db_id": "Wide-Grip_Lat_Pulldown",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Lat_Pulldown/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Lat_Pulldown/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Horizontal Pull",
+        "exercises": [
+          {
+            "name": "Seated Cable Row (Close Grip)",
+            "sets": 4,
+            "reps": "10 reps",
+            "tempo": "2-2-3",
+            "rest": "90s",
+            "coaching_cue": "Chest to pads. Pull elbows behind body. Hold squeeze 2s. No spine rocking.",
+            "exercise_db_id": "Seated_Cable_Rows",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/1.jpg"
+          },
+          {
+            "name": "Cable Face Pull (Elbows High & Wide)",
+            "sets": 3,
+            "reps": "15 reps",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Rope at face height. Elbows fly high and wide. External rotation at end range. Rear delt and rotator cuff gold.",
+            "exercise_db_id": "Face_Pull",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Incline Press",
+        "exercises": [
+          {
+            "name": "Dumbbell Incline Press",
+            "sets": 4,
+            "reps": "10 reps",
+            "tempo": "3-1-2",
+            "rest": "90s",
+            "coaching_cue": "30–45° incline. Elbows at 45° from torso. Press to lockout.",
+            "exercise_db_id": "Incline_Dumbbell_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Dumbbell_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Dumbbell_Press/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Doorway Pec Stretch",
+        "duration": "60s per side",
+        "notes": "After heavy pressing always open the chest.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Behind_Head_Chest_Stretch/0.jpg"
+      },
+      {
+        "name": "Lat Stretch (Wall Assisted)",
+        "duration": "45s per side",
+        "notes": "One arm at a time. Let the lat fully elongate.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Latissimus_Dorsi-SMR/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w14-wrist-free-machine-cable-upper",
+    "title": "Wrist-Free Machine & Cable Upper Body",
+    "description": "30-minute gym session for women with wrist, carpal tunnel, or hand arthritis. Uses machine pads, forearm-loaded cables, and ankle-cuff attachments to completely eliminate wrist compression.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 30,
+    "target_focus": [
+      "upper_body_strength"
+    ],
+    "joint_sensitivities_safe": [
+      "wrists",
+      "hands"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Arm Circles & Thoracic Rotation",
+        "duration": "90s",
+        "notes": "No resistance. Full range of motion. Wake up rotator cuffs.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Arm_Circles/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Machine Press & Fly (No Grip)",
+        "exercises": [
+          {
+            "name": "Pec Deck / Machine Fly (Forearms on Pads)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-1-3",
+            "rest": "60s",
+            "coaching_cue": "Place forearms against pads, NOT hands gripping. Squeeze chest. No wrist loading whatsoever.",
+            "exercise_db_id": "Butterfly",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butterfly/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butterfly/1.jpg"
+          },
+          {
+            "name": "Cable Lateral Raise (Ankle Cuff on Forearm)",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Strap ankle cuff to forearm/wrist. Raise to shoulder height. Side delt isolation with zero grip.",
+            "exercise_db_id": "Side_Lateral_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Machine Row",
+        "exercises": [
+          {
+            "name": "Machine Row (Neutral Grip Handles)",
+            "sets": 3,
+            "reps": "12 reps",
+            "tempo": "2-2-3",
+            "rest": "60s",
+            "coaching_cue": "Use a light grip — movement driven by elbows and mid-back, not hand strength.",
+            "exercise_db_id": "Seated_Cable_Rows",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Core (No Wrist Bearing)",
+        "exercises": [
+          {
+            "name": "Forearm Plank",
+            "sets": 3,
+            "reps": "40s",
+            "tempo": "Hold",
+            "rest": "45s",
+            "coaching_cue": "Fists together or forearms flat. Zero wrist extension. Gold standard for wrist-sensitive core work.",
+            "exercise_db_id": "Plank",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Chest Opening Stretch on Foam Roller",
+        "duration": "2 min",
+        "notes": "Roller along spine. Arms out to sides. Gravity opens chest.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Chest_Stretch_on_Stability_Ball/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w15-knee-bulletproofing",
+    "title": "Lower Body Knee-Bulletproofing",
+    "description": "45-minute gym session to build lateral stability, VMO strength, and posterior chain resilience that protects the knee joint during sport and everyday life.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 45,
+    "target_focus": [
+      "knee_health",
+      "lateral_stability",
+      "injury_prevention"
+    ],
+    "joint_sensitivities_safe": [
+      "knees"
+    ],
+    "energy_level": "moderate",
+    "warmup": [
+      {
+        "name": "Banded Monster Walk (Lateral Side Steps)",
+        "duration": "60s",
+        "notes": "Band above knees. Wide stance. Stay low. Fire glute medius.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Monster_Walk/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — VMO & Knee Stability",
+        "exercises": [
+          {
+            "name": "Banded Spanish Squat (Band Behind Knees)",
+            "sets": 4,
+            "reps": "12 reps",
+            "tempo": "3-2-2",
+            "rest": "75s",
+            "coaching_cue": "Band behind knees pulls tibias back, offloading patellar tendon. Sit deep, chest up. VMO fires maximally.",
+            "exercise_db_id": "Bodyweight_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/1.jpg"
+          },
+          {
+            "name": "Terminal Knee Extension (Band TKE)",
+            "sets": 3,
+            "reps": "15 per side",
+            "tempo": "2-2-3",
+            "rest": "45s",
+            "coaching_cue": "Band behind knee. Leg slightly bent. Extend to full lockout. Isolates VMO without patellar shear.",
+            "exercise_db_id": "Bodyweight_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Lateral Chain & Hip Stability",
+        "exercises": [
+          {
+            "name": "Lateral Dumbbell Step-Up (Low Box, Slow Eccentric)",
+            "sets": 3,
+            "reps": "8 per side",
+            "tempo": "1-1-4",
+            "rest": "60s",
+            "coaching_cue": "Step up with outside leg. The 4-second lowering trains knee stabilizers eccentrically. DO NOT drop down fast.",
+            "exercise_db_id": "Step-up_with_Knee_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Step-up_with_Knee_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Step-up_with_Knee_Raise/1.jpg"
+          },
+          {
+            "name": "Copenhagen Adductor Plank (Modified from Knee)",
+            "sets": 3,
+            "reps": "20s per side",
+            "tempo": "Hold",
+            "rest": "45s",
+            "coaching_cue": "Top foot on bench. Bottom knee on floor. Lift hips. Powerful adductor/groin training for ACL support.",
+            "exercise_db_id": "Adductor",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Posterior Chain Knee Support",
+        "exercises": [
+          {
+            "name": "Lying Hamstring Curl Machine",
+            "sets": 4,
+            "reps": "10 reps",
+            "tempo": "2-2-4",
+            "rest": "60s",
+            "coaching_cue": "Strong hamstrings prevent ACL injury. 4-second lowering is key.",
+            "exercise_db_id": "Lying_Hamstring",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Hamstring/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Hamstring/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Calf Stretch on Step",
+        "duration": "60s per side",
+        "notes": "Heel drops below step level. Straight knee then bent knee.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Calf_Stretch_Hands_Against_Wall/0.jpg"
+      },
+      {
+        "name": "Deep Achilles Stretch (Knee Bent, Heel Down)",
+        "duration": "60s per side",
+        "notes": "Bent knee variant targets Achilles/soleus specifically.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Calf_Stretch_Elbows_Against_Wall/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w16-cable-dumbbell-circuit",
+    "title": "Full-Body Cable & Dumbbell Circuit",
+    "description": "30-minute time-efficient gym circuit combining cable machine fluidity with dumbbell compound strength. Minimal setup changes, maximum full-body stimulus.",
+    "equipment": "gym_machines_free_weights",
+    "duration_minutes": 30,
+    "target_focus": [
+      "full_body_strength",
+      "time_efficiency",
+      "metabolic"
+    ],
+    "joint_sensitivities_safe": [],
+    "energy_level": "high",
+    "warmup": [
+      {
+        "name": "Brisk Bike or Rower",
+        "duration": "3 min",
+        "notes": "Build a light sweat. Prep the full body for compound loading.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rowing_Stationary/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Full-Body Circuit (3 Rounds, 45s Work / 15s Transition)",
+        "exercises": [
+          {
+            "name": "Cable Goblet Squat (Low Pulley)",
+            "sets": 3,
+            "reps": "45s",
+            "tempo": "Controlled",
+            "rest": "15s transition",
+            "coaching_cue": "Hold cable at chest. Squat to parallel. Squeeze glutes on the way up.",
+            "exercise_db_id": "Goblet_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/1.jpg"
+          },
+          {
+            "name": "Dumbbell Push Press",
+            "sets": 3,
+            "reps": "45s",
+            "tempo": "Explosive up, 3s down",
+            "rest": "15s transition",
+            "coaching_cue": "Drive from legs, press overhead. Eccentric return is the muscle builder.",
+            "exercise_db_id": "Push_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push_Press/1.jpg"
+          },
+          {
+            "name": "Cable Pull-Through (Hip Hinge)",
+            "sets": 3,
+            "reps": "45s",
+            "tempo": "Controlled",
+            "rest": "15s transition",
+            "coaching_cue": "Cable between legs, hinge back to feel glutes load, drive hips forward to stand.",
+            "exercise_db_id": "Pull_Through",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pull_Through/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pull_Through/1.jpg"
+          },
+          {
+            "name": "Dumbbell Bent-Over Row",
+            "sets": 3,
+            "reps": "45s",
+            "tempo": "2-2-3",
+            "rest": "60s after full round",
+            "coaching_cue": "Hinge to 45°. Pull elbows past torso. Both arms simultaneously.",
+            "exercise_db_id": "Bent_Over_Two-Dumbbell_Row",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Full-Body Roll-Down Stretch",
+        "duration": "2 min",
+        "notes": "Stand tall, chin to chest, roll down vertebra by vertebra. Hang for 30s.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dynamic_Back_Stretch/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w17-evening-decompression",
+    "title": "Evening Decompression & Parasympathetic Reset",
+    "description": "15-minute end-of-day ritual to down-regulate the nervous system, decompress the spine, and shift from sympathetic to parasympathetic mode. Perfect for sleep quality.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 15,
+    "target_focus": [
+      "nervous_system_regulation",
+      "sleep_quality",
+      "recovery"
+    ],
+    "joint_sensitivities_safe": [
+      "knees",
+      "lower_back",
+      "hips",
+      "shoulders",
+      "neck"
+    ],
+    "energy_level": "low",
+    "warmup": [],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Breathwork Activation",
+        "exercises": [
+          {
+            "name": "4-7-8 Breathing",
+            "sets": 4,
+            "reps": "4 breath cycles",
+            "tempo": "Inhale 4s, hold 7s, exhale 8s",
+            "rest": "None",
+            "coaching_cue": "The long exhale activates the vagus nerve. This is your reset switch. Close your eyes.",
+            "exercise_db_id": "Childs_Pose",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Spinal Decompression",
+        "exercises": [
+          {
+            "name": "Legs-Up-The-Wall (Viparita Karani)",
+            "sets": 1,
+            "reps": "5 min hold",
+            "tempo": "Static",
+            "rest": "None",
+            "coaching_cue": "Hips close to wall, legs vertical. Let gravity reverse the day's compression. Arms relaxed by sides, palms up.",
+            "exercise_db_id": "Seated_Floor_Hamstring_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Floor_Hamstring_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Floor_Hamstring_Stretch/1.jpg"
+          },
+          {
+            "name": "Supine Spinal Twist",
+            "sets": 1,
+            "reps": "90s per side",
+            "tempo": "Static",
+            "rest": "None",
+            "coaching_cue": "Both shoulders stay on mat. Breathe into the side being stretched.",
+            "exercise_db_id": "Russian_Twist",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Russian_Twist/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Russian_Twist/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Hip & Lower Body Release",
+        "exercises": [
+          {
+            "name": "Lying Figure-4 (Piriformis Release)",
+            "sets": 1,
+            "reps": "2 min per side",
+            "tempo": "Static",
+            "rest": "None",
+            "coaching_cue": "Cradle the leg, breathe deeply. With each exhale, gently pull the thigh closer.",
+            "exercise_db_id": "Piriformis-SMR",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Piriformis-SMR/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Piriformis-SMR/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Savasana with Diaphragmatic Breathing",
+        "duration": "3 min",
+        "notes": "Arms at sides, palms up. Scan the body top to bottom. Release every muscle.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w18-somatic-floor-core-spine",
+    "title": "Somatic Floor-Based Core & Spine Unloading",
+    "description": "20-minute mat-based slow-motion neuromuscular session to build deep core stability and release accumulated spinal compression — without any load on the spine.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 20,
+    "target_focus": [
+      "core_stability",
+      "nervous_system_regulation",
+      "spine_health"
+    ],
+    "joint_sensitivities_safe": [
+      "knees",
+      "lower_back",
+      "hips"
+    ],
+    "energy_level": "low",
+    "warmup": [
+      {
+        "name": "Box Breathing (4-4-4-4)",
+        "duration": "3 min",
+        "notes": "4s in, 4s hold, 4s out, 4s hold. Prepare nervous system for somatic work.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Deep Core Re-Education",
+        "exercises": [
+          {
+            "name": "Slow-Motion Deadbug (3-Second Pace)",
+            "sets": 4,
+            "reps": "8 per side",
+            "tempo": "3-1-3",
+            "rest": "30s",
+            "coaching_cue": "This is neuromuscular practice, not exercise. Feel the transverse abdominis engage. Lower back absolutely flat.",
+            "exercise_db_id": "Dead_Bug",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dead_Bug/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dead_Bug/1.jpg"
+          },
+          {
+            "name": "Pilates Toe Taps",
+            "sets": 3,
+            "reps": "12 per side",
+            "tempo": "3-1-3",
+            "rest": "30s",
+            "coaching_cue": "Tabletop position. Lower one foot to tap floor, return. Pelvis stays completely neutral throughout.",
+            "exercise_db_id": "Bent-Knee_Hip_Raise",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Knee_Hip_Raise/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Lateral Stability",
+        "exercises": [
+          {
+            "name": "Modified Side Plank from Knees",
+            "sets": 3,
+            "reps": "20s per side",
+            "tempo": "Hold",
+            "rest": "30s",
+            "coaching_cue": "Bottom knee down. Body straight from knee to shoulder. Hip does NOT sag. Breathe freely.",
+            "exercise_db_id": "Plank",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Supported Bridge Pose (Pillow Under Sacrum)",
+        "duration": "3 min",
+        "notes": "Pillow under lower back/sacrum. Completely passive. Let hip flexors release.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w19-hip-ankle-mobility-overhaul",
+    "title": "Deep Hip & Ankle Mobility Overhaul",
+    "description": "30-minute mobility session targeting the two most commonly restricted joints in women 40+: the hip capsule and ankle dorsiflexion. Improved mobility reduces knee and lower back pain downstream.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 30,
+    "target_focus": [
+      "joint_mobility",
+      "hip_health",
+      "injury_prevention"
+    ],
+    "joint_sensitivities_safe": [
+      "knees",
+      "lower_back",
+      "hips",
+      "ankles"
+    ],
+    "energy_level": "low",
+    "warmup": [
+      {
+        "name": "90/90 Hip Rotation Flow",
+        "duration": "2 min",
+        "notes": "Shift between both sides. Internal and external rotation. No pain.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Hip Capsule Mobility",
+        "exercises": [
+          {
+            "name": "Deep Squat Hold with Ankle Oscillation",
+            "sets": 3,
+            "reps": "60s hold",
+            "tempo": "Small oscillations",
+            "rest": "30s",
+            "coaching_cue": "Heels on floor. Use hands on thighs or hold a support. Let hips sink. Rock gently side to side.",
+            "exercise_db_id": "Bodyweight_Squat",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/1.jpg"
+          },
+          {
+            "name": "Pigeon Pose (or Figure-4)",
+            "sets": 2,
+            "reps": "90s per side",
+            "tempo": "Static",
+            "rest": "None",
+            "coaching_cue": "Let gravity do the work. Do NOT force it. Breathe into the hip. The tighter it is, the slower you go.",
+            "exercise_db_id": "IT_Band_and_Glute_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/IT_Band_and_Glute_Stretch/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Ankle Dorsiflexion",
+        "exercises": [
+          {
+            "name": "Ankle CARs (Controlled Articular Rotations)",
+            "sets": 3,
+            "reps": "5 slow circles each direction per ankle",
+            "tempo": "5s per rotation",
+            "rest": "20s",
+            "coaching_cue": "Maximize range in every direction. Keep the leg still — only the ankle moves.",
+            "exercise_db_id": "Ankle_Circles",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ankle_Circles/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ankle_Circles/1.jpg"
+          },
+          {
+            "name": "Wall Ankle Stretch (Knee Drives Over Pinky Toe)",
+            "sets": 3,
+            "reps": "45s per side",
+            "tempo": "Oscillating",
+            "rest": "15s",
+            "coaching_cue": "Foot close to wall. Drive knee toward outside of foot. Heel stays flat. Directly improves squat depth.",
+            "exercise_db_id": "Calf_Stretch_Hands_Against_Wall",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Calf_Stretch_Hands_Against_Wall/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Calf_Stretch_Hands_Against_Wall/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Hip Flexor & Adductor Release",
+        "exercises": [
+          {
+            "name": "Kneeling Hip Flexor Stretch with Overhead Reach",
+            "sets": 2,
+            "reps": "90s per side",
+            "tempo": "Static",
+            "rest": "None",
+            "coaching_cue": "Posterior pelvic tilt before shifting forward. Overhead reach opens thoracic spine simultaneously.",
+            "exercise_db_id": "Kneeling_Hip_Flexor",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kneeling_Hip_Flexor/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kneeling_Hip_Flexor/1.jpg"
+          },
+          {
+            "name": "Wide-Stance Adductor Squat Stretch (Frog Pose)",
+            "sets": 2,
+            "reps": "90s hold",
+            "tempo": "Static with gentle oscillation",
+            "rest": "None",
+            "coaching_cue": "Knees wide over toes. Elbows on inner thighs to deepen stretch. Rock forward-back gently.",
+            "exercise_db_id": "Adductor",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Adductor/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Savasana",
+        "duration": "2 min",
+        "notes": "Let the body integrate the mobility work. Zero effort.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Childs_Pose/0.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "w20-desk-hunch-relief-chest-opening",
+    "title": "Desk-Hunch Relief & Chest Opening",
+    "description": "20-minute targeted session for chronically hunched posture from desk work. Opens the pec minor, anterior shoulder capsule, and thoracic spine while activating the opposing weak mid-back muscles.",
+    "equipment": "home_bodyweight",
+    "duration_minutes": 20,
+    "target_focus": [
+      "posture_correction",
+      "thoracic_mobility",
+      "pain_relief"
+    ],
+    "joint_sensitivities_safe": [
+      "shoulders",
+      "neck",
+      "lower_back"
+    ],
+    "energy_level": "low",
+    "warmup": [
+      {
+        "name": "Foam Roll Thoracic Spine",
+        "duration": "2 min",
+        "notes": "Roll from T1 to T12. Pause on each sticky segment for a slow breath.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lower_Back-SMR/0.jpg"
+      }
+    ],
+    "main_blocks": [
+      {
+        "block_name": "Block A — Pec Minor & Anterior Capsule Release",
+        "exercises": [
+          {
+            "name": "Doorway Pec Stretch (Low, Mid, High Position)",
+            "sets": 3,
+            "reps": "60s per position",
+            "tempo": "Static",
+            "rest": "15s",
+            "coaching_cue": "Change arm height each set: Low (below shoulder), Mid (shoulder height), High (above). Each targets different pec fiber.",
+            "exercise_db_id": "Behind_Head_Chest_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Behind_Head_Chest_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Behind_Head_Chest_Stretch/1.jpg"
+          },
+          {
+            "name": "Open Book Stretch",
+            "sets": 3,
+            "reps": "10 per side",
+            "tempo": "2-3-2",
+            "rest": "20s",
+            "coaching_cue": "Side-lying. Follow top hand with eyes. Let chest open like a book. Breathe into it.",
+            "exercise_db_id": "Side-Lying_Floor_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side-Lying_Floor_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side-Lying_Floor_Stretch/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block B — Mid-Back Activation",
+        "exercises": [
+          {
+            "name": "Prone Superman Hold",
+            "sets": 3,
+            "reps": "8 reps (3-sec hold)",
+            "tempo": "2-3-2",
+            "rest": "45s",
+            "coaching_cue": "Arms in Y, thumbs up. Lift chest and legs simultaneously. Mid-back and glutes working. No neck strain.",
+            "exercise_db_id": "Superman",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Superman/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Superman/1.jpg"
+          },
+          {
+            "name": "Wall Angels (Low Elbow Variation)",
+            "sets": 3,
+            "reps": "10 reps",
+            "tempo": "3-1-3",
+            "rest": "45s",
+            "coaching_cue": "Spine flat on wall. Elbows and wrists touch wall entire movement. Slow slide up and down. Postural gold.",
+            "exercise_db_id": "Overhead_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Overhead_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Overhead_Stretch/1.jpg"
+          }
+        ]
+      },
+      {
+        "block_name": "Block C — Neck & Tech Neck Release",
+        "exercises": [
+          {
+            "name": "Chin Tuck + Cervical Retraction",
+            "sets": 3,
+            "reps": "10 reps (3-sec hold)",
+            "tempo": "1-3-1",
+            "rest": "20s",
+            "coaching_cue": "Draw chin straight back (not down). Think: make a double chin. Corrects forward head posture directly.",
+            "exercise_db_id": "Neck_Press",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Neck_Press/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Neck_Press/1.jpg"
+          },
+          {
+            "name": "Seated Neck Side Stretch",
+            "sets": 2,
+            "reps": "60s per side",
+            "tempo": "Static",
+            "rest": "15s",
+            "coaching_cue": "Ear toward shoulder. Opposite hand gently adds traction. Never pull aggressively.",
+            "exercise_db_id": "Side_Neck_Stretch",
+            "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Neck_Stretch/0.jpg",
+            "gif_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Neck_Stretch/1.jpg"
+          }
+        ]
+      }
+    ],
+    "cooldown": [
+      {
+        "name": "Foam Roller Chest Opening (T-Spine Extension)",
+        "duration": "3 min",
+        "notes": "Roller perpendicular to spine. Arms cross or extend overhead. Pure passive gravity opening.",
+        "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Chest_Stretch_on_Stability_Ball/0.jpg"
+      }
+    ]
+  }
+]

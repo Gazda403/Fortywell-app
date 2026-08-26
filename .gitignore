@@ -1,0 +1,30 @@
+# Learn more https://docs.expo.dev/more/expo-cli/#gitignore
+
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Native builds
+/ios
+/android
+
+# Temporary files
+*.log
+.vscode/
+.idea/
