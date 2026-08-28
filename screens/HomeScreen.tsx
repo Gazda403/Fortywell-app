@@ -73,6 +73,7 @@ import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
 import { useFavorites } from '../lib/useFavorites';
 import { useOfflineSync } from '../lib/useOfflineSync';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -175,6 +176,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // ── Favorites & Offline Protection ────────────────────────────────────────
   const { favoriteSlugs, toggleFavorite, isFavorite } = useFavorites();
   const { hasPendingLogs, isSyncing } = useOfflineSync();
+  const { t } = useLanguage();
 
   // Compute saved workouts list
   const savedWorkouts = useMemo(() => {
@@ -497,7 +499,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.stickyNavLeft}>
             <View style={styles.stickyNavDot} />
             <Text style={styles.stickyNavKicker}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} • PROTOCOL ACTIVE
+              {new Date().toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} • {t('home.protocolActive')}
             </Text>
           </View>
 
@@ -552,12 +554,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <View style={styles.kickerRow}>
               <View style={styles.activeDot} />
               <Text style={styles.headerKicker}>
-                {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()} • PROTOCOL ACTIVE
+                {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()} • {t('home.protocolActive')}
               </Text>
             </View>
             <Text style={styles.greetingTitle}>{userProfile.greetingName}</Text>
             <Text style={styles.greetingSubtitle}>
-              Your nervous system is primed for restorative movement.
+              {t('home.nervousSystemSubtitle')}
             </Text>
           </View>
 
@@ -628,8 +630,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {/* ── 3D FLOATING WEEK CALENDAR STRIP ── */}
             <View style={styles.weekCard}>
               <View style={styles.weekHeaderRow}>
-                <Text style={styles.weekKicker}>WEEKLY RHYTHM</Text>
-                <Text style={styles.weekSubtext}>Goal: {userProfile.weeklyFrequency}</Text>
+                <Text style={styles.weekKicker}>{t('home.weeklyRhythm')}</Text>
+                <Text style={styles.weekSubtext}>{t('home.goal', { frequency: String(userProfile.weeklyFrequency || '3–4 days') })}</Text>
               </View>
 
               <View style={styles.daysRow}>
@@ -695,7 +697,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={styles.metricValue}>
                   {lifetimeStats.currentStreak} {lifetimeStats.currentStreak === 1 ? 'Day' : 'Days'}
                 </Text>
-                <Text style={styles.metricLabel}>Active Streak</Text>
+                <Text style={styles.metricLabel}>{t('home.activeStreak')}</Text>
               </View>
 
               {/* Stat 2: Daily Target / Session Duration */}
@@ -706,7 +708,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={styles.metricValue}>
                   {answers?.time_commitment ? answers.time_commitment.replace(' minutes', 'm').replace(' mins', 'm') : '20–30 min'}
                 </Text>
-                <Text style={styles.metricLabel}>Daily Target</Text>
+                <Text style={styles.metricLabel}>{t('home.dailyTarget')}</Text>
               </View>
 
               {/* Stat 3: Weekly Sessions Goal */}
@@ -717,7 +719,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={styles.metricValue}>
                   {currentWeekDays.filter((d) => d.isCompleted).length} / {answers?.weekly_frequency ? (answers.weekly_frequency.split('–')[0].trim() || '3') : '3'}
                 </Text>
-                <Text style={styles.metricLabel}>Weekly Goal</Text>
+                <Text style={styles.metricLabel}>{t('home.weeklyGoal')}</Text>
               </View>
             </View>
           </View>
@@ -741,11 +743,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         >
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionKicker}>
-              {answers ? 'CALIBRATED TO YOUR PROFILE' : "TODAY'S FOCUS SESSION"}
+              {answers ? t('home.calibratedToProfile') : "TODAY'S FOCUS SESSION"}
             </Text>
             <View style={styles.safeTag}>
               <ShieldCheck size={11} color={colors.sageDark} />
-              <Text style={styles.safeTagText}>Joint-Safe</Text>
+              <Text style={styles.safeTagText}>{t('home.jointSafe')}</Text>
             </View>
           </View>
 
@@ -762,7 +764,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={styles.heroTagRow}>
                 <View style={styles.primaryPill}>
                   <Text style={styles.primaryPillText}>
-                    {answers ? 'QUIZ MATCH #1' : 'RECOMMENDED TODAY'}
+                    {answers ? t('home.quizMatch') : 'RECOMMENDED TODAY'}
                   </Text>
                 </View>
                 <View style={styles.timeTag}>
@@ -1028,7 +1030,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 selectedTab === 'today' && styles.navLabelActive,
               ]}
             >
-              Today
+              {t('nav.today')}
             </Text>
           </Pressable>
 
@@ -1060,7 +1062,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 selectedTab === 'coach' && styles.navLabelActive,
               ]}
             >
-              Coach
+              {t('nav.coach')}
             </Text>
           </Pressable>
 
@@ -1111,7 +1113,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 selectedTab === 'progress' && styles.navLabelActive,
               ]}
             >
-              Rhythm
+              {t('nav.rhythm')}
             </Text>
           </Pressable>
 
@@ -1143,7 +1145,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 selectedTab === 'garden' && styles.navLabelActive,
               ]}
             >
-              Garden
+              {t('nav.garden')}
             </Text>
           </Pressable>
         </View>
