@@ -283,7 +283,10 @@ export function useWeeklyPlan(
             .eq('week_key', currentWeekKey)
             .maybeSingle();
 
-          if (existingPlan && !force) {
+          // Check if this existing plan was incorrectly saved with fatigue message for a brand new user
+          const hasBogusFatigue = existingPlan?.coach_message?.includes('some fatigue') && (!existingPlan?.last_week_completions || existingPlan?.last_week_completions === 0);
+
+          if (existingPlan && !force && !hasBogusFatigue) {
             const slugs: string[] = existingPlan.workout_slugs || [];
             const workouts = slugs
               .map((slug: string) => allWorkouts.find((w) => w.slug === slug))
@@ -325,9 +328,22 @@ export function useWeeklyPlan(
       let lastAvgEnergy = 3;
       let lastAvgMood = 3;
       let lastWeekSlugs: string[] = [];
+      let hasPriorWeekPlan = false;
+      let hasAnyPriorCompletedLogs = false;
 
       if (userId) {
         try {
+          // Check if the user has EVER completed any workouts in the past
+          const { data: allLogs } = await supabase
+            .from('workout_logs')
+            .select('id')
+            .eq('status', 'completed')
+            .limit(5);
+
+          if (allLogs && allLogs.length > 0) {
+            hasAnyPriorCompletedLogs = true;
+          }
+
           // Completed workout logs from last 7–14 days
           const lastWeekStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
           const lastWeekEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -368,15 +384,19 @@ export function useWeeklyPlan(
             .eq('week_key', lastWeekKey)
             .maybeSingle();
 
-          if (lastPlan?.workout_slugs) {
-            lastWeekSlugs = [...lastWeekSlugs, ...lastPlan.workout_slugs];
+          if (lastPlan) {
+            hasPriorWeekPlan = true;
+            if (lastPlan.workout_slugs) {
+              lastWeekSlugs = [...lastWeekSlugs, ...lastPlan.workout_slugs];
+            }
           }
         } catch (_) {}
       }
 
       // 3b. Determine adaptation mode
       const sessionsCount = parseSessionTarget(answers?.weekly_frequency);
-      const isFirstWeek = lastWeekCompletions === 0 && !userId;
+      // If there are no prior logs or prior plans, this is Debut / First Week
+      const isFirstWeek = !hasPriorWeekPlan && !hasAnyPriorCompletedLogs && lastWeekCompletions === 0;
 
       let adaptationMode: 'push' | 'maintain' | 'restore' | 'debut' = 'debut';
       if (!isFirstWeek) {
