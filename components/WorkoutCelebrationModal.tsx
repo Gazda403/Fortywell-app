@@ -8,7 +8,7 @@
  *   • Personal Record (PR) highlights with a progress boost bar
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  Share,
+  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -29,11 +31,27 @@ import Animated, {
   SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Trophy, Zap, Star, CheckCircle2, Flame, Target } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import {
+  Trophy,
+  Zap,
+  Star,
+  CheckCircle2,
+  Flame,
+  Target,
+  Heart,
+  Share2,
+  Copy,
+  Sparkles,
+  Check,
+  X,
+  Send,
+} from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { WorkoutSummaryData } from './ActiveWorkoutScreen';
 import { playWorkoutCelebrationChime } from '../lib/audioManager';
+import { useFavorites } from '../lib/useFavorites';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -315,11 +333,19 @@ interface Props {
 
 export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
   const [active, setActive] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [copiedText, setCopiedText] = useState(false);
+  const [favNotice, setFavNotice] = useState<string | null>(null);
+
+  const { isFavorite, toggleFavorite } = useFavorites();
+
   const sheetY = useSharedValue(H);
   const headerScale = useSharedValue(0.7);
   const headerOpacity = useSharedValue(0);
+  const heartScale = useSharedValue(1);
 
-
+  const workoutSlug = summary?.workoutSlug || 'custom';
+  const isFav = isFavorite(workoutSlug);
 
   useEffect(() => {
     if (visible) {
@@ -333,6 +359,8 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
       sheetY.value = withTiming(H, { duration: 280 });
       headerScale.value = 0.7;
       headerOpacity.value = 0;
+      setShareModalVisible(false);
+      setFavNotice(null);
     }
   }, [visible]);
 
@@ -345,6 +373,28 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
     transform: [{ scale: headerScale.value }],
   }));
 
+  const heartAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+  }));
+
+  const handleToggleFav = useCallback(() => {
+    if (!summary) return;
+    heartScale.value = withSequence(
+      withSpring(1.4, { damping: 4, stiffness: 350 }),
+      withSpring(1, { damping: 8, stiffness: 200 })
+    );
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    } catch (_) {}
+
+    toggleFavorite(workoutSlug);
+    const willBeFav = !isFav;
+    setFavNotice(willBeFav ? 'Saved to Your Favorite Routines! ♥' : 'Removed from Favorites');
+    setTimeout(() => setFavNotice(null), 3000);
+  }, [summary, workoutSlug, isFav, toggleFavorite, heartScale]);
+
   if (!visible || !summary) return null;
 
   const prs = detectPRs(summary);
@@ -352,8 +402,50 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
   const durationSec = summary.durationSeconds % 60;
   const durationStr = `${durationMin}:${String(durationSec).padStart(2, '0')}`;
 
+  const shareMessage = `🌸 FortyWell Workout Complete!\n` +
+    `Routine: ${summary.workoutTitle}\n` +
+    `📊 ${summary.completedSets}/${summary.totalSets} Sets Done • ⏱ ${durationStr} • 🏋️ ${summary.totalVolumeKg}kg Volume\n` +
+    `Move with your cycle, not against it. ✨\n` +
+    `https://fortywell-app.vercel.app`;
+
+  const handleNativeShare = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (_) {}
+
+    try {
+      await Share.share({
+        message: shareMessage,
+        title: `FortyWell Milestone: ${summary.workoutTitle}`,
+      });
+    } catch (_) {
+      // Fallback: open modal preview
+      setShareModalVisible(true);
+    }
+  };
+
+  const handleCopyText = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareMessage);
+      }
+      setCopiedText(true);
+      try {
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } catch (_) {}
+      setTimeout(() => setCopiedText(false), 2500);
+    } catch (_) {
+      setCopiedText(true);
+      setTimeout(() => setCopiedText(false), 2500);
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       {/* Confetti layer — full screen, above everything */}
       <View style={cel_s.confettiLayer} pointerEvents="none">
         <ConfettiLayer active={active} />
@@ -375,6 +467,14 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
               <Text style={cel_s.congrats}>Workout Complete!</Text>
               <Text style={cel_s.subLine}>{summary.workoutTitle}</Text>
             </Animated.View>
+
+            {/* Notification banner when favorited */}
+            {favNotice && (
+              <View style={cel_s.favNoticeBanner}>
+                <Sparkles size={13} color={colors.rose} />
+                <Text style={cel_s.favNoticeText}>{favNotice}</Text>
+              </View>
+            )}
 
             {/* Stats row */}
             <View style={cel_s.statsRow}>
@@ -432,7 +532,41 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
               </View>
             )}
 
-            {/* Close button */}
+            {/* ── DUAL CELEBRATION ACTION BUTTONS: SAVE & SHARE ── */}
+            <View style={cel_s.actionButtonsRow}>
+              {/* Save / Favorite Routine Button */}
+              <Pressable
+                onPress={handleToggleFav}
+                style={[cel_s.favBtn, isFav && cel_s.favBtnActive]}
+                accessibilityRole="button"
+                accessibilityLabel="Save routine to favorites"
+              >
+                <Animated.View style={heartAnimStyle}>
+                  <Heart
+                    size={17}
+                    color={isFav ? '#FFFFFF' : colors.primaryDark}
+                    fill={isFav ? '#FFFFFF' : 'transparent'}
+                    strokeWidth={2.2}
+                  />
+                </Animated.View>
+                <Text style={[cel_s.favBtnText, isFav && cel_s.favBtnTextActive]}>
+                  {isFav ? 'Saved Routine ♥' : 'Save Routine'}
+                </Text>
+              </Pressable>
+
+              {/* Share Button */}
+              <Pressable
+                onPress={() => setShareModalVisible(true)}
+                style={cel_s.shareBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Share workout achievement on social media"
+              >
+                <Share2 size={16} color={colors.primaryDark} strokeWidth={2.2} />
+                <Text style={cel_s.shareBtnText}>Share Story</Text>
+              </Pressable>
+            </View>
+
+            {/* Close / Return button */}
             <Pressable onPress={onClose} style={cel_s.closeBtn}>
               <LinearGradient
                 colors={[colors.primary, colors.primaryDark]}
@@ -444,6 +578,120 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
           </ScrollView>
         </Animated.View>
       </View>
+
+      {/* ── SOCIAL SHARE STORY CARD MODAL ── */}
+      <Modal
+        visible={shareModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <View style={cel_s.shareModalBackdrop}>
+          <View style={cel_s.storyCardContainer}>
+            {/* Close modal X */}
+            <Pressable
+              style={cel_s.storyCloseBtn}
+              onPress={() => setShareModalVisible(false)}
+              hitSlop={10}
+            >
+              <X size={18} color="#FFFFFF" strokeWidth={2.5} />
+            </Pressable>
+
+            {/* Visual Social Story Card (9:16 Ratio Aesthetic) */}
+            <View style={cel_s.storyCard}>
+              <LinearGradient
+                colors={['#F9D6DE', '#EDD7CA', '#D7E5D0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+
+              {/* Top Editorial Kicker */}
+              <View style={cel_s.storyHeader}>
+                <View style={cel_s.storyBrandBadge}>
+                  <Sparkles size={11} color={colors.primaryDark} />
+                  <Text style={cel_s.storyBrandText}>FORTYWELL</Text>
+                </View>
+                <Text style={cel_s.storyDateText}>
+                  {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </Text>
+              </View>
+
+              {/* Story Trophy & Title */}
+              <View style={cel_s.storyMainBody}>
+                <LinearGradient
+                  colors={['#F39EB0', '#C9465B']}
+                  style={cel_s.storyTrophyRing}
+                >
+                  <Trophy size={32} color="#FFFFFF" fill="rgba(255,255,255,0.3)" />
+                </LinearGradient>
+                <Text style={cel_s.storyKicker}>SESSION COMPLETE</Text>
+                <Text style={cel_s.storyWorkoutTitle} numberOfLines={2}>
+                  {summary.workoutTitle}
+                </Text>
+
+                {/* 3 Story Stats Badges */}
+                <View style={cel_s.storyStatsGrid}>
+                  <View style={cel_s.storyStatItem}>
+                    <Text style={cel_s.storyStatVal}>{summary.completedSets}</Text>
+                    <Text style={cel_s.storyStatLbl}>SETS</Text>
+                  </View>
+                  <View style={cel_s.storyStatDivider} />
+                  <View style={cel_s.storyStatItem}>
+                    <Text style={cel_s.storyStatVal}>{durationStr}</Text>
+                    <Text style={cel_s.storyStatLbl}>TIME</Text>
+                  </View>
+                  <View style={cel_s.storyStatDivider} />
+                  <View style={cel_s.storyStatItem}>
+                    <Text style={cel_s.storyStatVal}>{summary.totalVolumeKg}kg</Text>
+                    <Text style={cel_s.storyStatLbl}>VOLUME</Text>
+                  </View>
+                </View>
+
+                <View style={cel_s.storyTaglineBox}>
+                  <Text style={cel_s.storyTagline}>
+                    "Move with your cycle, not against it."
+                  </Text>
+                </View>
+              </View>
+
+              {/* Story Footer */}
+              <View style={cel_s.storyFooter}>
+                <Text style={cel_s.storyDomain}>fortywell-app.vercel.app</Text>
+              </View>
+            </View>
+
+            {/* Social Share Actions */}
+            <View style={cel_s.storyActionsGroup}>
+              <Pressable style={cel_s.shareStoryBtn} onPress={handleNativeShare}>
+                <LinearGradient
+                  colors={['#F39EB0', '#C9465B']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={cel_s.shareStoryGrad}
+                >
+                  <Send size={15} color="#FFFFFF" strokeWidth={2.2} />
+                  <Text style={cel_s.shareStoryBtnText}>Share to Socials / Apps</Text>
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable style={cel_s.copyTextBtn} onPress={handleCopyText}>
+                {copiedText ? (
+                  <>
+                    <Check size={14} color={colors.sageDark} strokeWidth={2.5} />
+                    <Text style={[cel_s.copyTextBtnText, { color: colors.sageDark }]}>Copied to Clipboard! ✓</Text>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} color={colors.textPrimary} />
+                    <Text style={cel_s.copyTextBtnText}>Copy Text Summary</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -561,5 +809,284 @@ const cel_s = StyleSheet.create({
     fontFamily: fontFamilies.monoBold,
     color: '#FFF',
     letterSpacing: 1.5,
+  },
+
+  // Notification Banner
+  favNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(201, 70, 91, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 70, 91, 0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 14,
+  },
+  favNoticeText: {
+    fontSize: 11.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 0.3,
+  },
+
+  // Dual Action Buttons: Save & Share
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  favBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(201, 70, 91, 0.3)',
+    ...Platform.select({
+      ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
+      android: { elevation: 2 },
+      default: {},
+    }),
+  },
+  favBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  favBtnText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 0.5,
+  },
+  favBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  shareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: 'rgba(101, 78, 60, 0.15)',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      android: { elevation: 2 },
+      default: {},
+    }),
+  },
+  shareBtnText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textPrimary,
+    letterSpacing: 0.5,
+  },
+
+  // Social Share Story Modal
+  shareModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(25, 18, 15, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 22,
+  },
+  storyCardContainer: {
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+  },
+  storyCloseBtn: {
+    alignSelf: 'flex-end',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  storyCard: {
+    width: '100%',
+    height: 440,
+    borderRadius: 28,
+    padding: 22,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 24 },
+      android: { elevation: 12 },
+      default: {},
+    }),
+  },
+  storyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  storyBrandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  storyBrandText: {
+    fontSize: 10,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 1.5,
+  },
+  storyDateText: {
+    fontSize: 10.5,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+  },
+  storyMainBody: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  storyTrophyRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  storyKicker: {
+    fontSize: 9.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  storyWorkoutTitle: {
+    fontSize: 20,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 24,
+  },
+  storyStatsGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 14,
+  },
+  storyStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  storyStatVal: {
+    fontSize: 15,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textPrimary,
+  },
+  storyStatLbl: {
+    fontSize: 8.5,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    marginTop: 2,
+  },
+  storyStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(101, 78, 60, 0.12)',
+    marginHorizontal: 8,
+  },
+  storyTaglineBox: {
+    paddingHorizontal: 10,
+  },
+  storyTagline: {
+    fontSize: 11.5,
+    fontFamily: fontFamilies.sansRegular,
+    fontStyle: 'italic',
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  storyFooter: {
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(101, 78, 60, 0.1)',
+    paddingTop: 8,
+  },
+  storyDomain: {
+    fontSize: 10,
+    fontFamily: fontFamilies.monoRegular,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+  },
+
+  // Action group under story card
+  storyActionsGroup: {
+    width: '100%',
+    marginTop: 16,
+    gap: 10,
+  },
+  shareStoryBtn: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  shareStoryGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  shareStoryBtnText: {
+    fontSize: 13,
+    fontFamily: fontFamilies.monoBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  copyTextBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(101, 78, 60, 0.15)',
+  },
+  copyTextBtnText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textPrimary,
   },
 });

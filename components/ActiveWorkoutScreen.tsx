@@ -78,6 +78,7 @@ interface LoggedExercise {
 
 export interface WorkoutSummaryData {
   workoutTitle: string;
+  workoutSlug?: string;
   durationSeconds: number;
   completedSets: number;
   totalSets: number;
@@ -635,6 +636,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
 
     const summary: WorkoutSummaryData = {
       workoutTitle: workout?.title || 'Custom Session',
+      workoutSlug: workout?.slug || 'custom',
       durationSeconds: elapsed,
       completedSets: doneSets,
       totalSets,
