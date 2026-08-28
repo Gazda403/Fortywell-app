@@ -201,7 +201,7 @@ const SetRow = React.memo(function SetRow({
         style={[sr.input, set.completed && sr.inputDone]}
         placeholder="—"
         placeholderTextColor={colors.textTertiary}
-        keyboardType="number-pad"
+        keyboardType="default"
         value={set.reps}
         onChangeText={(v) => onChange('reps', v)}
         editable={!set.completed}
@@ -210,12 +210,13 @@ const SetRow = React.memo(function SetRow({
       <Pressable
         style={[sr.checkBtn, set.completed && sr.checkBtnDone]}
         onPress={onToggle}
+        hitSlop={6}
       >
-        <Check size={14} color={set.completed ? '#FFF' : colors.textTertiary} strokeWidth={2.5} />
+        <Check size={15} color={set.completed ? '#FFF' : colors.textTertiary} strokeWidth={2.5} />
       </Pressable>
 
       <Pressable style={sr.delBtn} onPress={onDelete} hitSlop={8}>
-        <Trash2 size={12} color="rgba(201,70,91,0.4)" />
+        <Trash2 size={13} color="rgba(201,70,91,0.45)" />
       </Pressable>
     </View>
   );
@@ -225,25 +226,28 @@ const sr = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    gap: 8,
+    paddingVertical: 3,
+    gap: 6,
     borderRadius: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     marginBottom: 4,
+    width: '100%',
   },
   rowDone: { backgroundColor: 'rgba(74,93,78,0.06)' },
   numBadge: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     borderRadius: 6,
     backgroundColor: 'rgba(101,78,60,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   numTxt: { fontSize: 11, fontFamily: fontFamilies.monoBold, color: colors.textSecondary },
   numTxtDone: { color: colors.sageDark },
   input: {
     flex: 1,
+    minWidth: 0,
     height: 36,
     backgroundColor: '#FAF8F5',
     borderRadius: 8,
@@ -253,6 +257,7 @@ const sr = StyleSheet.create({
     fontSize: 13,
     fontFamily: fontFamilies.monoMedium,
     color: colors.textPrimary,
+    paddingHorizontal: 4,
   },
   inputDone: {
     backgroundColor: 'transparent',
@@ -260,17 +265,18 @@ const sr = StyleSheet.create({
     color: colors.sageDark,
   },
   checkBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
     borderWidth: 1.5,
     borderColor: 'rgba(101,78,60,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFF',
+    flexShrink: 0,
   },
   checkBtnDone: { backgroundColor: colors.sageDark, borderColor: colors.sageDark },
-  delBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+  delBtn: { width: 26, height: 34, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 });
 
 // --- Exercise Card ------------------------------------------------------------
@@ -348,10 +354,10 @@ const ExCard = React.memo(function ExCard({
             </View>
           ) : null}
           <View style={ec.colHdr}>
-            <View style={{ width: 24 }} />
-            <Text style={[ec.col, { flex: 1, textAlign: 'center' }]}>KG</Text>
-            <Text style={[ec.col, { flex: 1, textAlign: 'center' }]}>REPS</Text>
-            <View style={{ width: 36 + 8 + 30 }} />
+            <View style={{ width: 22, flexShrink: 0 }} />
+            <Text style={[ec.col, { flex: 1, textAlign: 'center', minWidth: 0 }]}>KG</Text>
+            <Text style={[ec.col, { flex: 1, textAlign: 'center', minWidth: 0 }]}>REPS</Text>
+            <View style={{ width: 66, flexShrink: 0 }} />
           </View>
           {ex.sets.map((set, i) => (
             <SetRow
@@ -378,7 +384,6 @@ const ec = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 18,
     marginBottom: 10,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(101,78,60,0.08)',
     ...Platform.select({
@@ -407,31 +412,32 @@ const ec = StyleSheet.create({
     backgroundColor: '#F5F2EB',
     borderWidth: 1,
     borderColor: 'rgba(101,78,60,0.1)',
+    flexShrink: 0,
   },
   thumbImg: {
     width: '100%',
     height: '100%',
   },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(101,78,60,0.2)' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(101,78,60,0.2)', flexShrink: 0 },
   dotDone: { backgroundColor: colors.sageDark },
-  hdrTxt: { flex: 1 },
+  hdrTxt: { flex: 1, minWidth: 0 },
   name: { fontSize: 13, fontFamily: fontFamilies.monoMedium, color: colors.textPrimary, marginBottom: 2 },
   meta: { fontSize: 10, fontFamily: fontFamilies.monoRegular, color: colors.textSecondary },
-  infoBtn: { padding: 4, marginRight: 2 },
-  delBtn: { padding: 4 },
+  infoBtn: { padding: 4, marginRight: 2, flexShrink: 0 },
+  delBtn: { padding: 4, flexShrink: 0 },
   body: {
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    paddingHorizontal: 10,
+    paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(101,78,60,0.06)',
-    paddingTop: 10,
+    paddingTop: 8,
   },
   cue: {
     backgroundColor: 'rgba(201,70,91,0.06)',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   cueTxt: {
     fontSize: 11,
@@ -440,7 +446,7 @@ const ec = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 16,
   },
-  colHdr: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  colHdr: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4, paddingHorizontal: 2 },
   col: { fontSize: 9, fontFamily: fontFamilies.monoBold, letterSpacing: 1, color: colors.textTertiary },
   addSet: {
     flexDirection: 'row',
@@ -1013,7 +1019,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   iconBtn: {
@@ -1024,7 +1030,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  titleBox: { alignItems: 'center', flex: 1, marginHorizontal: 10 },
+  titleBox: { alignItems: 'center', flex: 1, marginHorizontal: 8, minWidth: 0 },
   titleTxt: { fontSize: 14, fontFamily: fontFamilies.monoBold, color: colors.textPrimary },
   timerRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   timerTxt: { fontSize: 12, fontFamily: fontFamilies.monoMedium, color: colors.primaryDark },
@@ -1040,7 +1046,7 @@ const s = StyleSheet.create({
   progBg: { height: 3, backgroundColor: 'rgba(101,78,60,0.1)' },
   progFill: { height: '100%', backgroundColor: colors.sageDark },
   scroll: { flex: 1 },
-  scrollPad: { padding: 14, paddingBottom: 40 },
+  scrollPad: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 40 },
   addExBtn: {
     flexDirection: 'row',
     alignItems: 'center',
