@@ -9,13 +9,15 @@ import {
   X, User, Bell, Shield, FileText, ChevronRight,
   RotateCcw, LogOut, Compass, Heart, Leaf, Moon,
   Volume2, Lock, ExternalLink, Trash2, CheckCircle2,
-  Clock, Activity, Sparkles, Info, Tag,
+  Clock, Activity, Sparkles, Info, Tag, Globe,
 } from "lucide-react-native";
 import { colors } from "../theme/colors";
 import { fontFamilies } from "../theme/typography";
 import { setSoundEffectsEnabled, setHapticsEnabled } from "../lib/audioManager";
 import { UserProfile } from "../hooks/useUserData";
 import { LegalDocumentModal, LegalDocType } from "./LegalDocumentModal";
+import { useLanguage } from "../context/LanguageContext";
+import { SUPPORTED_LANGUAGES } from "../types/i18n";
 
 interface SettingsModalProps {
   visible: boolean;
@@ -117,6 +119,10 @@ export function SettingsModal({
   const [crashReports, setCrashReports] = useState(true);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [activeDoc, setActiveDoc] = useState<LegalDocType | null>(null);
+  const [langPickerVisible, setLangPickerVisible] = useState(false);
+
+  const { language, setLanguage, languageOptions } = useLanguage();
+  const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   const haptic = useCallback(() => {
     try { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
@@ -266,6 +272,15 @@ export function SettingsModal({
 
             <SectionHeader label="APP EXPERIENCE" icon={Compass} color={colors.primary} />
             <SettingsCard>
+              <SettingAction
+                label="App Language"
+                sublabel={`${currentLang.flag}  ${currentLang.nativeLabel}`}
+                icon={Globe}
+                iconColor={colors.primary}
+                onPress={() => { haptic(); setLangPickerVisible(true); }}
+                rightLabel={currentLang.flag}
+              />
+              <View style={sStyles.rowDivider} />
               <SettingAction label="Take the Guided App Tour" sublabel="Rediscover every feature with a curated walkthrough" icon={Compass} iconColor={colors.primary} onPress={() => { onClose(); onReplayTour?.(); }} />
               <View style={sStyles.rowDivider} />
               <SettingAction label="App Version" sublabel="FortyWell PWA" icon={Info} iconColor={colors.textTertiary} onPress={() => {}} rightLabel="1.0.0" />
@@ -373,6 +388,43 @@ export function SettingsModal({
           </ScrollView>
         </View>
       </View>
+
+      {/* ── Language Picker Modal ── */}
+      <Modal visible={langPickerVisible} transparent animationType="slide" onRequestClose={() => setLangPickerVisible(false)}>
+        <View style={sStyles.confirmBackdrop}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setLangPickerVisible(false)} />
+          <View style={[sStyles.confirmCard, { paddingBottom: 24 }]}>
+            <Text style={[sStyles.confirmTitle, { marginBottom: 4 }]}>Select Language</Text>
+            <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16, textAlign: 'center' }}>Choose your preferred language for the app</Text>
+            {languageOptions.map((opt, idx) => (
+              <Pressable
+                key={opt.code}
+                onPress={async () => { haptic(); await setLanguage(opt.code); setLangPickerVisible(false); }}
+                style={({ pressed }) => [{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderRadius: 12,
+                  marginBottom: 4,
+                  backgroundColor: language === opt.code ? 'rgba(201,70,91,0.09)' : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 22, marginRight: 12 }}>{opt.flag}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: language === opt.code ? colors.primary : colors.textPrimary }}>{opt.nativeLabel}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 1 }}>{opt.label}</Text>
+                </View>
+                {language === opt.code && <CheckCircle2 size={18} color={colors.primary} strokeWidth={2.2} />}
+              </Pressable>
+            ))}
+            <Pressable onPress={() => setLangPickerVisible(false)} style={[sStyles.confirmCancelBtn, { marginTop: 8 }]}>
+              <Text style={sStyles.confirmCancelBtnText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={deleteConfirmVisible} transparent animationType="fade" onRequestClose={() => setDeleteConfirmVisible(false)}>
         <View style={sStyles.confirmBackdrop}>
