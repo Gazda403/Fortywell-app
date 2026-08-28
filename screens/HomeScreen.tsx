@@ -26,6 +26,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Image as ExpoImage } from 'expo-image';
 import {
   Play,
   Clock,
@@ -47,6 +48,7 @@ import {
   CheckCircle2,
   Tag,
   ShoppingBag,
+  Target,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { typography, fontFamilies } from '../theme/typography';
@@ -242,31 +244,50 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Guided Spotlight Tour state
   const [tourVisible, setTourVisible] = useState<boolean>(false);
   const [targetRects, setTargetRects] = useState<TargetRectsMap>({});
-  // Ensure tour only ever fires ONCE per app mount (lifetime guard — AsyncStorage handles
-  // persistence across restarts; this ref prevents double-triggering within a single session).
+  // Ensure tour only ever fires ONCE per account mount
   const tourShownRef = React.useRef(false);
 
   // Automatically trigger first-time guided walkthrough on initial landing
   React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.sessionStorage?.getItem('fortywell_tour_shown_session') === 'true') {
+        return;
+      }
+      if (window.localStorage?.getItem('@fortywell_has_seen_walkthrough_v1') === 'true') {
+        return;
+      }
+      if (userProfile?.id && window.localStorage?.getItem(`@fortywell_walkthrough_${userProfile.id}`) === 'true') {
+        return;
+      }
+    }
     // Only proceed when we have real data from the server (not loading)
     // and user has definitively NOT seen the walkthrough (not just the default 'true' stub)
     if (!userLoading && userProfile.hasSeenWalkthrough === false && !tourShownRef.current) {
-      tourShownRef.current = true; // mark so even if effect re-runs it won't double-fire
+      tourShownRef.current = true;
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem('fortywell_tour_shown_session', 'true');
+      }
       const timer = setTimeout(() => {
         setTourVisible(true);
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [userLoading, userProfile.hasSeenWalkthrough]);
+  }, [userLoading, userProfile.hasSeenWalkthrough, userProfile?.id]);
 
   const handleTourComplete = React.useCallback(() => {
     setTourVisible(false);
     markWalkthroughCompleted();
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem('fortywell_tour_shown_session', 'true');
+    }
   }, [markWalkthroughCompleted]);
 
   const handleTourSkip = React.useCallback(() => {
     setTourVisible(false);
     markWalkthroughCompleted();
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem('fortywell_tour_shown_session', 'true');
+    }
   }, [markWalkthroughCompleted]);
 
   const handleReplayTour = React.useCallback(() => {
@@ -587,12 +608,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* ── IMAGE BACKGROUND SEGMENT: WEEK 1 RHYTHM + STATS ── */}
         <View style={styles.imageBackgroundSegment}>
-          <ImageBackground
+          {/* Centered Runner Image with focal positioning on the runner */}
+          <ExpoImage
             source={heroRunnerImage}
-            style={styles.heroSegmentBg}
-            imageStyle={styles.heroSegmentBgImage}
-            resizeMode="cover"
-          >
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+            contentPosition={{ top: '35%', left: '38%' }}
+            transition={200}
+            cachePolicy="memory-disk"
+          />
+
+          {/* Warm Dark Vignette Overlay for Crisp Contrast on Floating Cards */}
+          <LinearGradient
+            colors={['rgba(25, 20, 16, 0.22)', 'rgba(25, 20, 16, 0.42)']}
+            style={StyleSheet.absoluteFillObject}
+          />
+
+          <View style={styles.heroSegmentInner}>
             {/* ── 3D FLOATING WEEK CALENDAR STRIP ── */}
             <View style={styles.weekCard}>
               <View style={styles.weekHeaderRow}>
@@ -639,7 +671,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             </View>
 
-            {/* ── READINESS / METRICS STRIP (3D depth) ── */}
+            {/* ── METRICS STRIP (3D depth & real transparent stats) ── */}
             <View
               style={styles.metricsStrip}
               onLayout={(e) => {
@@ -655,33 +687,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 }));
               }}
             >
+              {/* Stat 1: Active Streak */}
               <View style={styles.metricCard}>
-                <View style={styles.metricIconCircle}>
-                  <HeartPulse size={14} color={colors.primary} />
-                </View>
-                <Text style={styles.metricValue}>{recommendations.readinessScore}%</Text>
-                <Text style={styles.metricLabel}>Readiness</Text>
-              </View>
-
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIconCircle, { backgroundColor: colors.sageSoft }]}>
-                  <ShieldCheck size={14} color={colors.sageDark} />
-                </View>
-                <Text style={styles.metricValue}>{recommendations.pacingLabel}</Text>
-                <Text style={styles.metricLabel}>Pacing</Text>
-              </View>
-
-              <View style={styles.metricCard}>
-                <View style={styles.metricIconCircle}>
+                <View style={[styles.metricIconCircle, { backgroundColor: 'rgba(201, 70, 91, 0.12)' }]}>
                   <Flame size={14} color={colors.primary} />
                 </View>
                 <Text style={styles.metricValue}>
-                  {currentWeekDays.filter((d) => d.isCompleted).length} / {answers?.weekly_frequency ? (answers.weekly_frequency.split('–')[0] || 3) : 3}
+                  {lifetimeStats.currentStreak} {lifetimeStats.currentStreak === 1 ? 'Day' : 'Days'}
                 </Text>
-                <Text style={styles.metricLabel}>Sessions</Text>
+                <Text style={styles.metricLabel}>Active Streak</Text>
+              </View>
+
+              {/* Stat 2: Daily Target / Session Duration */}
+              <View style={styles.metricCard}>
+                <View style={[styles.metricIconCircle, { backgroundColor: colors.sageSoft }]}>
+                  <Clock size={14} color={colors.sageDark} />
+                </View>
+                <Text style={styles.metricValue}>
+                  {answers?.time_commitment ? answers.time_commitment.replace(' minutes', 'm').replace(' mins', 'm') : '20–30 min'}
+                </Text>
+                <Text style={styles.metricLabel}>Daily Target</Text>
+              </View>
+
+              {/* Stat 3: Weekly Sessions Goal */}
+              <View style={styles.metricCard}>
+                <View style={[styles.metricIconCircle, { backgroundColor: 'rgba(112, 134, 85, 0.12)' }]}>
+                  <Target size={14} color={colors.sageDark} />
+                </View>
+                <Text style={styles.metricValue}>
+                  {currentWeekDays.filter((d) => d.isCompleted).length} / {answers?.weekly_frequency ? (answers.weekly_frequency.split('–')[0].trim() || '3') : '3'}
+                </Text>
+                <Text style={styles.metricLabel}>Weekly Goal</Text>
               </View>
             </View>
-          </ImageBackground>
+          </View>
         </View>
 
         {/* ── HERO GRADIENT CARD: START TODAY'S WORKOUT ── */}
@@ -1383,21 +1422,20 @@ const styles = StyleSheet.create({
 
   // ── WEEK CALENDAR ──
   weekCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     ...Platform.select({
       ios: {
-        shadowColor: colors.textPrimary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
+        shadowColor: '#1A1412',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
       },
-      android: { elevation: 2 },
+      android: { elevation: 4 },
       default: {},
     }),
   },
@@ -1482,26 +1520,25 @@ const styles = StyleSheet.create({
   // ── METRICS STRIP ──
   metricsStrip: {
     flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    gap: 8,
   },
   metricCard: {
     flex: 1,
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: colors.textPrimary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
+        shadowColor: '#1A1412',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
       },
-      android: { elevation: 2 },
+      android: { elevation: 3 },
       default: {},
     }),
   },
@@ -1515,17 +1552,19 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   metricValue: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   metricLabel: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
     color: colors.textTertiary,
     marginTop: 2,
+    textAlign: 'center',
   },
 
   // ── IMAGE BACKGROUND SEGMENT FOR WEEK + STATS ──
@@ -1534,24 +1573,22 @@ const styles = StyleSheet.create({
     marginBottom: 26,
     borderRadius: 24,
     overflow: 'hidden',
+    position: 'relative',
     ...Platform.select({
       ios: {
         shadowColor: '#2A2320',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.16,
         shadowRadius: 16,
       },
       android: { elevation: 6 },
       default: {},
     }),
   },
-  heroSegmentBg: {
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-  },
-  heroSegmentBgImage: {
-    borderRadius: 24,
-    opacity: 1.0,
+  heroSegmentInner: {
+    padding: 12,
+    position: 'relative',
+    zIndex: 2,
   },
 
 

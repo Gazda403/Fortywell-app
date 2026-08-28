@@ -169,12 +169,19 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         const greeting = firstName ? `Hi, ${firstName}` : 'Welcome';
         const mono = firstName ? firstName.charAt(0).toUpperCase() : 'W';
 
-        // Check persistent local AsyncStorage for walkthrough completion
+        // Check persistent local AsyncStorage & localStorage for walkthrough completion
         let localHasSeenWalkthrough = false;
         try {
           const storedVal = await AsyncStorage.getItem(STORAGE_KEY_WALKTHROUGH);
-          if (storedVal === 'true') {
+          const userKeyVal = user?.id ? await AsyncStorage.getItem(`@fortywell_walkthrough_${user.id}`) : null;
+          if (storedVal === 'true' || userKeyVal === 'true') {
             localHasSeenWalkthrough = true;
+          } else if (typeof window !== 'undefined' && window.localStorage) {
+            const lsVal = window.localStorage.getItem(STORAGE_KEY_WALKTHROUGH);
+            const lsUserVal = user?.id ? window.localStorage.getItem(`@fortywell_walkthrough_${user.id}`) : null;
+            if (lsVal === 'true' || lsUserVal === 'true') {
+              localHasSeenWalkthrough = true;
+            }
           }
         } catch (_) {}
 
@@ -333,10 +340,19 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     }
     try {
       await AsyncStorage.setItem(STORAGE_KEY_WALKTHROUGH, 'true');
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(STORAGE_KEY_WALKTHROUGH, 'true');
+      }
     } catch (_) {}
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.id) {
+        try {
+          await AsyncStorage.setItem(`@fortywell_walkthrough_${user.id}`, 'true');
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(`@fortywell_walkthrough_${user.id}`, 'true');
+          }
+        } catch (_) {}
         await supabase
           .from('profiles')
           .update({ has_seen_walkthrough: true, updated_at: new Date().toISOString() })
