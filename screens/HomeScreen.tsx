@@ -68,6 +68,7 @@ import { useUserData } from '../hooks/useUserData';
 import { StoreScreen } from '../components/StoreScreen';
 import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
+import { SettingsModal } from '../components/SettingsModal';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -925,178 +926,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setExerciseDetailVisible(false)}
       />
 
-      {/* ── PROFILE & ACCOUNT MODAL ── */}
-      <Modal
+      {/* ── PROFILE & SETTINGS MODAL ── */}
+      <SettingsModal
         visible={profileModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setProfileModalVisible(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <Pressable
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => setProfileModalVisible(false)}
-          />
-          <View style={styles.profileModalCard}>
-            {/* Header close button */}
-            <Pressable
-              style={styles.modalCloseBtn}
-              onPress={() => setProfileModalVisible(false)}
-              hitSlop={10}
-            >
-              <X size={18} color={colors.textTertiary} />
-            </Pressable>
+        onClose={() => setProfileModalVisible(false)}
+        onSignOut={onSignOut}
+        onRetakeQuiz={onRetakeQuiz}
+        onReplayTour={handleReplayTour}
+        userProfile={userProfile}
+        codeCopied={codeCopied}
+        onCopyCode={() => {
+          setCodeCopied(true);
+          setTimeout(() => setCodeCopied(false), 2500);
+          try { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
+        }}
+        onDeleteAccount={() => {
+          setProfileModalVisible(false);
+          onSignOut?.();
+        }}
+      />
 
-            {/* Avatar & Names */}
-            <View style={styles.profileAvatarLarge}>
-              <Text style={styles.profileAvatarText}>{userProfile.monogram}</Text>
-            </View>
-            <Text style={styles.profileModalName}>{userProfile.fullName || 'Member'}</Text>
-            {userProfile.email ? (
-              <Text style={styles.profileModalEmail}>{userProfile.email}</Text>
-            ) : null}
-
-            {/* Profile summary info */}
-            <View style={styles.profilePillGroup}>
-              <View style={styles.profileInfoPill}>
-                <Text style={styles.profileInfoPillLabel}>Cadence</Text>
-                <Text style={styles.profileInfoPillVal}>{userProfile.weeklyFrequency || '3–4 days'}</Text>
-              </View>
-              <View style={styles.profileInfoPill}>
-                <Text style={styles.profileInfoPillLabel}>Daily Window</Text>
-                <Text style={styles.profileInfoPillVal}>{userProfile.timeCommitment ? userProfile.timeCommitment.replace('_', ' ') : '15–30 min'}</Text>
-              </View>
-            </View>
-
-            {/* ── 5% STORE DISCOUNT & EMAIL VERIFICATION REWARD CARD ── */}
-            {userProfile.isEmailVerified || profileOtpSuccessBanner ? (
-              <View style={styles.verifiedRewardCard}>
-                <View style={styles.verifiedRewardHeader}>
-                  <Sparkles size={14} color={colors.rose} />
-                  <Text style={styles.verifiedRewardBadge}>✦ 5% STORE DISCOUNT ACTIVE</Text>
-                </View>
-                <Text style={styles.verifiedRewardTitle}>Member Benefit Unlocked</Text>
-                <Text style={styles.verifiedRewardDesc}>
-                  Your verified email grants you 5% off all upcoming FortyWell store drops & gear.
-                </Text>
-                <Pressable
-                  style={styles.promoCodeBox}
-                  onPress={() => {
-                    setCodeCopied(true);
-                    setTimeout(() => setCodeCopied(false), 2500);
-                    try { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Copy store discount promo code"
-                >
-                  <Text style={styles.promoCodeText}>FORTY5</Text>
-                  <View style={styles.promoCodeTag}>
-                    <Text style={styles.promoCodeTagText}>{codeCopied ? 'Copied! ✓' : 'Tap to Copy'}</Text>
-                  </View>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.unverifiedRewardCard}>
-                <View style={styles.unverifiedRewardHeader}>
-                  <Gift size={14} color={colors.rose} />
-                  <Text style={styles.unverifiedRewardKicker}>OPTIONAL REWARD • 5% OFF</Text>
-                </View>
-                <Text style={styles.unverifiedRewardTitle}>Unlock 5% Store Discount</Text>
-                <Text style={styles.unverifiedRewardDesc}>
-                  Enter the 6-digit code from your email to unlock 5% off our upcoming store.
-                </Text>
-
-                <View style={styles.profileOtpInputRow}>
-                  <TextInput
-                    style={styles.profileOtpInput}
-                    value={profileOtpInput}
-                    onChangeText={(t) => {
-                      setProfileOtpInput(t.replace(/[^0-9]/g, '').slice(0, 6));
-                      if (profileOtpError) setProfileOtpError(null);
-                    }}
-                    placeholder="6-digit code"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="numeric"
-                    maxLength={6}
-                  />
-                  <Pressable
-                    style={[
-                      styles.profileOtpBtn,
-                      (profileOtpInput.length < 6 || profileOtpLoading) && styles.profileOtpBtnDisabled,
-                    ]}
-                    onPress={handleProfileVerifyOtp}
-                    disabled={profileOtpInput.length < 6 || profileOtpLoading}
-                  >
-                    {profileOtpLoading ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.profileOtpBtnText}>Unlock</Text>
-                    )}
-                  </Pressable>
-                </View>
-
-                {profileOtpError ? (
-                  <Text style={styles.profileOtpErrorText}>{profileOtpError}</Text>
-                ) : null}
-                {profileOtpSuccessBanner ? (
-                  <Text style={styles.profileOtpSuccessText}>{profileOtpSuccessBanner}</Text>
-                ) : null}
-
-                <Pressable
-                  style={styles.profileResendLink}
-                  onPress={handleProfileResend}
-                  disabled={profileResendCooldown > 0 || profileResending}
-                >
-                  <Text style={styles.profileResendLinkText}>
-                    {profileResending
-                      ? 'Sending email...'
-                      : profileResendCooldown > 0
-                      ? `Resend code in ${profileResendCooldown}s`
-                      : 'Send or resend code to my email'}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-
-            <View style={styles.profileDivider} />
-
-            {/* Action buttons */}
-            <Pressable
-              style={styles.profileActionBtn}
-              onPress={handleReplayTour}
-            >
-              <Compass size={16} color={colors.primary} />
-              <Text style={styles.profileActionText}>Take Guided App Tour</Text>
-            </Pressable>
-
-            {onRetakeQuiz && (
-              <Pressable
-                style={styles.profileActionBtn}
-                onPress={() => {
-                  setProfileModalVisible(false);
-                  onRetakeQuiz();
-                }}
-              >
-                <RotateCcw size={16} color={colors.primary} />
-                <Text style={styles.profileActionText}>Recalibrate Quiz & Protocol</Text>
-              </Pressable>
-            )}
-
-            {onSignOut && (
-              <Pressable
-                style={[styles.profileActionBtn, styles.profileSignOutBtn]}
-                onPress={() => {
-                  setProfileModalVisible(false);
-                  onSignOut();
-                }}
-              >
-                <LogOut size={16} color={colors.error} />
-                <Text style={[styles.profileActionText, { color: colors.error }]}>Log Out</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      </Modal>
 
       {/* ── FLOATING LUXURY BOTTOM NAVIGATION BAR ── */}
       <View style={styles.floatingNavWrapper}>

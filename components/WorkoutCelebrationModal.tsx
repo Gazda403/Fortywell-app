@@ -33,6 +33,7 @@ import { Trophy, Zap, Star, CheckCircle2, Flame, Target } from 'lucide-react-nat
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { WorkoutSummaryData } from './ActiveWorkoutScreen';
+import { playWorkoutCelebrationChime } from '../lib/audioManager';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -323,6 +324,7 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
   useEffect(() => {
     if (visible) {
       setActive(true);
+      playWorkoutCelebrationChime();
       sheetY.value = withSpring(0, { damping: 22, stiffness: 120 });
       headerScale.value = withDelay(200, withSpring(1, { damping: 12, stiffness: 150 }));
       headerOpacity.value = withDelay(150, withTiming(1, { duration: 400 }));

@@ -45,6 +45,7 @@ import { CancelWorkoutSheet } from './CancelWorkoutSheet';
 import { FinishConfirmSheet } from './FinishConfirmSheet';
 import { WorkoutCelebrationModal } from './WorkoutCelebrationModal';
 import { ResetSlot } from '../types/rhythm';
+import { playSetCompleteSound } from '../lib/audioManager';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -532,13 +533,20 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   , []);
 
   const toggleSet = useCallback((exId: string, sid: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setExercises((prev) =>
       prev.map((e) => {
         if (e.id !== exId) return e;
         return {
           ...e,
-          sets: e.sets.map((s) => (s.id === sid ? { ...s, completed: !s.completed } : s)),
+          sets: e.sets.map((s) => {
+            if (s.id === sid) {
+              const nextVal = !s.completed;
+              if (nextVal) playSetCompleteSound();
+              else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              return { ...s, completed: nextVal };
+            }
+            return s;
+          }),
         };
       })
     );

@@ -9,6 +9,7 @@ import {
   Dimensions,
   Modal,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import {
   Download,
@@ -23,8 +24,20 @@ import {
   Leaf,
   Activity,
   X,
+  Flower,
+  Flower2,
+  Sprout,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
+import { fontFamilies } from '../theme/typography';
+import Svg, {
+  Defs,
+  LinearGradient as SvgGradient,
+  Stop,
+  Path,
+  Circle,
+  G,
+} from 'react-native-svg';
 
 interface PwaWelcomeGateProps {
   onEnterApp: () => void;
@@ -103,19 +116,362 @@ export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
     onEnterApp();
   };
 
+  const { width, height } = useWindowDimensions();
+  const isWideScreen = width >= 860;
+  const leftGutterWidth = Math.max(0, (width - 460) / 2);
+  // Slimmer photo strip along the left edge
+  const imageStripWidth = Math.min(Math.max(Math.round(leftGutterWidth * 0.50), 260), 360);
+  const LETTER_SPACING = 6;
+  // FortyWell text increased by an additional 15%
+  const dynamicFontSize = Math.round(imageStripWidth * 0.718);
+
   return (
     <View style={styles.outerContainer}>
+      {/* Full Top Green Background Section with Rich Blooming Botanical Rose Illustrations */}
+      <View
+        style={[
+          styles.topGreenSection,
+          { left: isWideScreen ? imageStripWidth : 0 },
+        ]}
+        pointerEvents="none"
+        aria-hidden={true}
+      >
+        {/* Soft decorative concentric thin rose rings for depth */}
+        <View style={styles.roseDecoRingLarge} />
+        <View style={styles.roseDecoRingSmall} />
+
+        {/* Left-Side Flourishing Rose Vine & Blossom SVG */}
+        <View style={styles.roseSvgContainerLeft}>
+          <Svg width={280} height={200} viewBox="0 0 280 200">
+            <Defs>
+              <SvgGradient id="roseGradBloom1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#FBD6DF" stopOpacity="0.95" />
+                <Stop offset="50%" stopColor="#E28698" stopOpacity="0.90" />
+                <Stop offset="100%" stopColor="#A84357" stopOpacity="0.95" />
+              </SvgGradient>
+              <SvgGradient id="roseGradPetalFold1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#FFF0F3" stopOpacity="0.95" />
+                <Stop offset="100%" stopColor="#D96E82" stopOpacity="0.90" />
+              </SvgGradient>
+              <SvgGradient id="roseGradInnerCore1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#C44E64" stopOpacity="0.95" />
+                <Stop offset="100%" stopColor="#7E2436" stopOpacity="0.95" />
+              </SvgGradient>
+              <SvgGradient id="botanicalVineGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor="#8EA973" stopOpacity="0.85" />
+                <Stop offset="100%" stopColor="#B3CD9B" stopOpacity="0.90" />
+              </SvgGradient>
+              <SvgGradient id="roseLeafGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#9EBA82" stopOpacity="0.90" />
+                <Stop offset="100%" stopColor="#556E3B" stopOpacity="0.90" />
+              </SvgGradient>
+            </Defs>
+
+            {/* Graceful Arching Vine Stems */}
+            <Path
+              d="M-20,180 Q60,150 110,110 T220,50 Q250,30 270,10"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="2.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <Path
+              d="M70,135 Q95,95 85,60"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="1.8"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <Path
+              d="M170,75 Q210,105 240,115"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="1.8"
+              fill="none"
+              strokeLinecap="round"
+            />
+
+            {/* Botanical Leaves along the vine */}
+            <G transform="translate(45, 135) rotate(-35)">
+              <Path d="M0,0 C12,-18 28,-14 32,0 C28,14 12,18 0,0 Z" fill="url(#roseLeafGrad1)" />
+              <Path d="M0,0 L26,0" stroke="#BFE0A3" strokeWidth="1" opacity="0.7" />
+            </G>
+            <G transform="translate(150, 85) rotate(40)">
+              <Path d="M0,0 C14,-20 32,-16 36,0 C32,16 14,20 0,0 Z" fill="url(#roseLeafGrad1)" />
+              <Path d="M0,0 L30,0" stroke="#BFE0A3" strokeWidth="1" opacity="0.7" />
+            </G>
+            <G transform="translate(225, 60) rotate(-25)">
+              <Path d="M0,0 C10,-14 22,-12 26,0 C22,12 10,14 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+
+            {/* Main Blooming Rose Blossom (Centered on vine at 110, 105) */}
+            <G transform="translate(110, 105)">
+              {/* Outer Layer Petals */}
+              <Path
+                d="M-38,-15 C-48,-42 -15,-55 0,-40 C15,-55 48,-42 38,-15 C55,5 42,42 15,46 C-5,50 -28,45 -38,20 C-46,5 -44,-5 -38,-15 Z"
+                fill="url(#roseGradBloom1)"
+              />
+              {/* Overlapping Mid-Petals */}
+              <Path
+                d="M-26,-22 C-32,-38 -8,-44 4,-30 C16,-44 40,-32 30,-12 C42,4 28,34 6,36 C-14,38 -32,24 -28,2 C-34,-8 -32,-16 -26,-22 Z"
+                fill="url(#roseGradPetalFold1)"
+                opacity="0.95"
+              />
+              {/* Inner Petal Layers */}
+              <Path
+                d="M-18,-14 C-22,-26 -4,-30 4,-20 C12,-30 28,-22 22,-8 C30,4 20,24 4,25 C-10,26 -22,16 -18,2 Z"
+                fill="url(#roseGradBloom1)"
+              />
+              {/* Core Spiral Rose Cup */}
+              <Path
+                d="M-10,-8 C-14,-18 0,-20 6,-12 C12,-20 22,-14 16,-4 C22,4 14,16 2,16 C-8,16 -16,8 -10,-8 Z"
+                fill="url(#roseGradInnerCore1)"
+              />
+              <Path
+                d="M-4,-4 Q2,-10 7,-4 Q12,2 4,8 Q-4,8 -4,-4 Z"
+                fill="#FAD1DC"
+                opacity="0.9"
+              />
+              {/* Golden Pistils/Stamens */}
+              <Circle cx="-2" cy="-6" r="1.8" fill="#FDE68A" />
+              <Circle cx="5" cy="-4" r="1.8" fill="#FDE68A" />
+              <Circle cx="2" cy="3" r="1.8" fill="#FDE68A" />
+            </G>
+
+            {/* Smaller Bud Blossom at (255, 25) */}
+            <G transform="translate(255, 25) rotate(25)">
+              <Path d="M-6,8 C-10,2 -8,-10 0,-16 C8,-10 10,2 6,8 Z" fill="url(#roseGradBloom1)" />
+              <Path d="M-4,4 C-6,0 -4,-8 0,-12 C4,-8 6,0 4,4 Z" fill="url(#roseGradInnerCore1)" />
+              <Path d="M-8,12 Q-4,4 0,10 Q4,4 8,12 Z" fill="#6B854E" />
+            </G>
+          </Svg>
+        </View>
+
+        {/* Right-Side Cascading Rose Bouquet & Botanical Vines SVG */}
+        <View style={styles.roseSvgContainerRight}>
+          <Svg width={280} height={200} viewBox="0 0 280 200">
+            <Defs>
+              <SvgGradient id="roseGradBloom2" x1="100%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor="#FCE0E7" stopOpacity="0.95" />
+                <Stop offset="45%" stopColor="#E58B9C" stopOpacity="0.92" />
+                <Stop offset="100%" stopColor="#9C3A4D" stopOpacity="0.95" />
+              </SvgGradient>
+              <SvgGradient id="roseGradPetalFold2" x1="100%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor="#FFF5F7" stopOpacity="0.98" />
+                <Stop offset="100%" stopColor="#D96E82" stopOpacity="0.92" />
+              </SvgGradient>
+            </Defs>
+
+            {/* Sweeping Botanical Vines */}
+            <Path
+              d="M300,170 Q210,140 160,95 T40,40 Q10,25 -10,10"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="2.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <Path
+              d="M200,120 Q160,70 120,60"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="1.8"
+              fill="none"
+              strokeLinecap="round"
+            />
+
+            {/* Leaves */}
+            <G transform="translate(230, 130) rotate(45)">
+              <Path d="M0,0 C14,-20 32,-16 36,0 C32,16 14,20 0,0 Z" fill="url(#roseLeafGrad1)" />
+              <Path d="M0,0 L30,0" stroke="#BFE0A3" strokeWidth="1" opacity="0.7" />
+            </G>
+            <G transform="translate(120, 65) rotate(-35)">
+              <Path d="M0,0 C12,-18 28,-14 32,0 C28,14 12,18 0,0 Z" fill="url(#roseLeafGrad1)" />
+              <Path d="M0,0 L26,0" stroke="#BFE0A3" strokeWidth="1" opacity="0.7" />
+            </G>
+            <G transform="translate(55, 45) rotate(30)">
+              <Path d="M0,0 C10,-14 22,-12 26,0 C22,12 10,14 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+
+            {/* Full Blooming Rose on Right (at 175, 90) */}
+            <G transform="translate(175, 90)">
+              <Path
+                d="M-36,-14 C-46,-38 -14,-50 0,-36 C14,-50 46,-38 36,-14 C50,4 38,38 14,42 C-4,46 -26,40 -36,18 C-44,4 -42,-4 -36,-14 Z"
+                fill="url(#roseGradBloom2)"
+              />
+              <Path
+                d="M-24,-18 C-30,-34 -6,-38 4,-26 C14,-38 36,-28 26,-10 C36,4 24,30 4,32 C-12,34 -28,20 -24,2 Z"
+                fill="url(#roseGradPetalFold2)"
+                opacity="0.95"
+              />
+              <Path
+                d="M-16,-12 C-20,-22 -4,-26 4,-16 C12,-26 24,-18 18,-6 C26,4 16,20 4,22 C-8,24 -18,14 -16,2 Z"
+                fill="url(#roseGradBloom2)"
+              />
+              <Path
+                d="M-8,-6 C-12,-14 0,-16 4,-10 C8,-16 18,-12 12,-4 C18,4 12,14 2,14 C-6,14 -12,8 -8,-6 Z"
+                fill="#7E2436"
+              />
+              <Path
+                d="M-3,-3 Q2,-8 6,-3 Q10,2 3,6 Q-3,6 -3,-3 Z"
+                fill="#FAD1DC"
+              />
+              <Circle cx="-1" cy="-5" r="1.8" fill="#FDE68A" />
+              <Circle cx="4" cy="-3" r="1.8" fill="#FDE68A" />
+              <Circle cx="1" cy="2" r="1.8" fill="#FDE68A" />
+            </G>
+
+            {/* Second Rose Bloom in three-quarter view (at 85, 45) */}
+            <G transform="translate(85, 45) rotate(-15)">
+              <Path
+                d="M-22,-10 C-28,-26 -8,-32 0,-24 C8,-32 28,-26 22,-10 C30,2 22,24 8,26 C-4,28 -18,22 -22,10 Z"
+                fill="url(#roseGradBloom2)"
+              />
+              <Path
+                d="M-14,-8 C-18,-18 -4,-20 2,-14 C8,-20 20,-16 14,-6 C20,2 14,16 4,18 C-6,20 -14,12 -14,2 Z"
+                fill="url(#roseGradPetalFold2)"
+              />
+              <Path d="M-6,-4 C-8,-10 0,-12 3,-8 C6,-12 14,-10 9,-2 C12,4 8,10 2,10 C-4,10 -8,4 -6,-4 Z" fill="#7E2436" />
+            </G>
+          </Svg>
+        </View>
+
+        {/* Bottom-Left Blooming Rose & Foliage SVG */}
+        <View style={styles.roseSvgContainerBottomLeft}>
+          <Svg width={180} height={140} viewBox="0 0 180 140">
+            <Path
+              d="M-10,130 Q40,110 70,80 T150,30"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="2.2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <G transform="translate(30, 95) rotate(30)">
+              <Path d="M0,0 C10,-16 24,-12 28,0 C24,12 10,16 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+            <G transform="translate(110, 55) rotate(-40)">
+              <Path d="M0,0 C10,-14 20,-10 24,0 C20,10 10,14 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+            <G transform="translate(70, 75) rotate(15)">
+              <Path
+                d="M-28,-10 C-36,-30 -10,-40 0,-28 C10,-40 36,-30 28,-10 C38,4 30,30 10,34 C-4,36 -20,32 -28,14 Z"
+                fill="url(#roseGradBloom1)"
+              />
+              <Path
+                d="M-18,-14 C-24,-26 -4,-30 4,-20 C12,-30 28,-22 22,-8 C28,4 20,24 4,25 C-10,26 -22,16 -18,2 Z"
+                fill="url(#roseGradPetalFold1)"
+                opacity="0.95"
+              />
+              <Path
+                d="M-10,-8 C-14,-18 0,-20 6,-12 C12,-20 22,-14 16,-4 C22,4 14,16 2,16 C-8,16 -16,8 -10,-8 Z"
+                fill="url(#roseGradInnerCore1)"
+              />
+              <Path d="M-3,-3 Q2,-8 6,-3 Q10,2 3,6 Q-3,6 -3,-3 Z" fill="#FAD1DC" />
+              <Circle cx="-1" cy="-4" r="1.5" fill="#FDE68A" />
+              <Circle cx="3" cy="-2" r="1.5" fill="#FDE68A" />
+            </G>
+          </Svg>
+        </View>
+
+        {/* Bottom-Right Blooming Rose & Foliage SVG */}
+        <View style={styles.roseSvgContainerBottomRight}>
+          <Svg width={180} height={140} viewBox="0 0 180 140">
+            <Path
+              d="M190,130 Q140,110 110,80 T30,30"
+              stroke="url(#botanicalVineGrad1)"
+              strokeWidth="2.2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <G transform="translate(150, 95) rotate(-30)">
+              <Path d="M0,0 C10,-16 24,-12 28,0 C24,12 10,16 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+            <G transform="translate(70, 55) rotate(40)">
+              <Path d="M0,0 C10,-14 20,-10 24,0 C20,10 10,14 0,0 Z" fill="url(#roseLeafGrad1)" />
+            </G>
+            <G transform="translate(110, 75) rotate(-15)">
+              <Path
+                d="M-28,-10 C-36,-30 -10,-40 0,-28 C10,-40 36,-30 28,-10 C38,4 30,30 10,34 C-4,36 -20,32 -28,14 Z"
+                fill="url(#roseGradBloom2)"
+              />
+              <Path
+                d="M-18,-14 C-24,-26 -4,-30 4,-20 C12,-30 28,-22 22,-8 C28,4 20,24 4,25 C-10,26 -22,16 -18,2 Z"
+                fill="url(#roseGradPetalFold2)"
+                opacity="0.95"
+              />
+              <Path
+                d="M-10,-8 C-14,-18 0,-20 6,-12 C12,-20 22,-14 16,-4 C22,4 14,16 2,16 C-8,16 -16,8 -10,-8 Z"
+                fill="#7E2436"
+              />
+              <Path d="M-3,-3 Q2,-8 6,-3 Q10,2 3,6 Q-3,6 -3,-3 Z" fill="#FAD1DC" />
+              <Circle cx="-1" cy="-4" r="1.5" fill="#FDE68A" />
+              <Circle cx="3" cy="-2" r="1.5" fill="#FDE68A" />
+            </G>
+          </Svg>
+        </View>
+
+        {/* Delicate Drifting Rose Petals in Center */}
+        <View style={styles.floatingPetal1}>
+          <Svg width={32} height={32} viewBox="0 0 32 32">
+            <Path d="M4,16 C4,6 16,4 24,12 C28,18 22,28 12,26 C6,24 4,20 4,16 Z" fill="#F7CAD5" opacity="0.85" />
+          </Svg>
+        </View>
+        <View style={styles.floatingPetal2}>
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            <Path d="M3,12 C3,5 12,3 18,9 C21,14 16,21 9,20 C4,18 3,15 3,12 Z" fill="#E88A9D" opacity="0.75" />
+          </Svg>
+        </View>
+      </View>
+
+      {/* Left-side sleek vertical photo column with FortyWell brand spine */}
+      {isWideScreen && (
+        <View
+          style={[styles.leftBgContainer, { width: imageStripWidth }]}
+          pointerEvents="none"
+          aria-hidden={true}
+        >
+          {/* Top image block (oč.png) */}
+          <View style={styles.bgImageBlock}>
+            <Image
+              source={require('../assets/editorial_oc.png')}
+              style={styles.bgImage}
+              resizeMode="cover"
+            />
+            <View style={styles.bgImageOverlay} />
+          </View>
+
+          {/* Bottom image block (pivvcvcvc.png) */}
+          <View style={styles.bgImageBlock}>
+            <Image
+              source={require('../assets/editorial_piv.png')}
+              style={styles.bgImage}
+              resizeMode="cover"
+            />
+            <View style={styles.bgImageOverlay} />
+          </View>
+
+          {/* Vertical FortyWell typography sitting centered over the photo strip */}
+          <View style={[styles.verticalSpineContainer, { left: 0, width: imageStripWidth }]}>
+            <View style={[styles.verticalSpineInner, { width: width * 2 }]}>
+              <Text
+                style={[styles.verticalSpineText, { fontSize: dynamicFontSize, letterSpacing: LETTER_SPACING }]}
+                numberOfLines={1}
+              >
+                FortyWell
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-          {/* Header Brand */}
-          <View style={styles.brandRow}>
-            <View style={styles.leafBadge}>
-              <Leaf size={16} color={colors.sage} />
+          {/* Green Color Block Header above the download card */}
+          <View style={styles.greenBrandBlock}>
+            <View style={styles.greenLeafBadge}>
+              <Leaf size={15} color="#FFFFFF" />
             </View>
-            <Text style={styles.brandText}>FORTYWELL</Text>
+            <Text style={styles.greenBrandText}>FORTYWELL</Text>
           </View>
 
           {/* Main Hero Card */}
@@ -303,6 +659,135 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  topGreenSection: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    height: 230,
+    backgroundColor: colors.sageDark,
+    zIndex: 0,
+    overflow: 'hidden',
+  },
+  roseDecoRingLarge: {
+    position: 'absolute',
+    right: -40,
+    top: -40,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 1,
+    borderColor: 'rgba(208, 120, 135, 0.22)',
+  },
+  roseDecoRingSmall: {
+    position: 'absolute',
+    left: 40,
+    top: -60,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 1,
+    borderColor: 'rgba(208, 120, 135, 0.18)',
+  },
+  roseSvgContainerLeft: {
+    position: 'absolute',
+    left: 10,
+    top: 5,
+    zIndex: 1,
+    opacity: 0.95,
+  },
+  roseSvgContainerRight: {
+    position: 'absolute',
+    right: 10,
+    top: 5,
+    zIndex: 1,
+    opacity: 0.95,
+  },
+  roseSvgContainerBottomLeft: {
+    position: 'absolute',
+    left: 15,
+    bottom: -15,
+    zIndex: 1,
+    opacity: 0.92,
+  },
+  roseSvgContainerBottomRight: {
+    position: 'absolute',
+    right: 15,
+    bottom: -15,
+    zIndex: 1,
+    opacity: 0.92,
+  },
+  floatingPetal1: {
+    position: 'absolute',
+    left: '26%',
+    top: 50,
+    transform: [{ rotate: '25deg' }],
+    zIndex: 1,
+  },
+  floatingPetal2: {
+    position: 'absolute',
+    right: '24%',
+    top: 38,
+    transform: [{ rotate: '-35deg' }],
+    zIndex: 1,
+  },
+  leftBgContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 0,
+    overflow: 'hidden',
+    flexDirection: 'column',
+  },
+  bgImageBlock: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bgImage: {
+    width: '100%',
+    height: '100%',
+  },
+  bgImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(237, 227, 213, 0.22)',
+  },
+  verticalSpineContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    pointerEvents: 'none',
+    overflow: 'visible',
+  },
+  verticalSpineInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-90deg' }],
+  },
+  verticalSpineText: {
+    fontFamily: fontFamilies.soria,
+    fontSize: 104,
+    fontWeight: '400',
+    color: colors.rose,
+    letterSpacing: 10,
+    textAlign: 'center',
+    opacity: 0.95,
+    ...Platform.select({
+      web: {
+        whiteSpace: 'nowrap' as any,
+        userSelect: 'none' as any,
+        fontWeight: '300' as any,
+        textShadow: '0 2px 16px rgba(42, 35, 32, 0.25)',
+      },
+      default: {},
+    }),
   },
   scrollContent: {
     flexGrow: 1,
@@ -311,31 +796,39 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
     minHeight: '100%',
+    zIndex: 1,
   },
   contentWrapper: {
     width: '100%',
     maxWidth: 460,
     alignItems: 'center',
   },
-  brandRow: {
+  greenBrandBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    paddingVertical: 10,
+    paddingHorizontal: 22,
+    borderRadius: 100,
     marginBottom: 20,
   },
-  leafBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.sageSoft,
+  greenLeafBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandText: {
-    fontSize: 14,
-    letterSpacing: 3,
+  greenBrandText: {
+    fontSize: 13,
+    letterSpacing: 3.5,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontFamily: 'MartianMono-Bold',
   },
   heroCard: {
