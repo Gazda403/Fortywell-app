@@ -15,6 +15,7 @@ import { colors } from "../theme/colors";
 import { fontFamilies } from "../theme/typography";
 import { setSoundEffectsEnabled, setHapticsEnabled } from "../lib/audioManager";
 import { UserProfile } from "../hooks/useUserData";
+import { LegalDocumentModal, LegalDocType } from "./LegalDocumentModal";
 
 interface SettingsModalProps {
   visible: boolean;
@@ -28,58 +29,60 @@ interface SettingsModalProps {
   onDeleteAccount?: () => void;
 }
 
-function SectionHeader({ label, icon: Icon, color }: { label: string; icon: any; color: string }) {
+function SectionHeader({ label, icon: Icon, color = colors.primary }: { label: string; icon?: React.ElementType; color?: string }) {
   return (
     <View style={sStyles.sectionHeader}>
-      <View style={[sStyles.sectionIconWrap, { backgroundColor: color + "18" }]}>
-        <Icon size={13} color={color} strokeWidth={2.2} />
-      </View>
+      {Icon && (
+        <View style={[sStyles.sectionIconWrap, { backgroundColor: `${color}18` }]}>
+          <Icon size={12} color={color} strokeWidth={2.5} />
+        </View>
+      )}
       <Text style={[sStyles.sectionHeaderText, { color }]}>{label}</Text>
     </View>
   );
 }
 
-function SettingToggle({ label, sublabel, value, onToggle, icon: Icon, iconColor, disabled }: {
+function SettingToggle({
+  label, sublabel, value, onToggle, icon: Icon, iconColor = colors.primary,
+}: {
   label: string; sublabel?: string; value: boolean; onToggle: (v: boolean) => void;
-  icon: any; iconColor?: string; disabled?: boolean;
+  icon?: React.ElementType; iconColor?: string;
 }) {
-  const iColor = iconColor || colors.primary;
   return (
     <View style={sStyles.settingRow}>
-      <View style={[sStyles.settingRowIconWrap, { backgroundColor: iColor + "14" }]}>
-        <Icon size={15} color={iColor} strokeWidth={2} />
-      </View>
+      {Icon && (
+        <View style={[sStyles.settingRowIconWrap, { backgroundColor: `${iconColor}15` }]}>
+          <Icon size={16} color={iconColor} strokeWidth={2.2} />
+        </View>
+      )}
       <View style={sStyles.settingRowTextWrap}>
         <Text style={sStyles.settingRowLabel}>{label}</Text>
         {sublabel ? <Text style={sStyles.settingRowSublabel}>{sublabel}</Text> : null}
       </View>
       <Switch
-        value={value} onValueChange={onToggle} disabled={disabled}
-        trackColor={{ false: "rgba(101,78,60,0.14)", true: colors.rose }}
-        thumbColor={Platform.OS === "android" ? (value ? "#FFFFFF" : "#EDE3D5") : undefined}
-        ios_backgroundColor="rgba(101,78,60,0.14)"
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: "rgba(101,78,60,0.15)", true: colors.primary }}
+        thumbColor={Platform.OS === "android" ? (value ? "#FFFFFF" : "#FAF8F5") : "#FFFFFF"}
+        ios_backgroundColor="rgba(101,78,60,0.15)"
       />
     </View>
   );
 }
 
-function SettingAction({ label, sublabel, icon: Icon, iconColor, onPress, destructive, rightLabel }: {
-  label: string; sublabel?: string; icon: any; iconColor?: string;
-  onPress: () => void; destructive?: boolean; rightLabel?: string;
+function SettingAction({
+  label, sublabel, onPress, icon: Icon, iconColor = colors.primary, destructive, rightLabel,
+}: {
+  label: string; sublabel?: string; onPress: () => void;
+  icon?: React.ElementType; iconColor?: string; destructive?: boolean; rightLabel?: string;
 }) {
-  const iColor = destructive ? colors.error : (iconColor || colors.primary);
   return (
-    <Pressable
-      style={({ pressed }) => [sStyles.settingRow, pressed && { opacity: 0.7 }]}
-      onPress={() => {
-        try { if (Platform.OS !== "web") Haptics.selectionAsync(); } catch (_) {}
-        onPress();
-      }}
-      accessibilityRole="button"
-    >
-      <View style={[sStyles.settingRowIconWrap, { backgroundColor: iColor + "14" }]}>
-        <Icon size={15} color={iColor} strokeWidth={2} />
-      </View>
+    <Pressable style={({ pressed }) => [sStyles.settingRow, pressed && { opacity: 0.7 }]} onPress={onPress}>
+      {Icon && (
+        <View style={[sStyles.settingRowIconWrap, { backgroundColor: destructive ? "rgba(201,70,91,0.12)" : `${iconColor}15` }]}>
+          <Icon size={16} color={destructive ? colors.error : iconColor} strokeWidth={2.2} />
+        </View>
+      )}
       <View style={sStyles.settingRowTextWrap}>
         <Text style={[sStyles.settingRowLabel, destructive && { color: colors.error }]}>{label}</Text>
         {sublabel ? <Text style={sStyles.settingRowSublabel}>{sublabel}</Text> : null}
@@ -113,6 +116,7 @@ export function SettingsModal({
   const [analyticsOptIn, setAnalyticsOptIn] = useState(true);
   const [crashReports, setCrashReports] = useState(true);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [activeDoc, setActiveDoc] = useState<LegalDocType | null>(null);
 
   const haptic = useCallback(() => {
     try { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
@@ -138,11 +142,11 @@ export function SettingsModal({
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={sStyles.heroHeader}
           >
-            <Pressable style={sStyles.closeBtn} onPress={onClose} hitSlop={12}>
-              <X size={17} color={colors.textTertiary} strokeWidth={2.5} />
+            <Pressable style={sStyles.closeBtn} onPress={onClose} hitSlop={10}>
+              <X size={18} color={colors.textPrimary} strokeWidth={2.2} />
             </Pressable>
             <LinearGradient
-              colors={["#F9D4DC", "#EBAAB8"]}
+              colors={["#F39EB0", "#C9465B"]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={sStyles.avatarRing}
             >
@@ -152,45 +156,46 @@ export function SettingsModal({
             </LinearGradient>
             <Text style={sStyles.heroName}>{fullName}</Text>
             {email ? <Text style={sStyles.heroEmail}>{email}</Text> : null}
+
             <View style={sStyles.statsPillRow}>
               <View style={sStyles.statsPill}>
-                <Activity size={11} color={colors.primary} strokeWidth={2.3} />
+                <Clock size={11} color={colors.primary} />
                 <Text style={sStyles.statsPillLabel}>CADENCE</Text>
                 <Text style={sStyles.statsPillVal}>{cadence}</Text>
               </View>
               <View style={sStyles.statsPillDivider} />
               <View style={sStyles.statsPill}>
-                <Clock size={11} color={colors.sageDark} strokeWidth={2.3} />
+                <Activity size={11} color={colors.sageDark} />
                 <Text style={sStyles.statsPillLabel}>SESSION</Text>
                 <Text style={sStyles.statsPillVal}>{sessionWindow}</Text>
               </View>
-              {userProfile.isEmailVerified && (
+              {userProfile.isEmailVerified ? (
                 <>
                   <View style={sStyles.statsPillDivider} />
                   <View style={sStyles.statsPill}>
-                    <CheckCircle2 size={11} color={colors.sageDark} strokeWidth={2.3} />
+                    <CheckCircle2 size={11} color={colors.sageDark} />
                     <Text style={[sStyles.statsPillVal, { color: colors.sageDark }]}>VERIFIED</Text>
                   </View>
                 </>
-              )}
+              ) : null}
             </View>
           </LinearGradient>
 
           <ScrollView style={sStyles.scrollBody} contentContainerStyle={sStyles.scrollContent} showsVerticalScrollIndicator={false}>
-
             {userProfile.isEmailVerified && (
               <View style={sStyles.rewardCard}>
                 <View style={sStyles.rewardCardHeader}>
-                  <Sparkles size={13} color={colors.rose} strokeWidth={2} />
+                  <Sparkles size={13} color={colors.rose} />
                   <Text style={sStyles.rewardCardKicker}>MEMBER BENEFIT ACTIVE</Text>
                 </View>
                 <Text style={sStyles.rewardCardTitle}>5% Store Discount Unlocked</Text>
-                <Text style={sStyles.rewardCardDesc}>Your verified email grants 5% off all upcoming FortyWell store drops and gear.</Text>
-                <Pressable style={sStyles.promoCodeBox} onPress={onCopyCode}>
+                <Text style={sStyles.rewardCardDesc}>
+                  Your verified email grants 5% off all upcoming FortyWell store drops and gear.
+                </Text>
+                <Pressable style={sStyles.promoCodeBox} onPress={onCopyCode} accessibilityRole="button">
                   <Text style={sStyles.promoCodeText}>FORTY5</Text>
                   <View style={sStyles.promoCodeTag}>
-                    <Tag size={10} color="#fff" strokeWidth={2.5} />
-                    <Text style={sStyles.promoCodeTagText}>{codeCopied ? "Copied!" : "Tap to Copy"}</Text>
+                    <Text style={sStyles.promoCodeTagText}>{codeCopied ? "Copied! ✓" : "Tap to Copy"}</Text>
                   </View>
                 </Pressable>
               </View>
@@ -272,20 +277,73 @@ export function SettingsModal({
               <View style={sStyles.rowDivider} />
               <SettingToggle label="Crash Reports" sublabel="Automatically send error reports to help us fix issues faster" value={crashReports} onToggle={(v) => { haptic(); setCrashReports(v); }} icon={Activity} iconColor={colors.textTertiary} />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Privacy Policy" sublabel="How we collect, store, and protect your data" icon={Lock} iconColor={colors.sageDark} onPress={() => { Linking.openURL("https://fortywell-app.vercel.app").catch(() => {}); }} />
+              <SettingAction
+                label="Privacy Policy"
+                sublabel="How we collect, store, and protect your data"
+                icon={Lock}
+                iconColor={colors.sageDark}
+                onPress={() => {
+                  haptic();
+                  setActiveDoc("privacy");
+                }}
+              />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Terms of Service" sublabel="Your rights and responsibilities as a member" icon={FileText} iconColor={colors.sageDark} onPress={() => { Linking.openURL("https://fortywell-app.vercel.app").catch(() => {}); }} />
+              <SettingAction
+                label="Terms of Service"
+                sublabel="Your rights and responsibilities as a member"
+                icon={FileText}
+                iconColor={colors.sageDark}
+                onPress={() => {
+                  haptic();
+                  setActiveDoc("terms");
+                }}
+              />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Data Deletion Request" sublabel="Request a full export or permanent deletion of your data" icon={ExternalLink} iconColor={colors.textTertiary} onPress={() => { Linking.openURL("mailto:support@fortywell-app.vercel.app?subject=Data%20Deletion%20Request").catch(() => {}); }} />
+              <SettingAction
+                label="Data Deletion Request"
+                sublabel="Request a full export or permanent deletion of your data"
+                icon={ExternalLink}
+                iconColor={colors.textTertiary}
+                onPress={() => {
+                  Linking.openURL("mailto:privacy@fortywell-app.vercel.app?subject=Data%20Deletion%20Request").catch(() => {});
+                }}
+              />
             </SettingsCard>
 
             <SectionHeader label="LEGAL" icon={FileText} color={colors.textTertiary} />
             <SettingsCard>
-              <SettingAction label="Cookie Policy" icon={FileText} iconColor={colors.textTertiary} onPress={() => { Linking.openURL("https://fortywell-app.vercel.app").catch(() => {}); }} />
+              <SettingAction
+                label="Cookie Policy"
+                sublabel="Local storage and functional token transparency"
+                icon={FileText}
+                iconColor={colors.textTertiary}
+                onPress={() => {
+                  haptic();
+                  setActiveDoc("cookies");
+                }}
+              />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Medical Disclaimer" sublabel="FortyWell is not a substitute for professional medical advice" icon={Info} iconColor={colors.warning} onPress={() => { Linking.openURL("https://fortywell-app.vercel.app").catch(() => {}); }} />
+              <SettingAction
+                label="Medical Disclaimer"
+                sublabel="FortyWell is not a substitute for professional medical advice"
+                icon={Info}
+                iconColor={colors.warning}
+                onPress={() => {
+                  haptic();
+                  setActiveDoc("disclaimer");
+                }}
+              />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Open Source Licenses" icon={ExternalLink} iconColor={colors.textTertiary} onPress={() => { Linking.openURL("https://fortywell-app.vercel.app").catch(() => {}); }} />
+              <SettingAction
+                label="Open Source Licenses"
+                sublabel="Software notices and attribution"
+                icon={ExternalLink}
+                iconColor={colors.textTertiary}
+                onPress={() => {
+                  haptic();
+                  setActiveDoc("licenses");
+                }}
+              />
             </SettingsCard>
 
             <View style={sStyles.disclaimerBanner}>
@@ -335,6 +393,12 @@ export function SettingsModal({
           </View>
         </View>
       </Modal>
+
+      <LegalDocumentModal
+        visible={!!activeDoc}
+        docType={activeDoc}
+        onClose={() => setActiveDoc(null)}
+      />
     </Modal>
   );
 }
