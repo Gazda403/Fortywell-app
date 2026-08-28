@@ -608,19 +608,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* ── IMAGE BACKGROUND SEGMENT: WEEK 1 RHYTHM + STATS ── */}
         <View style={styles.imageBackgroundSegment}>
-          {/* Centered Runner Image with focal positioning on the runner */}
+          {/* Centered Runner Image with expansive focal framing */}
           <ExpoImage
             source={heroRunnerImage}
             style={StyleSheet.absoluteFillObject}
             contentFit="cover"
-            contentPosition={{ top: '35%', left: '38%' }}
+            contentPosition={{ top: '26%', left: '38%' }}
             transition={200}
             cachePolicy="memory-disk"
           />
 
-          {/* Warm Dark Vignette Overlay for Crisp Contrast on Floating Cards */}
+          {/* Lighter, high-clarity vignette overlay so the background shines through */}
           <LinearGradient
-            colors={['rgba(25, 20, 16, 0.22)', 'rgba(25, 20, 16, 0.42)']}
+            colors={['rgba(20, 16, 12, 0.10)', 'rgba(20, 16, 12, 0.28)']}
             style={StyleSheet.absoluteFillObject}
           />
 
@@ -1422,20 +1422,20 @@ const styles = StyleSheet.create({
 
   // ── WEEK CALENDAR ──
   weekCard: {
-    marginBottom: 10,
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.85)',
     ...Platform.select({
       ios: {
         shadowColor: '#1A1412',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.10,
+        shadowRadius: 10,
       },
-      android: { elevation: 4 },
+      android: { elevation: 3 },
       default: {},
     }),
   },
@@ -1443,7 +1443,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   weekKicker: {
     fontSize: 10,
@@ -1463,7 +1463,7 @@ const styles = StyleSheet.create({
   },
   dayCol: {
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   dayColToday: {},
   dayNameText: {
@@ -1476,9 +1476,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   dayNumBubble: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: colors.surfaceCard,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
@@ -1504,7 +1504,7 @@ const styles = StyleSheet.create({
     }),
   },
   dayNumText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: colors.textSecondary,
   },
@@ -1524,18 +1524,18 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 6,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.85)',
     alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#1A1412',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.08,
         shadowRadius: 8,
       },
       android: { elevation: 3 },
@@ -1543,16 +1543,16 @@ const styles = StyleSheet.create({
     }),
   },
   metricIconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: colors.surfaceCardSelected,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   metricValue: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '700',
     color: colors.textPrimary,
     lineHeight: 18,
@@ -1574,6 +1574,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
+    minHeight: 330,
     ...Platform.select({
       ios: {
         shadowColor: '#2A2320',
@@ -1586,7 +1587,10 @@ const styles = StyleSheet.create({
     }),
   },
   heroSegmentInner: {
-    padding: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    minHeight: 330,
+    justifyContent: 'space-between',
     position: 'relative',
     zIndex: 2,
   },
