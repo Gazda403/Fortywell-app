@@ -46,6 +46,12 @@ import { FinishConfirmSheet } from './FinishConfirmSheet';
 import { WorkoutCelebrationModal } from './WorkoutCelebrationModal';
 import { ResetSlot } from '../types/rhythm';
 import { playSetCompleteSound } from '../lib/audioManager';
+import {
+  saveActiveSessionCheckpoint,
+  clearActiveSessionCheckpoint,
+  enqueuePendingLog,
+} from '../lib/useOfflineSync';
+import { supabase } from '../lib/supabase';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -488,6 +494,32 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
     }
   }, [visible, workout]);
 
+  // ── Offline Checkpoint: Save progress every 30s ──────────────────────────
+  // Like hitting "Save" on a document — runs silently in the background.
+  const checkpointIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!visible || !workout) return;
+
+    const save = () => {
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      saveActiveSessionCheckpoint({
+        workoutSlug: workout.slug || 'custom',
+        workoutTitle: workout.title,
+        exercises,
+        elapsedSeconds: elapsed,
+        startedAt: new Date(startTimeRef.current).toISOString(),
+      });
+    };
+
+    checkpointIntervalRef.current = setInterval(save, 30_000);
+
+    return () => {
+      if (checkpointIntervalRef.current) clearInterval(checkpointIntervalRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, workout, exercises]);
+
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: slideY.value }],
   }));
@@ -584,7 +616,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
     setShowFinishSheet(true);
   };
 
-  const confirmFinish = (slot: ResetSlot = 'main') => {
+  const confirmFinish = async (slot: ResetSlot = 'main') => {
     setShowFinishSheet(false);
     const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
     const totalSets = exercises.reduce((a, e) => a + e.sets.length, 0);
@@ -610,6 +642,46 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
       exercises,
       sessionSlot: slot,
     };
+
+    // ── Clear the live checkpoint (workout is done) ─────────────────────
+    await clearActiveSessionCheckpoint();
+
+    // ── Try to save to Supabase; fall back to offline queue ─────────────
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        const today = new Date().toISOString().split('T')[0];
+        const { error } = await supabase.from('workout_logs').insert({
+          workout_slug: workout?.slug || 'custom',
+          workout_title: workout?.title || 'Custom Session',
+          date: today,
+          duration_minutes: Math.round(elapsed / 60),
+          completed_sets: doneSets,
+          total_sets: totalSets,
+          volume_kg: Math.round(volume),
+          exercises_json: JSON.stringify(exercises),
+          status: 'completed',
+          sync_status: 'synced',
+          created_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+      }
+    } catch (_) {
+      // Offline — queue for automatic sync when internet returns
+      const today = new Date().toISOString().split('T')[0];
+      await enqueuePendingLog({
+        workoutSlug: workout?.slug || 'custom',
+        workoutTitle: workout?.title || 'Custom Session',
+        date: today,
+        durationSeconds: elapsed,
+        completedSets: doneSets,
+        totalSets,
+        volumeKg: Math.round(volume),
+        exercises,
+        completedAt: new Date().toISOString(),
+      });
+    }
+
     setCelebration(summary);
   };
 

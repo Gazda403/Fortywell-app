@@ -69,6 +69,8 @@ import { StoreScreen } from '../components/StoreScreen';
 import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
+import { useFavorites } from '../lib/useFavorites';
+import { useOfflineSync } from '../lib/useOfflineSync';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -168,6 +170,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     });
     return slugSet;
   }, [currentWeekDays, weeklyPlan]);
+  // ── Favorites & Offline Protection ────────────────────────────────────────
+  const { favoriteSlugs, toggleFavorite, isFavorite } = useFavorites();
+  const { hasPendingLogs, isSyncing } = useOfflineSync();
+
+  // Compute saved workouts list
+  const savedWorkouts = useMemo(() => {
+    return workouts.filter((w) => favoriteSlugs.has(w.slug));
+  }, [workouts, favoriteSlugs]);
+
   const [selectedModalWorkout, setSelectedModalWorkout] = useState<Workout | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [quickLaunchVisible, setQuickLaunchVisible] = useState<boolean>(false);
@@ -914,6 +925,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         workout={selectedModalWorkout}
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
+        isFavorite={selectedModalWorkout ? isFavorite(selectedModalWorkout.slug) : false}
+        onToggleFavorite={toggleFavorite}
         onStart={(w) => {
           launchWorkout(w);
         }}
@@ -1103,6 +1116,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setQuickLaunchVisible(false)}
         personalizedWorkout={recommendations.featuredWorkout}
         matchReason={recommendations.matchReason}
+        savedWorkouts={savedWorkouts}
+        onToggleFavorite={toggleFavorite}
         onSelectWorkout={(w) => {
           launchWorkout(w);
         }}

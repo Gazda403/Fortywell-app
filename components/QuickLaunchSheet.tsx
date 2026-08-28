@@ -20,13 +20,15 @@ import {
   Dumbbell,
   Compass,
   ArrowRight,
+  Heart,
+  Bookmark,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { Workout } from '../hooks/useWorkouts';
 
 const { height: SCREEN_H } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_H * 0.68;
+const SHEET_HEIGHT = SCREEN_H * 0.78;
 
 interface QuickLaunchSheetProps {
   visible: boolean;
@@ -36,6 +38,8 @@ interface QuickLaunchSheetProps {
   onSelectWorkout: (workout: Workout) => void;
   onExploreAll: () => void;
   onStartEmpty: () => void;
+  savedWorkouts?: Workout[];
+  onToggleFavorite?: (slug: string) => void;
 }
 
 export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
@@ -46,6 +50,8 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
   onSelectWorkout,
   onExploreAll,
   onStartEmpty,
+  savedWorkouts = [],
+  onToggleFavorite,
 }) => {
   if (!visible) return null;
 
@@ -70,7 +76,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
         {/* Dimmed Backdrop */}
         <Pressable style={styles.backdrop} onPress={handleMinimize} />
 
-        {/* 2/3 Height Sheet */}
+        {/* Height Sheet */}
         <View style={styles.sheetContainer}>
           {/* Top Minimize Handle & Arrow Bar */}
           <Pressable
@@ -96,15 +102,117 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
             <View style={styles.sheetHeader}>
               <View style={styles.headerKickerRow}>
                 <Sparkles size={13} color={colors.primaryDark} />
-                <Text style={styles.headerKicker}>QUICK ACTION</Text>
+                <Text style={styles.headerKicker}>QUICK LAUNCH & BUILD</Text>
               </View>
-              <Text style={styles.sheetTitle}>Ready to move?</Text>
+              <Text style={styles.sheetTitle}>Create or Launch Workout</Text>
               <Text style={styles.sheetSubtitle}>
-                Choose your path today — dive into your custom plan or start a new workout.
+                Access your bookmarked routines, build a session from scratch, or follow your daily plan.
               </Text>
             </View>
 
-            {/* ── CARD 1: USE PERSONALIZED WORKOUT (HERO) ── */}
+            {/* ── CARD 1: BUILD YOUR OWN WORKOUT (PRIMARY EMPTY SESSION) ── */}
+            <Pressable
+              onPress={() => {
+                onStartEmpty();
+              }}
+              style={styles.actionCardEmpty}
+              accessibilityRole="button"
+              accessibilityLabel="Start empty workout session"
+            >
+              <View style={styles.emptyLeft}>
+                <View style={styles.emptyIconWrap}>
+                  <PlusCircle size={22} color={colors.primaryDark} strokeWidth={2.2} />
+                </View>
+                <View style={styles.emptyTextWrap}>
+                  <View style={styles.buildBadgeRow}>
+                    <Text style={styles.emptyTag}>CUSTOM BUILD</Text>
+                    <View style={styles.instantBadge}>
+                      <Text style={styles.instantBadgeText}>BLANK CANVAS</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.emptyTitle}>Build Your Own Workout</Text>
+                  <Text style={styles.emptySub}>
+                    Start a custom session and freely pick exercises from our 870+ movement library.
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.emptyArrow}>
+                <ArrowRight size={15} color="#FFFFFF" strokeWidth={2.5} />
+              </View>
+            </Pressable>
+
+            {/* ── SAVED & FAVORITED WORKOUTS SHELF ── */}
+            <View style={styles.savedSection}>
+              <View style={styles.savedHeaderRow}>
+                <View style={styles.savedTitleLeft}>
+                  <Heart size={14} color={colors.rose} fill={colors.rose} />
+                  <Text style={styles.savedSectionTitle}>SAVED &amp; FAVORITE ROUTINES</Text>
+                </View>
+                {savedWorkouts.length > 0 && (
+                  <View style={styles.savedCountPill}>
+                    <Text style={styles.savedCountText}>{savedWorkouts.length} SAVED</Text>
+                  </View>
+                )}
+              </View>
+
+              {savedWorkouts.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.savedScrollList}
+                >
+                  {savedWorkouts.map((item) => (
+                    <Pressable
+                      key={item.slug}
+                      onPress={() => onSelectWorkout(item)}
+                      style={styles.savedCard}
+                    >
+                      <LinearGradient
+                        colors={['#F7DFE4', '#EAEFE6']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <View style={styles.savedCardTop}>
+                        <View style={styles.savedCardBadge}>
+                          <Clock size={10} color={colors.primaryDark} />
+                          <Text style={styles.savedCardDuration}>{item.duration_minutes}m</Text>
+                        </View>
+                        {onToggleFavorite && (
+                          <Pressable
+                            onPress={() => onToggleFavorite(item.slug)}
+                            hitSlop={8}
+                            style={styles.savedHeartIconBtn}
+                          >
+                            <Heart size={14} color={colors.rose} fill={colors.rose} />
+                          </Pressable>
+                        )}
+                      </View>
+                      <Text style={styles.savedCardTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <View style={styles.savedCardFooter}>
+                        <Text style={styles.savedCardEq} numberOfLines={1}>
+                          {item.equipment.replace('_', ' ').toUpperCase()}
+                        </Text>
+                        <View style={styles.savedCardPlayBubble}>
+                          <Play size={10} color="#FFFFFF" fill="#FFFFFF" />
+                        </View>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={styles.savedEmptyNotice}>
+                  <Bookmark size={16} color={colors.textTertiary} />
+                  <Text style={styles.savedEmptyText}>
+                    Tap the <Text style={{ color: colors.rose, fontWeight: '700' }}>♥</Text> heart icon on any routine in the library to bookmark it here for instant 1-tap access.
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* ── CARD 2: USE PERSONALIZED WORKOUT (HERO) ── */}
             {personalizedWorkout && (
               <Pressable
                 onPress={() => {
@@ -146,13 +254,13 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 {/* Action Button inside card */}
                 <View style={styles.cardHeroBtn}>
                   <Play size={14} color="#C9465B" fill="#C9465B" />
-                  <Text style={styles.cardHeroBtnText}>START PERSONALIZED WORKOUT</Text>
+                  <Text style={styles.cardHeroBtnText}>START PRESCRIBED WORKOUT</Text>
                   <ArrowRight size={14} color="#C9465B" strokeWidth={2.2} />
                 </View>
               </Pressable>
             )}
 
-            {/* ── CARD 2: START NEW / CUSTOM WORKOUT ── */}
+            {/* ── CARD 3: EXPLORE ALL WORKOUTS ── */}
             <Pressable
               onPress={() => {
                 onExploreAll();
@@ -167,7 +275,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 </View>
                 <View style={styles.secondaryTextWrap}>
                   <View style={styles.secondaryTagRow}>
-                    <Text style={styles.secondaryTag}>20+ S&C PROTOCOLS</Text>
+                    <Text style={styles.secondaryTag}>20+ S&amp;C PROTOCOLS</Text>
                   </View>
                   <Text style={styles.secondaryTitle}>Explore All Workouts</Text>
                   <Text style={styles.secondarySubtitle}>
@@ -180,33 +288,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
               </View>
             </Pressable>
 
-            {/* ── CARD 3: START EMPTY WORKOUT ── */}
-            <Pressable
-              onPress={() => {
-                onStartEmpty();
-              }}
-              style={styles.actionCardEmpty}
-              accessibilityRole="button"
-              accessibilityLabel="Start empty workout session"
-            >
-              <View style={styles.emptyLeft}>
-                <View style={styles.emptyIconWrap}>
-                  <PlusCircle size={20} color={colors.primaryDark} />
-                </View>
-                <View style={styles.emptyTextWrap}>
-                  <Text style={styles.emptyTag}>BUILD YOUR OWN</Text>
-                  <Text style={styles.emptyTitle}>Empty Workout</Text>
-                  <Text style={styles.emptySub}>
-                    Start a blank session and add exercises freely.
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.emptyArrow}>
-                <ArrowRight size={14} color={colors.textPrimary} />
-              </View>
-            </Pressable>
-
-            <View style={{ height: 30 }} />
+            <View style={{ height: 40 }} />
           </ScrollView>
         </View>
       </View>
@@ -469,13 +551,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(201, 70, 91, 0.04)',
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1.5,
-    borderColor: 'rgba(201, 70, 91, 0.15)',
-    borderStyle: 'dashed',
+    borderColor: 'rgba(201, 70, 91, 0.25)',
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+      },
+      android: { elevation: 3 },
+      default: {},
+    }),
+  },
+  buildBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 3,
+  },
+  instantBadge: {
+    backgroundColor: 'rgba(201, 70, 91, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  instantBadgeText: {
+    fontSize: 8.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 0.6,
   },
   emptyLeft: {
     flexDirection: 'row',
@@ -484,10 +593,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emptyIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(201, 70, 91, 0.1)',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(201, 70, 91, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -499,26 +608,155 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.monoBold,
     letterSpacing: 1,
     color: colors.primaryDark,
-    marginBottom: 2,
   },
   emptyTitle: {
     fontSize: 16,
-    fontFamily: 'PlayfairDisplay-Bold',
+    fontFamily: fontFamilies.soria,
     color: colors.textPrimary,
+    fontWeight: '700',
     marginBottom: 2,
   },
   emptySub: {
     fontSize: 11,
-    fontFamily: fontFamilies.monoRegular,
+    fontFamily: fontFamilies.sansRegular,
     color: colors.textSecondary,
     lineHeight: 16,
   },
   emptyArrow: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(201, 70, 91, 0.08)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Saved Workouts Shelf
+  savedSection: {
+    marginBottom: 22,
+  },
+  savedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  savedTitleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  savedSectionTitle: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+    letterSpacing: 1.2,
+  },
+  savedCountPill: {
+    backgroundColor: 'rgba(201, 70, 91, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  savedCountText: {
+    fontSize: 9,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+  },
+  savedScrollList: {
+    gap: 12,
+    paddingRight: 10,
+  },
+  savedCard: {
+    width: 170,
+    height: 125,
+    borderRadius: 18,
+    padding: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(101, 78, 60, 0.12)',
+    justifyContent: 'space-between',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: { elevation: 2 },
+      default: {},
+    }),
+  },
+  savedCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  savedCardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  savedCardDuration: {
+    fontSize: 10,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.primaryDark,
+  },
+  savedHeartIconBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedCardTitle: {
+    fontSize: 13.5,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    lineHeight: 17,
+  },
+  savedCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  savedCardEq: {
+    fontSize: 8.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textTertiary,
+    maxWidth: 100,
+    letterSpacing: 0.5,
+  },
+  savedCardPlayBubble: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedEmptyNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(101, 78, 60, 0.05)',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(101, 78, 60, 0.1)',
+  },
+  savedEmptyText: {
+    flex: 1,
+    fontSize: 11.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: colors.textSecondary,
+    lineHeight: 16,
   },
 });

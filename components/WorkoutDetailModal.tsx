@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
 import {
   X,
   Clock,
@@ -20,17 +22,22 @@ import {
   Info,
   Play,
   RotateCcw,
+  Heart,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { Workout, Exercise } from '../hooks/useWorkouts';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
+import { useFavorites } from '../lib/useFavorites';
 
 interface WorkoutDetailModalProps {
   workout: Workout | null;
   visible: boolean;
   onClose: () => void;
   onStart?: (workout: Workout) => void;
+  // Optional external favorite control — if not provided, hook is used internally
+  isFavorite?: boolean;
+  onToggleFavorite?: (slug: string) => void;
 }
 
 export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
@@ -38,7 +45,35 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
   visible,
   onClose,
   onStart,
+  isFavorite: isFavoriteProp,
+  onToggleFavorite,
 }) => {
+  // Internal favorites support when not controlled externally
+  const { isFavorite: isFavHook, toggleFavorite: toggleFavHook } = useFavorites();
+  const heartScale = useSharedValue(1);
+
+  const isFav = isFavoriteProp !== undefined
+    ? isFavoriteProp
+    : (workout ? isFavHook(workout.slug) : false);
+
+  const handleHeartPress = useCallback(() => {
+    if (!workout) return;
+    // Bounce animation
+    heartScale.value = withSequence(
+      withSpring(1.35, { damping: 4, stiffness: 350 }),
+      withSpring(1, { damping: 8, stiffness: 200 })
+    );
+    try { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (_) {}
+    if (onToggleFavorite) {
+      onToggleFavorite(workout.slug);
+    } else {
+      toggleFavHook(workout.slug);
+    }
+  }, [workout, onToggleFavorite, toggleFavHook, heartScale]);
+
+  const heartStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+  }));
   // Support ESC key on web
   useEffect(() => {
     if (!visible || Platform.OS !== 'web' || typeof window === 'undefined') return;
@@ -81,9 +116,22 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
               <Text style={styles.kickerText}>FORTYWELL PROTOCOL</Text>
               <Text style={styles.modalTitle}>{workout.title}</Text>
             </View>
-            <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={10}>
-              <X size={20} color={colors.textPrimary} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              {/* Heart / Favorite button */}
+              <Pressable onPress={handleHeartPress} style={styles.heartBtn} hitSlop={10}>
+                <Animated.View style={heartStyle}>
+                  <Heart
+                    size={22}
+                    color={isFav ? colors.rose : colors.textTertiary}
+                    fill={isFav ? colors.rose : 'transparent'}
+                    strokeWidth={2}
+                  />
+                </Animated.View>
+              </Pressable>
+              <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={10}>
+                <X size={20} color={colors.textPrimary} />
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView
@@ -297,6 +345,19 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: 'rgba(101, 78, 60, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heartBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(208, 90, 110, 0.07)',
     alignItems: 'center',
     justifyContent: 'center',
   },
