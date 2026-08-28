@@ -1,5 +1,6 @@
 import { Workout } from '../hooks/useWorkouts';
 import { OnboardingAnswers } from '../types/onboarding';
+import { generateWeeklyWorkouts } from './dynamicWorkoutGenerator';
 
 export interface ScoredWorkout {
   workout: Workout;
@@ -16,6 +17,16 @@ export interface RecommendationResult {
   sessionTarget: string;
 }
 
+function getCurrentISOWeekKey(): string {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
 /**
  * Intelligent workout scoring and recommendation engine based on quiz answers
  */
@@ -27,12 +38,22 @@ export function getPersonalizedRecommendations(
     throw new Error('No workouts provided to recommendation engine');
   }
 
+  // Generate dynamic weekly workouts for the current week
+  const weekKey = getCurrentISOWeekKey();
+  const dynamicWeeklyWorkouts = generateWeeklyWorkouts(answers, weekKey, 4);
+
+  // Combine dynamic weekly specials + base library
+  const candidatePool = [
+    ...dynamicWeeklyWorkouts,
+    ...allWorkouts.filter((w) => !dynamicWeeklyWorkouts.some((dw) => dw.slug === w.slug)),
+  ];
+
   // If no quiz answers provided yet, return balanced defaults
   if (!answers) {
-    const defaultFeatured = allWorkouts.find((w) => w.slug === 'w01-knee-safe-core-glute') || allWorkouts[0];
+    const defaultFeatured = candidatePool[0] || allWorkouts[0];
     return {
       featuredWorkout: defaultFeatured,
-      curatedWorkouts: allWorkouts,
+      curatedWorkouts: candidatePool,
       matchReason: 'Calibrated for balanced full-body joint vitality & core stability.',
       readinessScore: 94,
       pacingLabel: '20–30 min',
@@ -62,9 +83,15 @@ export function getPersonalizedRecommendations(
     (equipment.includes('none') || equipment.includes('yoga_mat_blocks') || equipment.length === 0);
 
   // Score each workout
-  const scoredList: ScoredWorkout[] = allWorkouts.map((workout) => {
+  const scoredList: ScoredWorkout[] = candidatePool.map((workout) => {
     let score = 50; // base score
     const reasons: string[] = [];
+
+    // Weekly Dynamic Hand-Pick Bonus (+35 points)
+    if (workout.slug.startsWith('dynamic-')) {
+      score += 35;
+      reasons.push('Weekly Special');
+    }
 
     // 1. Equipment Match (+30 points)
     if (isGym && workout.equipment === 'gym_machines_free_weights') {
