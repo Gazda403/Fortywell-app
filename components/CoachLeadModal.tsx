@@ -41,9 +41,9 @@ interface CoachLeadModalProps {
 // Live endpoint on fortywell-app Next.js backend
 const LEAD_API_URL = 'https://fortywell-app.vercel.app/api/coaching/lead';
 
-// Lemon Squeezy Checkout URL (with Annual/Monthly/Coaching options)
+// Dedicated 1:1 Text Coaching ($55/mo) Checkout URL
 const LEMON_SQUEEZY_CHECKOUT_URL =
-  'https://fortywell.lemonsqueezy.com/checkout/buy/3f039828-d006-4d16-8366-97bf8eb733fa';
+  'https://fortywell.lemonsqueezy.com/checkout/buy/1c703c9c-090b-40d9-bc4f-eb00ed9bae16?discount=0';
 
 export const CoachLeadModal: React.FC<CoachLeadModalProps> = ({
   visible,
