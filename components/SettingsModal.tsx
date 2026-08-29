@@ -199,25 +199,6 @@ export function SettingsModal({
           </LinearGradient>
 
           <ScrollView style={sStyles.scrollBody} contentContainerStyle={sStyles.scrollContent} showsVerticalScrollIndicator={false}>
-            {userProfile.isEmailVerified && (
-              <View style={sStyles.rewardCard}>
-                <View style={sStyles.rewardCardHeader}>
-                  <Sparkles size={13} color={colors.rose} />
-                  <Text style={sStyles.rewardCardKicker}>MEMBER BENEFIT ACTIVE</Text>
-                </View>
-                <Text style={sStyles.rewardCardTitle}>5% Store Discount Unlocked</Text>
-                <Text style={sStyles.rewardCardDesc}>
-                  Your verified email grants 5% off all upcoming FortyWell store drops and gear.
-                </Text>
-                <Pressable style={sStyles.promoCodeBox} onPress={onCopyCode} accessibilityRole="button">
-                  <Text style={sStyles.promoCodeText}>FORTY5</Text>
-                  <View style={sStyles.promoCodeTag}>
-                    <Text style={sStyles.promoCodeTagText}>{codeCopied ? "Copied! ✓" : "Tap to Copy"}</Text>
-                  </View>
-                </Pressable>
-              </View>
-            )}
-
             <SectionHeader label="MEMBERSHIP & ACCESS" icon={Crown} color={colors.primaryDark} />
             <SettingsCard>
               {/* ── Status ── */}
@@ -584,15 +565,6 @@ const sStyles = StyleSheet.create({
   statsPillVal: { fontSize: 11, fontFamily: fontFamilies.sansSemiBold, color: colors.textPrimary },
   scrollBody: { flex: 1 },
   scrollContent: { paddingHorizontal: 18, paddingTop: 18 },
-  rewardCard: { backgroundColor: "rgba(146,169,117,0.12)", borderWidth: 1.5, borderColor: "rgba(146,169,117,0.32)", borderRadius: 18, padding: 16, marginBottom: 22 },
-  rewardCardHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
-  rewardCardKicker: { fontSize: 10, fontFamily: fontFamilies.monoBold, color: colors.sageDark, letterSpacing: 1.3 },
-  rewardCardTitle: { fontSize: 16, fontFamily: fontFamilies.soria, color: colors.textPrimary, fontWeight: "700", marginBottom: 4 },
-  rewardCardDesc: { fontSize: 12.5, fontFamily: fontFamilies.sansRegular, color: colors.textSecondary, lineHeight: 18, marginBottom: 12 },
-  promoCodeBox: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: "rgba(146,169,117,0.38)", paddingVertical: 10, paddingHorizontal: 14 },
-  promoCodeText: { fontSize: 15, fontFamily: fontFamilies.monoBold, color: colors.primaryDark, letterSpacing: 3.5 },
-  promoCodeTag: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: colors.sage, borderRadius: 8, paddingVertical: 5, paddingHorizontal: 10 },
-  promoCodeTagText: { fontSize: 11, fontFamily: fontFamilies.sansSemiBold, color: "#fff" },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 8, paddingHorizontal: 2 },
   sectionIconWrap: { width: 22, height: 22, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   sectionHeaderText: { fontSize: 10.5, fontFamily: fontFamilies.monoBold, letterSpacing: 1.5 },
