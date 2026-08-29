@@ -52,6 +52,9 @@ import {
   enqueuePendingLog,
 } from '../lib/useOfflineSync';
 import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -654,18 +657,30 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
     // ── Clear the live checkpoint (workout is done) ─────────────────────
     await clearActiveSessionCheckpoint();
 
+    const today = new Date().toISOString().split('T')[0];
+
+    // ── Immediately persist completed date to local storage (Garden/Streak update) ─
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES);
+      const existing: string[] = raw ? JSON.parse(raw) : [];
+      if (!existing.includes(today)) {
+        existing.push(today);
+        await AsyncStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(existing));
+      }
+    } catch (_) {}
+
     // ── Try to save to Supabase; fall back to offline queue ─────────────
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.id) {
-        const today = new Date().toISOString().split('T')[0];
         const { error } = await supabase.from('workout_logs').insert({
+          user_id: user.id,
           workout_slug: workout?.slug || 'custom',
           workout_title: workout?.title || 'Custom Session',
           date: today,
+          slot: slot,
+          session_slot: slot,
           duration_minutes: Math.round(elapsed / 60),
-          completed_sets: doneSets,
-          total_sets: totalSets,
           volume_kg: Math.round(volume),
           exercises_json: JSON.stringify(exercises),
           status: 'completed',
@@ -676,7 +691,6 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
       }
     } catch (_) {
       // Offline — queue for automatic sync when internet returns
-      const today = new Date().toISOString().split('T')[0];
       await enqueuePendingLog({
         workoutSlug: workout?.slug || 'custom',
         workoutTitle: workout?.title || 'Custom Session',

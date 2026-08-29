@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DayRhythmSummary,
   WeeklyThemePlan,
@@ -12,6 +13,19 @@ import {
   NightSessionActivityLog,
   DaySlotInfo,
 } from '../types/rhythm';
+
+const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
+
+async function persistCompletedDate(dateStr: string) {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES);
+    const existing: string[] = raw ? JSON.parse(raw) : [];
+    if (!existing.includes(dateStr)) {
+      existing.push(dateStr);
+      await AsyncStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(existing));
+    }
+  } catch (_) {}
+}
 
 export const NIGHT_ACTIVITIES = [
   {
@@ -436,11 +450,12 @@ export function useRhythmData(answers?: any) {
     timingPreferences,
   ]);
 
-  // Toggle slot completion status (optimistic + Supabase)
+  // Toggle slot completion status (optimistic + Supabase + local persist)
   const toggleSlotStatus = useCallback(async (dateStr: string, slot: ResetSlot) => {
+    let nextStatus: SlotStatus = 'completed';
     setCompletedSlotsByDate((prev) => {
       const currentStatus = prev[dateStr]?.[slot] || 'planned';
-      const nextStatus: SlotStatus = currentStatus === 'completed' ? 'planned' : 'completed';
+      nextStatus = currentStatus === 'completed' ? 'planned' : 'completed';
 
       return {
         ...prev,
@@ -451,19 +466,26 @@ export function useRhythmData(answers?: any) {
       };
     });
 
+    // Persist date locally so Garden updates immediately
+    await persistCompletedDate(dateStr);
+
     try {
-      await supabase
-        .from('workout_logs')
-        .upsert(
-          {
-            date: dateStr,
-            slot,
-            session_slot: slot,
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,date,slot' }
-        );
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await supabase
+          .from('workout_logs')
+          .upsert(
+            {
+              user_id: user.id,
+              date: dateStr,
+              slot,
+              session_slot: slot,
+              status: nextStatus,
+              completed_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,date,slot' }
+          );
+      }
     } catch (_) {}
   }, []);
 
@@ -484,6 +506,9 @@ export function useRhythmData(answers?: any) {
         },
       }));
 
+      // Persist date locally so Garden/Streak updates immediately
+      await persistCompletedDate(dateStr);
+
       if (slot === 'night' && activityType) {
         setNightLogsByDate((prev) => ({
           ...prev,
@@ -497,33 +522,41 @@ export function useRhythmData(answers?: any) {
         }));
 
         try {
-          await supabase
-            .from('night_session_activity_log')
-            .upsert(
-              {
-                date: dateStr,
-                activity_type: activityType,
-                duration_minutes: 20,
-                notes: customActivityTitle || notes || null,
-              },
-              { onConflict: 'user_id,date,activity_type' }
-            );
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            await supabase
+              .from('night_session_activity_log')
+              .upsert(
+                {
+                  user_id: user.id,
+                  date: dateStr,
+                  activity_type: activityType,
+                  duration_minutes: 20,
+                  notes: customActivityTitle || notes || null,
+                },
+                { onConflict: 'user_id,date,activity_type' }
+              );
+          }
         } catch (_) {}
       }
 
       try {
-        await supabase
-          .from('workout_logs')
-          .upsert(
-            {
-              date: dateStr,
-              slot,
-              session_slot: slot,
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id,date,slot' }
-          );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase
+            .from('workout_logs')
+            .upsert(
+              {
+                user_id: user.id,
+                date: dateStr,
+                slot,
+                session_slot: slot,
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,date,slot' }
+            );
+        }
       } catch (_) {}
     },
     []

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { OnboardingAnswers } from '../types/onboarding';
 
 const STORAGE_KEY_WALKTHROUGH = '@fortywell_has_seen_walkthrough_v1';
+const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 
 export interface UserProfile {
   id?: string;
@@ -211,28 +212,69 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         cachedUserProfile = newProfile;
         setUserProfile(newProfile);
 
-      // 2. Fetch completed workout logs
-      const { data: logs } = await supabase
-        .from('workout_logs')
-        .select('*')
-        .eq('status', 'completed');
-
+      // 2. Fetch completed workout logs (from Supabase + Local AsyncStorage cache)
       const completedDates = new Set<string>();
       let totalMinutes = 0;
       let totalVolume = 0;
+      let totalWorkoutsCount = 0;
 
-      if (logs && logs.length > 0) {
-        logs.forEach((l: any) => {
-          if (l.date) {
-            completedDates.add(l.date);
+      // Load local cached completed dates first
+      try {
+        const localDatesJson = await AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES);
+        if (localDatesJson) {
+          const parsed = JSON.parse(localDatesJson);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((d: string) => {
+              if (d && typeof d === 'string') completedDates.add(d);
+            });
           }
-          // Sum duration
-          totalMinutes += Number(l.duration_minutes || 20);
-          totalVolume += Number(l.volume_kg || 0);
-        });
-      }
+        }
+      } catch (_) {}
 
-      setCompletedDatesSet(completedDates);
+      // Load pending logs from useOfflineSync
+      try {
+        const pendingJson = await AsyncStorage.getItem('@fortywell_pending_workout_logs');
+        if (pendingJson) {
+          const pendingLogs = JSON.parse(pendingJson);
+          if (Array.isArray(pendingLogs)) {
+            pendingLogs.forEach((p: any) => {
+              if (p.date) completedDates.add(p.date);
+              totalMinutes += Math.round(Number(p.durationSeconds || 1200) / 60);
+              totalVolume += Number(p.volumeKg || 0);
+              totalWorkoutsCount += 1;
+            });
+          }
+        }
+      } catch (_) {}
+
+      // Load Supabase logs
+      try {
+        const { data: logs } = await supabase
+          .from('workout_logs')
+          .select('*')
+          .eq('status', 'completed');
+
+        if (logs && logs.length > 0) {
+          logs.forEach((l: any) => {
+            if (l.date) {
+              completedDates.add(l.date);
+            }
+            totalMinutes += Number(l.duration_minutes || 20);
+            totalVolume += Number(l.volume_kg || 0);
+            totalWorkoutsCount += 1;
+          });
+        }
+      } catch (_) {}
+
+      // Cache merged dates to local storage
+      try {
+        await AsyncStorage.setItem(
+          STORAGE_KEY_COMPLETED_DATES,
+          JSON.stringify(Array.from(completedDates))
+        );
+      } catch (_) {}
+
+      setCompletedDatesSet(new Set(completedDates));
 
       // 3. Compute Streak
       let streak = 0;
@@ -256,7 +298,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       }
 
       const newStats: LifetimeStats = {
-        totalWorkouts: logs?.length || 0,
+        totalWorkouts: Math.max(totalWorkoutsCount, completedDates.size),
         totalVolumeKg: totalVolume,
         currentStreak: streak,
         totalTimeHours: Number((totalMinutes / 60).toFixed(1)),
@@ -538,6 +580,29 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     };
   }, [completedDatesSet, feelingCheckins]);
 
+  const recordCompletedWorkout = useCallback(
+    async (dateStr?: string, minutes: number = 20, volumeKg: number = 0) => {
+      const today = dateStr || getISODateStr(new Date());
+      setCompletedDatesSet((prev) => {
+        const next = new Set(prev);
+        next.add(today);
+        AsyncStorage.setItem(
+          STORAGE_KEY_COMPLETED_DATES,
+          JSON.stringify(Array.from(next))
+        ).catch(() => {});
+        return next;
+      });
+
+      setLifetimeStats((prev) => ({
+        ...prev,
+        totalWorkouts: prev.totalWorkouts + 1,
+        totalTimeHours: Math.round(((prev.totalTimeHours * 60 + minutes) / 60) * 10) / 10,
+        totalVolumeKg: prev.totalVolumeKg + volumeKg,
+      }));
+    },
+    []
+  );
+
   return {
     loading,
     userProfile,
@@ -546,6 +611,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     gardenProgress,
     feelingCheckins,
     logFeeling,
+    recordCompletedWorkout,
     markWalkthroughCompleted,
     verifyEmailWithOtp,
     resendVerificationEmail,
