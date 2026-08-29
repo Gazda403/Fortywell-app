@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { OnboardingAnswers } from '../types/onboarding';
@@ -19,6 +20,8 @@ export interface UserProfile {
   hasSeenWalkthrough?: boolean;
   createdAt?: string | null;
   isEmailVerified?: boolean;
+  subscriptionStatus?: string | null;
+  subscriptionEndsAt?: string | null;
 }
 
 export interface LifetimeStats {
@@ -201,6 +204,8 @@ export function useUserData(answers?: OnboardingAnswers | null) {
           hasSeenWalkthrough: hasSeen,
           createdAt: profileData?.created_at || user?.created_at || null,
           isEmailVerified: Boolean(user?.email_confirmed_at || profileData?.is_email_verified),
+          subscriptionStatus: profileData?.subscription_status || 'free_trial',
+          subscriptionEndsAt: profileData?.subscription_ends_at || null,
         };
 
         cachedUserProfile = newProfile;
@@ -299,6 +304,56 @@ export function useUserData(answers?: OnboardingAnswers | null) {
 
   useEffect(() => {
     loadUserData();
+
+    // 1. AppState listener: immediately refresh when user returns from mobile browser checkout
+    const appStateSub = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        loadUserData(true);
+      }
+    });
+
+    // 2. Supabase Realtime channel: instant update when Lemon Squeezy webhook writes to profiles table
+    let channel: any = null;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          channel = supabase
+            .channel(`public:profiles:${user.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${user.id}`,
+              },
+              (payload) => {
+                const updated = payload.new as any;
+                if (updated) {
+                  setUserProfile((prev) => ({
+                    ...prev,
+                    subscriptionStatus: updated.subscription_status || prev.subscriptionStatus,
+                    subscriptionEndsAt: updated.subscription_ends_at || prev.subscriptionEndsAt,
+                  }));
+                  if (cachedUserProfile) {
+                    cachedUserProfile.subscriptionStatus = updated.subscription_status || cachedUserProfile.subscriptionStatus;
+                    cachedUserProfile.subscriptionEndsAt = updated.subscription_ends_at || cachedUserProfile.subscriptionEndsAt;
+                  }
+                }
+              }
+            )
+            .subscribe();
+        }
+      } catch (_) {}
+    })();
+
+    return () => {
+      appStateSub.remove();
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [loadUserData]);
 
   // Log feeling check-in to Supabase

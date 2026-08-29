@@ -88,6 +88,34 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return initialTrialStart || new Date();
   }, [devDateOverride, userProfile.createdAt, initialTrialStart]);
 
+  // Determine if active from backend database profile status or local storage
+  const hasActiveBackendSubscription = useMemo(() => {
+    if (userProfile.subscriptionStatus === 'active') {
+      if (userProfile.subscriptionEndsAt) {
+        return new Date(userProfile.subscriptionEndsAt) > new Date();
+      }
+      return true;
+    }
+    return false;
+  }, [userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
+
+  const effectiveIsSubscribed = isSubscribed || hasActiveBackendSubscription;
+
+  // If subscription status is explicitly cancelled, expired, or paused from backend
+  const isExplicitlyBlocked = useMemo(() => {
+    if (
+      userProfile.subscriptionStatus === 'cancelled' ||
+      userProfile.subscriptionStatus === 'expired' ||
+      userProfile.subscriptionStatus === 'paused'
+    ) {
+      if (userProfile.subscriptionEndsAt) {
+        return new Date(userProfile.subscriptionEndsAt) <= new Date();
+      }
+      return true;
+    }
+    return false;
+  }, [userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
+
   // Compute trial status
   const { isTrialActive, trialDaysRemaining, trialDayNumber, trialExpiryDate, isPaused } = useMemo(() => {
     const now = new Date();
@@ -102,17 +130,17 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const msElapsed = Math.max(0, now.getTime() - startTime);
     const dayNumber = Math.min(7, Math.max(1, Math.floor(msElapsed / (1000 * 60 * 60 * 24)) + 1));
 
-    const trialActive = msDiff > 0;
-    const paused = !trialActive && !isSubscribed;
+    const trialActive = msDiff > 0 && !isExplicitlyBlocked;
+    const paused = isExplicitlyBlocked || (!trialActive && !effectiveIsSubscribed);
 
     return {
-      isTrialActive: trialActive,
+      isTrialActive: trialActive && !effectiveIsSubscribed,
       trialDaysRemaining: daysRemaining,
       trialDayNumber: dayNumber,
       trialExpiryDate: expiryDate,
       isPaused: paused,
     };
-  }, [accountCreationDate, isSubscribed]);
+  }, [accountCreationDate, effectiveIsSubscribed, isExplicitlyBlocked]);
 
   // Dynamic pricing calculation (Single Plan: $19.99/mo or $149/yr)
   const pricing: SubscriptionPricing = useMemo(() => {
@@ -236,7 +264,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <SubscriptionContext.Provider
       value={{
         isTrialActive,
-        isSubscribed,
+        isSubscribed: effectiveIsSubscribed,
         isPaused,
         trialDaysRemaining,
         trialDayNumber,
