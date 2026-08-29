@@ -55,6 +55,7 @@ import {
   EducationalArticle,
 } from '../data/educationalArticles';
 import { ArticleDetailModal } from './ArticleDetailModal';
+import { CoachLeadModal } from './CoachLeadModal';
 import {
   classifyUserFeelingMessage,
   ClassificationResult,
@@ -472,6 +473,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   const [selectedMessagingApp, setSelectedMessagingApp] = useState<'whatsapp' | 'signal' | 'viber' | 'messenger'>('whatsapp');
   const [hasEnrolledTextCoach, setHasEnrolledTextCoach] = useState<boolean>(false);
   const [textCoachToast, setTextCoachToast] = useState<boolean>(false);
+  const [leadModalVisible, setLeadModalVisible] = useState<boolean>(false);
 
   // Sync feeling history from real Supabase check-ins
   React.useEffect(() => {
@@ -1130,10 +1132,8 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
                   hasEnrolledTextCoach && s.consultationBtnJoined,
                 ]}
                 onPress={() => {
-                  try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (_) {}
-                  setHasEnrolledTextCoach(true);
-                  setTextCoachToast(true);
-                  setTimeout(() => setTextCoachToast(false), 5000);
+                  try { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
+                  setLeadModalVisible(true);
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Enroll in 1:1 Text Coaching for $55 per month"
@@ -1253,6 +1253,19 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         article={activeArticle}
         visible={!!activeArticle}
         onClose={() => setActiveArticle(null)}
+      />
+
+      {/* 1:1 Text Coach Lead Capture & Checkout Modal */}
+      <CoachLeadModal
+        visible={leadModalVisible}
+        onClose={() => setLeadModalVisible(false)}
+        selectedMessagingApp={selectedMessagingApp}
+        userProfile={userProfile}
+        onSuccess={() => {
+          setHasEnrolledTextCoach(true);
+          setTextCoachToast(true);
+          setTimeout(() => setTextCoachToast(false), 6000);
+        }}
       />
     </KeyboardAvoidingView>
   );
