@@ -97,9 +97,9 @@ export const CoachLeadModal: React.FC<CoachLeadModalProps> = ({
     setErrorMessage(null);
 
     try {
-      // 1. Send lead details via Resend API endpoint
+      // 1. Send lead details via Resend API endpoint (Ensures email is sent BEFORE checkout opens)
       try {
-        await fetch(LEAD_API_URL, {
+        const res = await fetch(LEAD_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -111,6 +111,8 @@ export const CoachLeadModal: React.FC<CoachLeadModalProps> = ({
             userId: userProfile.id,
           }),
         });
+        // We explicitly wait for the server to confirm the email was sent
+        await res.json();
       } catch (networkErr) {
         console.warn('Lead API submission notice:', networkErr);
       }
