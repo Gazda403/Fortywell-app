@@ -43,18 +43,27 @@ interface PwaWelcomeGateProps {
   onEnterApp: () => void;
 }
 
+// Capture the install prompt globally immediately in case it fires before React mounts
+let globalDeferredPrompt: any = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e: any) => {
+    e.preventDefault();
+    globalDeferredPrompt = e;
+  });
+}
+
 export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(globalDeferredPrompt);
   const [isIOS, setIsIOS] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (Platform.OS !== 'web') return;
 
-    // Detect iOS Safari
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(ua);
+    const ua = navigator.userAgent.toLowerCase();
+    const isIosDevice =
+      /ipad|iphone|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOS(isIosDevice);
 
     // Register service worker if supported
@@ -64,13 +73,15 @@ export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
       });
     }
 
-    // Capture install prompt
+    // Capture install prompt if it fires after mount
     const handleBeforeInstall = (e: any) => {
       e.preventDefault();
+      globalDeferredPrompt = e;
       setDeferredPrompt(e);
     };
 
     const handleAppInstalled = () => {
+      globalDeferredPrompt = null;
       setDeferredPrompt(null);
       onEnterApp();
     };
@@ -591,14 +602,14 @@ export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
                 </View>
                 <View style={styles.stepDetails}>
                   <Text style={styles.stepHeading}>
-                    Tap the <Text style={{ fontWeight: '700' }}>Share</Text> button
+                    Tap the <Text style={{ fontWeight: '700' }}>Share</Text> button (iOS) or <Text style={{ fontWeight: '700' }}>Menu ⋮</Text> (Android)
                   </Text>
                   <Text style={styles.stepSub}>
                     Found in Safari's bottom toolbar or Chrome's address bar.
                   </Text>
                 </View>
                 <View style={styles.stepIconBox}>
-                  <Share size={18} color={colors.primary} />
+                  <Share size={20} color={colors.primary} />
                 </View>
               </View>
 
@@ -611,11 +622,11 @@ export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
                     Select <Text style={{ fontWeight: '700' }}>Add to Home Screen</Text>
                   </Text>
                   <Text style={styles.stepSub}>
-                    Scroll down slightly in the share menu options.
+                    You might need to scroll down to find this option. Or on Android, look for "Install App".
                   </Text>
                 </View>
                 <View style={styles.stepIconBox}>
-                  <PlusSquare size={18} color={colors.sageDark} />
+                  <PlusSquare size={20} color={colors.primary} />
                 </View>
               </View>
 
