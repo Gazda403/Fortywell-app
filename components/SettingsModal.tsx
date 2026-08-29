@@ -220,15 +220,19 @@ export function SettingsModal({
 
             <SectionHeader label="MEMBERSHIP & ACCESS" icon={Crown} color={colors.primaryDark} />
             <SettingsCard>
-              {/* Status Header */}
+              {/* ── Status ── */}
               <View style={sStyles.membershipStatusHeader}>
                 <View style={sStyles.statusIndicatorRow}>
                   <View style={[
                     sStyles.statusDot,
-                    isSubscribed ? sStyles.statusDotSubscribed : isPaused ? sStyles.statusDotPaused : sStyles.statusDotTrial
+                    isSubscribed ? sStyles.statusDotSubscribed : isPaused ? sStyles.statusDotPaused : sStyles.statusDotTrial,
                   ]} />
                   <Text style={sStyles.statusKicker}>
-                    {isSubscribed ? "ACTIVE SUBSCRIBER" : isPaused ? "TRIAL EXPIRED • PAUSED STATE" : `7-DAY FREE TRIAL • DAY ${trialDayNumber}`}
+                    {isSubscribed
+                      ? "ACTIVE SUBSCRIBER"
+                      : isPaused
+                      ? "TRIAL EXPIRED · PAUSED"
+                      : `7-DAY FREE TRIAL · DAY ${trialDayNumber}`}
                   </Text>
                 </View>
                 <Text style={sStyles.statusTitle}>
@@ -236,102 +240,72 @@ export function SettingsModal({
                     ? "Full Access Member"
                     : isPaused
                     ? "Read-Only Mode Active"
-                    : `${trialDaysRemaining} days remaining in trial`}
+                    : `${trialDaysRemaining} day${trialDaysRemaining !== 1 ? "s" : ""} remaining`}
                 </Text>
                 <Text style={sStyles.statusDesc}>
                   {isSubscribed
                     ? "All daily workouts, AI coach guidance, and cycle rhythm tracking active."
                     : isPaused
-                    ? "Your past logs & Garden are preserved. Subscribe to resume new sessions."
-                    : "Experience the full FortyWell protocol with zero feature restrictions."}
+                    ? "Your Garden & past logs are preserved. Subscribe to resume new sessions."
+                    : "Enjoy full access during your free trial. Subscribe anytime to continue."}
                 </Text>
               </View>
 
-              <View style={sStyles.rowDivider} />
-
-              {/* Prominent Test Paywall Button */}
-              <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-                <Pressable
-                  style={({ pressed }) => [
-                    sStyles.testPaywallBtn,
-                    pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
-                  ]}
-                  onPress={() => {
-                    haptic();
-                    openPaywall("settings_manual_test");
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Preview and test Paywall modal"
-                >
-                  <LinearGradient
-                    colors={[colors.primary, colors.primaryDark]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={sStyles.testPaywallGradient}
+              {/* ── Actions ── */}
+              {!isSubscribed && (
+                <>
+                  <View style={sStyles.rowDivider} />
+                  <Pressable
+                    style={({ pressed }) => [
+                      sStyles.subscribeNowBtn,
+                      pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
+                    ]}
+                    onPress={() => {
+                      haptic();
+                      onClose();
+                      openPaywall("settings_subscribe");
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="View subscription options"
                   >
-                    <View style={sStyles.testPaywallInner}>
-                      <View style={sStyles.testPaywallIconWrap}>
-                        <Crown size={16} color="#FFFFFF" strokeWidth={2.2} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={sStyles.testPaywallTitle}>Preview / Test Paywall</Text>
-                        <Text style={sStyles.testPaywallSubtitle}>
-                          View real momentum stats, pricing & Lemon Squeezy single plan
-                        </Text>
-                      </View>
-                      <Sparkles size={16} color="#FFFFFF" strokeWidth={2} />
+                    <LinearGradient
+                      colors={[colors.primary, colors.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={sStyles.subscribeNowGradient}
+                    >
+                      <Crown size={15} color="#FFFFFF" strokeWidth={2.2} />
+                      <Text style={sStyles.subscribeNowText}>
+                        {isPaused ? "Subscribe & Restore Access" : "View Subscription Options"}
+                      </Text>
+                    </LinearGradient>
+                  </Pressable>
+                </>
+              )}
+
+              {isSubscribed && (
+                <>
+                  <View style={sStyles.rowDivider} />
+                  <Pressable
+                    style={sStyles.settingRow}
+                    onPress={() => {
+                      haptic();
+                      Linking.openURL("https://app.lemonsqueezy.com/my-orders");
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Manage or cancel subscription"
+                  >
+                    <View style={[sStyles.settingRowIconWrap, { backgroundColor: "rgba(101,78,60,0.08)" }]}>
+                      <ExternalLink size={17} color={colors.textSecondary} strokeWidth={2} />
                     </View>
-                  </LinearGradient>
-                </Pressable>
-              </View>
-
-              <View style={sStyles.rowDivider} />
-
-              {/* Simulation Tools for QA Testing */}
-              <View style={sStyles.simSection}>
-                <Text style={sStyles.simKicker}>SIMULATE ACCOUNT STATES FOR TESTING:</Text>
-                <View style={sStyles.simPillsRow}>
-                  <Pressable
-                    style={sStyles.simPill}
-                    onPress={() => {
-                      haptic();
-                      setDevSubscriptionOverride("trial_day_3");
-                    }}
-                  >
-                    <Text style={sStyles.simPillText}>Day 3 (Trial)</Text>
+                    <View style={sStyles.settingRowTextWrap}>
+                      <Text style={sStyles.settingRowLabel}>Manage Subscription</Text>
+                      <Text style={sStyles.settingRowSublabel}>Pause, upgrade, or cancel via Lemon Squeezy portal</Text>
+                    </View>
+                    <ChevronRight size={17} color={colors.textTertiary} strokeWidth={2} />
                   </Pressable>
-
-                  <Pressable
-                    style={[sStyles.simPill, { borderColor: colors.primary }]}
-                    onPress={() => {
-                      haptic();
-                      setDevSubscriptionOverride("expired_day_8");
-                    }}
-                  >
-                    <Text style={[sStyles.simPillText, { color: colors.primaryDark }]}>Day 8 (Paused)</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={[sStyles.simPill, { borderColor: colors.sageDark }]}
-                    onPress={() => {
-                      haptic();
-                      setDevSubscriptionOverride("subscribed");
-                    }}
-                  >
-                    <Text style={[sStyles.simPillText, { color: colors.sageDark }]}>Subscribed</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={sStyles.simPill}
-                    onPress={() => {
-                      haptic();
-                      setDevSubscriptionOverride("reset");
-                    }}
-                  >
-                    <Text style={sStyles.simPillText}>Reset</Text>
-                  </Pressable>
-                </View>
-              </View>
+                </>
+              )}
             </SettingsCard>
 
             <SectionHeader label="PERSONALIZATION" icon={Leaf} color={colors.sageDark} />
@@ -630,8 +604,9 @@ const sStyles = StyleSheet.create({
   statusDotTrial: { backgroundColor: "#B87D2B" },
   statusKicker: { fontSize: 10, fontFamily: fontFamilies.monoBold, color: colors.textTertiary, letterSpacing: 1.2 },
   statusTitle: { fontSize: 16, fontFamily: fontFamilies.soria, fontWeight: "700", color: colors.textPrimary, marginBottom: 2 },
-  statusDesc: { fontSize: 12, fontFamily: fontFamilies.sansRegular, color: colors.textSecondary, lineHeight: 17 },
-  testPaywallBtn: {
+  subscribeNowBtn: {
+    marginHorizontal: 16,
+    marginVertical: 12,
     borderRadius: 14,
     overflow: "hidden",
     ...Platform.select({
@@ -639,62 +614,19 @@ const sStyles = StyleSheet.create({
       android: { elevation: 3 },
     }),
   },
-  testPaywallGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  testPaywallInner: {
+  subscribeNowGradient: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  testPaywallIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
-  testPaywallTitle: {
-    fontSize: 14,
-    fontFamily: fontFamilies.sansBold,
+  subscribeNowText: {
+    fontSize: 13.5,
+    fontFamily: fontFamilies.sansSemiBold,
     color: "#FFFFFF",
-  },
-  testPaywallSubtitle: {
-    fontSize: 11,
-    fontFamily: fontFamilies.sansRegular,
-    color: "rgba(255, 255, 255, 0.85)",
-    marginTop: 1,
-  },
-  simSection: {
-    padding: 14,
-    backgroundColor: "rgba(101, 78, 60, 0.04)",
-  },
-  simKicker: {
-    fontSize: 9.5,
-    fontFamily: fontFamilies.monoBold,
-    color: colors.textTertiary,
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  simPillsRow: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  simPill: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderMedium,
-  },
-  simPillText: {
-    fontSize: 11,
-    fontFamily: fontFamilies.sansMedium,
-    color: colors.textSecondary,
+    letterSpacing: 0.3,
   },
   settingsCard: {
     backgroundColor: colors.surfaceCard, borderRadius: 18, marginBottom: 14, borderWidth: 1, borderColor: colors.borderSubtle, overflow: "hidden",
