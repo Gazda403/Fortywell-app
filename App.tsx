@@ -27,6 +27,7 @@ import { colors } from './theme/colors';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageProvider } from './context/LanguageContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 
 const STORAGE_PROFILE_KEY = '@fortywell_completed_profile';
 const STORAGE_ONBOARDING_COMPLETED_KEY = '@fortywell_onboarding_completed';
@@ -319,31 +320,33 @@ export default function App() {
 
   return (
     <LanguageProvider>
-      <SafeAreaProvider>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <SubscriptionProvider>
+        <SafeAreaProvider>
+          <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-        {activeScreen === 'auth' && (
-          <AuthScreen
-            onAccountCreated={handleAccountCreated}
-            onLoginSuccess={handleLoginSuccess}
-          />
-        )}
+          {activeScreen === 'auth' && (
+            <AuthScreen
+              onAccountCreated={handleAccountCreated}
+              onLoginSuccess={handleLoginSuccess}
+            />
+          )}
 
-        {activeScreen === 'quiz' && (
-          <OnboardingQuizScreen
-            firstName={userFirstName}
-            onFlowCompleted={handleFlowCompleted}
-          />
-        )}
+          {activeScreen === 'quiz' && (
+            <OnboardingQuizScreen
+              firstName={userFirstName}
+              onFlowCompleted={handleFlowCompleted}
+            />
+          )}
 
-        {activeScreen === 'home' && (
-          <HomeScreen
-            answers={completedProfile}
-            onRetakeQuiz={handleRetakeQuiz}
-            onSignOut={handleSignOut}
-          />
-        )}
-      </SafeAreaProvider>
+          {activeScreen === 'home' && (
+            <HomeScreen
+              answers={completedProfile}
+              onRetakeQuiz={handleRetakeQuiz}
+              onSignOut={handleSignOut}
+            />
+          )}
+        </SafeAreaProvider>
+      </SubscriptionProvider>
     </LanguageProvider>
   );
 }

@@ -65,6 +65,7 @@ import {
 } from '../lib/coachIntentEngine';
 import { supabase } from '../lib/supabase';
 import { useUserData } from '../hooks/useUserData';
+import { useSubscription } from '../context/SubscriptionContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -464,7 +465,13 @@ const FeelingCheckIn: React.FC<{
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   const { userProfile, feelingCheckins, logFeeling } = useUserData(answers);
+  const { isPaused, openPaywall } = useSubscription();
   const [feelingHistory, setFeelingHistory] = useState<FeelingEntry[]>([]);
+
+  // 1:1 Texting Coach ($55/mo) preferred app
+  const [selectedMessagingApp, setSelectedMessagingApp] = useState<'whatsapp' | 'signal' | 'viber' | 'messenger'>('whatsapp');
+  const [hasEnrolledTextCoach, setHasEnrolledTextCoach] = useState<boolean>(false);
+  const [textCoachToast, setTextCoachToast] = useState<boolean>(false);
 
   // Sync feeling history from real Supabase check-ins
   React.useEffect(() => {
@@ -569,6 +576,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   // AI Intent-Aware Message Handler
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
+    if (isPaused) {
+      openPaywall('coach_chat');
+      return;
+    }
     const cleanText = text.trim();
 
     const userMsg: CoachMessage = {
@@ -1027,7 +1038,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
           </View>
         </View>
 
-        {/* ── 1:1 PERSONALISATION / CONSULTATION PLACEHOLDER CARD ── */}
+        {/* ── 1:1 PERSONALISATION / TEXTING COACH & CONSULTATION ── */}
         <View style={s.section}>
           <View style={s.sectionRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -1040,6 +1051,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
             <Text style={s.waitlistTag}>Limited spots</Text>
           </View>
 
+          {/* 1:1 Daily Texting Coach Card ($55/month) */}
           <View style={s.consultationCard}>
             <LinearGradient
               colors={['#FFFFFF', '#FFF9F6']}
@@ -1047,68 +1059,109 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
               end={{ x: 1, y: 1 }}
               style={s.consultationGradient}
             >
-              {/* Top Header Row with Icon & Title */}
+              {/* Top Header Row */}
               <View style={s.consultationHeaderRow}>
                 <View style={s.consultationIconWrap}>
                   <UserCheck size={20} color={colors.primaryDark} strokeWidth={2} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={s.consultationTitle}>Want more personalisation?</Text>
-                  <Text style={s.consultationSubtitle}>Book a 1:1 Hormone & Movement Specialist</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={s.consultationTitle}>1:1 Daily Text Coach</Text>
+                    <View style={s.pricingTag}>
+                      <Text style={s.pricingTagText}>$55/mo</Text>
+                    </View>
+                  </View>
+                  <Text style={s.consultationSubtitle}>Daily check-ups & direct protocol tweaks</Text>
                 </View>
               </View>
 
               {/* Description Body */}
               <Text style={s.consultationBody}>
-                Connect directly with a certified clinical physiologist trained in women’s 40+ hormone transitions. Receive a completely bespoke protocol tailored to your unique joint sensitivities, energy curve, and recovery goals.
+                Text every single day with a dedicated clinical physiologist. Get proactive morning check-ins, custom workout adaptations on the fly, and compassionate accountability via your favourite messaging app.
               </Text>
+
+              {/* App Picker */}
+              <Text style={s.appPickerLabel}>CHOOSE YOUR PREFERRED MESSAGING APP:</Text>
+              <View style={s.appPickerRow}>
+                {[
+                  { id: 'whatsapp', name: 'WhatsApp' },
+                  { id: 'signal',   name: 'Signal' },
+                  { id: 'viber',    name: 'Viber' },
+                  { id: 'messenger', name: 'Messenger' },
+                ].map((app) => {
+                  const isSelected = selectedMessagingApp === app.id;
+                  return (
+                    <Pressable
+                      key={app.id}
+                      style={[s.appPill, isSelected && s.appPillSelected]}
+                      onPress={() => {
+                        try { if (Platform.OS !== 'web') Haptics.selectionAsync(); } catch (_) {}
+                        setSelectedMessagingApp(app.id as any);
+                      }}
+                    >
+                      <Text style={[s.appPillText, isSelected && s.appPillTextSelected]}>
+                        {app.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
               {/* 3 Pillar Value Chips */}
               <View style={s.consultationChipsRow}>
                 <View style={s.consultationChip}>
                   <CheckCircle2 size={12} color={colors.sageDark} strokeWidth={2.2} />
-                  <Text style={s.consultationChipText}>Hormone Pacing</Text>
+                  <Text style={s.consultationChipText}>Daily Text Check-ins</Text>
                 </View>
                 <View style={s.consultationChip}>
                   <CheckCircle2 size={12} color={colors.sageDark} strokeWidth={2.2} />
-                  <Text style={s.consultationChipText}>Joint-Safe Adaptations</Text>
+                  <Text style={s.consultationChipText}>No App Switching</Text>
                 </View>
                 <View style={s.consultationChip}>
                   <CheckCircle2 size={12} color={colors.sageDark} strokeWidth={2.2} />
-                  <Text style={s.consultationChipText}>Live 1:1 Video Call</Text>
+                  <Text style={s.consultationChipText}>Real Specialist</Text>
                 </View>
               </View>
 
-              {/* Action Button / Waitlist State */}
+              {/* Action Button */}
               <Pressable
                 style={[
                   s.consultationBtn,
-                  hasJoinedWaitlist && s.consultationBtnJoined,
+                  hasEnrolledTextCoach && s.consultationBtnJoined,
                 ]}
-                onPress={handleBookConsultationPress}
+                onPress={() => {
+                  try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (_) {}
+                  setHasEnrolledTextCoach(true);
+                  setTextCoachToast(true);
+                  setTimeout(() => setTextCoachToast(false), 5000);
+                }}
                 accessibilityRole="button"
-                accessibilityLabel="Book 1:1 Consultation or join priority waitlist"
+                accessibilityLabel="Enroll in 1:1 Text Coaching for $55 per month"
               >
-                {hasJoinedWaitlist ? (
+                {hasEnrolledTextCoach ? (
                   <View style={s.consultationBtnInner}>
                     <Check size={16} color={colors.sageDark} strokeWidth={2.5} />
-                    <Text style={s.consultationBtnTextJoined}>You're on the Priority List</Text>
+                    <Text style={s.consultationBtnTextJoined}>
+                      Enrolled on {selectedMessagingApp.toUpperCase()}
+                    </Text>
                   </View>
                 ) : (
                   <View style={s.consultationBtnInner}>
                     <Calendar size={15} color="#FFFFFF" strokeWidth={2} />
-                    <Text style={s.consultationBtnText}>Book 1:1 Consultation (Preview)</Text>
+                    <Text style={s.consultationBtnText}>
+                      Start Daily Text Coach ($55/mo)
+                    </Text>
                     <ChevronRight size={15} color="#FFFFFF" strokeWidth={2.2} />
                   </View>
                 )}
               </Pressable>
 
-              {/* Confirmation Toast Note */}
-              {showWaitlistToast && (
+              {/* Toast */}
+              {textCoachToast && (
                 <View style={s.consultationToast}>
                   <Sparkles size={13} color={colors.primaryDark} strokeWidth={2} />
                   <Text style={s.consultationToastText}>
-                    You've been added to the priority list! 1:1 bookings are launching soon.
+                    You're set! Your dedicated coach will message you on {selectedMessagingApp.toUpperCase()} shortly.
                   </Text>
                 </View>
               )}
@@ -2190,6 +2243,54 @@ const s = StyleSheet.create({
     fontFamily: fontFamilies.sansMedium,
     color: colors.primaryDark,
     marginTop: 2,
+  },
+  pricingTag: {
+    backgroundColor: colors.sageSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.sageBorder,
+  },
+  pricingTagText: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.sageDark,
+    letterSpacing: 0.5,
+  },
+  appPickerLabel: {
+    fontSize: 9.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textTertiary,
+    letterSpacing: 1.2,
+    marginBottom: 8,
+  },
+  appPickerRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  appPill: {
+    backgroundColor: 'rgba(101, 78, 60, 0.06)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(101, 78, 60, 0.12)',
+  },
+  appPillSelected: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+  },
+  appPillText: {
+    fontSize: 11.5,
+    fontFamily: fontFamilies.sansMedium,
+    color: colors.textSecondary,
+  },
+  appPillTextSelected: {
+    color: colors.primaryDark,
+    fontFamily: fontFamilies.sansBold,
   },
   consultationBody: {
     fontSize: 12.5,

@@ -9,7 +9,7 @@ import {
   X, User, Bell, Shield, FileText, ChevronRight,
   RotateCcw, LogOut, Compass, Heart, Leaf, Moon,
   Volume2, Lock, ExternalLink, Trash2, CheckCircle2,
-  Clock, Activity, Sparkles, Info, Tag, Globe,
+  Clock, Activity, Sparkles, Info, Tag, Globe, Crown,
 } from "lucide-react-native";
 import { colors } from "../theme/colors";
 import { fontFamilies } from "../theme/typography";
@@ -18,6 +18,7 @@ import { UserProfile } from "../hooks/useUserData";
 import { LegalDocumentModal, LegalDocType } from "./LegalDocumentModal";
 import { useLanguage } from "../context/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../types/i18n";
+import { useSubscription } from "../context/SubscriptionContext";
 
 interface SettingsModalProps {
   visible: boolean;
@@ -124,6 +125,16 @@ export function SettingsModal({
   const { language, setLanguage, languageOptions } = useLanguage();
   const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
 
+  const {
+    isTrialActive,
+    isSubscribed,
+    isPaused,
+    trialDaysRemaining,
+    trialDayNumber,
+    openPaywall,
+    setDevSubscriptionOverride,
+  } = useSubscription();
+
   const haptic = useCallback(() => {
     try { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (_) {}
   }, []);
@@ -206,6 +217,122 @@ export function SettingsModal({
                 </Pressable>
               </View>
             )}
+
+            <SectionHeader label="MEMBERSHIP & ACCESS" icon={Crown} color={colors.primaryDark} />
+            <SettingsCard>
+              {/* Status Header */}
+              <View style={sStyles.membershipStatusHeader}>
+                <View style={sStyles.statusIndicatorRow}>
+                  <View style={[
+                    sStyles.statusDot,
+                    isSubscribed ? sStyles.statusDotSubscribed : isPaused ? sStyles.statusDotPaused : sStyles.statusDotTrial
+                  ]} />
+                  <Text style={sStyles.statusKicker}>
+                    {isSubscribed ? "ACTIVE SUBSCRIBER" : isPaused ? "TRIAL EXPIRED • PAUSED STATE" : `7-DAY FREE TRIAL • DAY ${trialDayNumber}`}
+                  </Text>
+                </View>
+                <Text style={sStyles.statusTitle}>
+                  {isSubscribed
+                    ? "Full Access Member"
+                    : isPaused
+                    ? "Read-Only Mode Active"
+                    : `${trialDaysRemaining} days remaining in trial`}
+                </Text>
+                <Text style={sStyles.statusDesc}>
+                  {isSubscribed
+                    ? "All daily workouts, AI coach guidance, and cycle rhythm tracking active."
+                    : isPaused
+                    ? "Your past logs & Garden are preserved. Subscribe to resume new sessions."
+                    : "Experience the full FortyWell protocol with zero feature restrictions."}
+                </Text>
+              </View>
+
+              <View style={sStyles.rowDivider} />
+
+              {/* Prominent Test Paywall Button */}
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+                <Pressable
+                  style={({ pressed }) => [
+                    sStyles.testPaywallBtn,
+                    pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
+                  ]}
+                  onPress={() => {
+                    haptic();
+                    openPaywall("settings_manual_test");
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Preview and test Paywall modal"
+                >
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={sStyles.testPaywallGradient}
+                  >
+                    <View style={sStyles.testPaywallInner}>
+                      <View style={sStyles.testPaywallIconWrap}>
+                        <Crown size={16} color="#FFFFFF" strokeWidth={2.2} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={sStyles.testPaywallTitle}>Preview / Test Paywall</Text>
+                        <Text style={sStyles.testPaywallSubtitle}>
+                          View real momentum stats, pricing & Lemon Squeezy single plan
+                        </Text>
+                      </View>
+                      <Sparkles size={16} color="#FFFFFF" strokeWidth={2} />
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+
+              <View style={sStyles.rowDivider} />
+
+              {/* Simulation Tools for QA Testing */}
+              <View style={sStyles.simSection}>
+                <Text style={sStyles.simKicker}>SIMULATE ACCOUNT STATES FOR TESTING:</Text>
+                <View style={sStyles.simPillsRow}>
+                  <Pressable
+                    style={sStyles.simPill}
+                    onPress={() => {
+                      haptic();
+                      setDevSubscriptionOverride("trial_day_3");
+                    }}
+                  >
+                    <Text style={sStyles.simPillText}>Day 3 (Trial)</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[sStyles.simPill, { borderColor: colors.primary }]}
+                    onPress={() => {
+                      haptic();
+                      setDevSubscriptionOverride("expired_day_8");
+                    }}
+                  >
+                    <Text style={[sStyles.simPillText, { color: colors.primaryDark }]}>Day 8 (Paused)</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[sStyles.simPill, { borderColor: colors.sageDark }]}
+                    onPress={() => {
+                      haptic();
+                      setDevSubscriptionOverride("subscribed");
+                    }}
+                  >
+                    <Text style={[sStyles.simPillText, { color: colors.sageDark }]}>Subscribed</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={sStyles.simPill}
+                    onPress={() => {
+                      haptic();
+                      setDevSubscriptionOverride("reset");
+                    }}
+                  >
+                    <Text style={sStyles.simPillText}>Reset</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </SettingsCard>
 
             <SectionHeader label="PERSONALIZATION" icon={Leaf} color={colors.sageDark} />
             <SettingsCard>
@@ -495,6 +622,80 @@ const sStyles = StyleSheet.create({
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 8, paddingHorizontal: 2 },
   sectionIconWrap: { width: 22, height: 22, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   sectionHeaderText: { fontSize: 10.5, fontFamily: fontFamilies.monoBold, letterSpacing: 1.5 },
+  membershipStatusHeader: { padding: 16 },
+  statusIndicatorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusDotSubscribed: { backgroundColor: colors.sageDark },
+  statusDotPaused: { backgroundColor: colors.primary },
+  statusDotTrial: { backgroundColor: "#B87D2B" },
+  statusKicker: { fontSize: 10, fontFamily: fontFamilies.monoBold, color: colors.textTertiary, letterSpacing: 1.2 },
+  statusTitle: { fontSize: 16, fontFamily: fontFamilies.soria, fontWeight: "700", color: colors.textPrimary, marginBottom: 2 },
+  statusDesc: { fontSize: 12, fontFamily: fontFamilies.sansRegular, color: colors.textSecondary, lineHeight: 17 },
+  testPaywallBtn: {
+    borderRadius: 14,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6 },
+      android: { elevation: 3 },
+    }),
+  },
+  testPaywallGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  testPaywallInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  testPaywallIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  testPaywallTitle: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansBold,
+    color: "#FFFFFF",
+  },
+  testPaywallSubtitle: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sansRegular,
+    color: "rgba(255, 255, 255, 0.85)",
+    marginTop: 1,
+  },
+  simSection: {
+    padding: 14,
+    backgroundColor: "rgba(101, 78, 60, 0.04)",
+  },
+  simKicker: {
+    fontSize: 9.5,
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textTertiary,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  simPillsRow: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  simPill: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+  },
+  simPillText: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sansMedium,
+    color: colors.textSecondary,
+  },
   settingsCard: {
     backgroundColor: colors.surfaceCard, borderRadius: 18, marginBottom: 14, borderWidth: 1, borderColor: colors.borderSubtle, overflow: "hidden",
     ...Platform.select({ ios: { shadowColor: "#2A2320", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 }, android: { elevation: 2 }, default: {} }),

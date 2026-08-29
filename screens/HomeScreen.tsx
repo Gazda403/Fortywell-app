@@ -74,6 +74,8 @@ import { SettingsModal } from '../components/SettingsModal';
 import { useFavorites } from '../lib/useFavorites';
 import { useOfflineSync } from '../lib/useOfflineSync';
 import { useLanguage } from '../context/LanguageContext';
+import { useSubscription } from '../context/SubscriptionContext';
+import { PaywallModal } from '../components/PaywallModal';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -177,6 +179,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { favoriteSlugs, toggleFavorite, isFavorite } = useFavorites();
   const { hasPendingLogs, isSyncing } = useOfflineSync();
   const { t } = useLanguage();
+  const { isPaused, openPaywall, isTrialActive, trialDaysRemaining, isSubscribed } = useSubscription();
+
+  // Auto-prompt paywall on Day 8+ if trial has concluded and account is paused
+  useEffect(() => {
+    if (isPaused && !userLoading) {
+      openPaywall('trial_expired_mount');
+    }
+  }, [isPaused, userLoading, openPaywall]);
 
   // Compute saved workouts list
   const savedWorkouts = useMemo(() => {
@@ -350,6 +360,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   const launchWorkout = (workout: Workout | null) => {
+    if (isPaused) {
+      openPaywall('start_workout');
+      return;
+    }
     setActiveWorkoutData(workout);
     setActiveWorkoutVisible(true);
     setQuickLaunchVisible(false);
@@ -380,11 +394,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   const handleStartWorkout = () => {
+    if (isPaused) {
+      openPaywall('hero_start_workout');
+      return;
+    }
     try {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (_) {}
+    launchWorkout(featuredWorkout);
   };
 
   const startBtnAnimStyle = useAnimatedStyle(() => ({
@@ -1208,6 +1227,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         visible={storeVisible}
         onClose={() => setStoreVisible(false)}
         isEmailVerified={userProfile.isEmailVerified}
+      />
+
+      {/* ── 7-DAY TRIAL & SUBSCRIPTION PAYWALL MODAL ── */}
+      <PaywallModal
+        onDismissToGarden={() => setSelectedTab('garden')}
       />
     </SafeAreaView>
   );
