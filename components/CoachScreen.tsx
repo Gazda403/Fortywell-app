@@ -64,9 +64,15 @@ import {
   detectIntent,
   saveTrainingPreference,
 } from '../lib/coachIntentEngine';
+import {
+  sendToGroq,
+  shouldUseGroqAI,
+  getFallbackReply,
+} from '../lib/coachGroqService';
 import { supabase } from '../lib/supabase';
 import { useUserData } from '../hooks/useUserData';
 import { useSubscription } from '../context/SubscriptionContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -553,6 +559,75 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     { id: 'h4', label: 'Noticed one stress signal',     iconType: 'wind',  checked: false },
   ]);
 
+  // Load persistent daily habits on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    const tKey = todayKey();
+    const storageKey = `@fortywell_habits_${tKey}`;
+
+    async function loadHabits() {
+      try {
+        // 1. Check local storage
+        const raw = await AsyncStorage.getItem(storageKey);
+        if (raw && isMounted) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setHabits(parsed);
+          }
+        }
+
+        // 2. Sync from Supabase daily_habits table
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          const { data: cloudHabits } = await supabase
+            .from('daily_habits')
+            .select('habit_id, completed')
+            .eq('user_id', user.id)
+            .eq('date', tKey);
+
+          if (cloudHabits && cloudHabits.length > 0 && isMounted) {
+            setHabits((prev) => {
+              const updated = prev.map((h) => {
+                const cloud = cloudHabits.find((c: any) => c.habit_id === h.id);
+                return cloud ? { ...h, checked: cloud.completed } : h;
+              });
+              AsyncStorage.setItem(storageKey, JSON.stringify(updated)).catch(() => {});
+              return updated;
+            });
+          }
+        }
+      } catch (_) {}
+    }
+
+    loadHabits();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Load persistent chat messages
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadSavedChat() {
+      try {
+        const raw = await AsyncStorage.getItem('@fortywell_coach_chat_history');
+        if (raw && isMounted) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+          }
+        }
+      } catch (_) {}
+    }
+    loadSavedChat();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Save chat messages whenever new message is sent/received
+  React.useEffect(() => {
+    if (messages.length > 1) {
+      AsyncStorage.setItem('@fortywell_coach_chat_history', JSON.stringify(messages.slice(-30))).catch(() => {});
+    }
+  }, [messages]);
+
   const scrollRef  = useRef<ScrollView>(null);
   const typingOpac = useRef(new Animated.Value(0)).current;
 
@@ -564,7 +639,36 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   };
 
   const toggleHabit = useCallback((id: string) => {
-    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, checked: !h.checked } : h)));
+    const tKey = todayKey();
+    const storageKey = `@fortywell_habits_${tKey}`;
+
+    setHabits((prev) => {
+      const next = prev.map((h) => (h.id === id ? { ...h, checked: !h.checked } : h));
+      AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch(() => {});
+
+      const target = next.find((h) => h.id === id);
+      if (target) {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user?.id) {
+            supabase
+              .from('daily_habits')
+              .upsert(
+                {
+                  user_id: user.id,
+                  date: tKey,
+                  habit_id: id,
+                  completed: target.checked,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: 'user_id,date,habit_id' }
+              )
+              .then();
+          }
+        }).catch(() => {});
+      }
+
+      return next;
+    });
     try { if (Platform.OS !== 'web') Haptics.selectionAsync(); } catch (_) {}
   }, []);
 
@@ -612,44 +716,92 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
       } catch (_) {}
     }
 
-    // Step 3: Determine the final reply text
-    let replyText = intentResult.coachReply;
+    // Step 3: Determine if we should use Groq AI
+    const useAI = shouldUseGroqAI(cleanText, intentResult.intent);
+
+    let replyText: string = '';
     let classification: ClassificationResult | undefined;
 
-    // For feeling check-ins, fall back to the detailed feeling classifier
-    if (intentResult.intent === 'feeling_checkin' || !replyText) {
-      classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
-      replyText = classification.coachReply;
-      if (classification.shouldSaveForWeeklyAnalysis) {
-        setWeeklySignalsCount((prev) => prev + 1);
+    if (useAI) {
+      // Use Groq for general chat and complex questions
+      const conversationHistory = messages.map(m => ({
+        role: m.role,
+        content: m.text,
+      }));
+
+      const latency = isDeepThink ? 2000 : 1500;
+
+      // Get AI response first
+      let aiReplyText = '';
+      const groqResult = await sendToGroq(cleanText, conversationHistory, answers);
+
+      if (groqResult.success && groqResult.reply) {
+        aiReplyText = groqResult.reply;
+      } else {
+        // Fallback to pre-built if Groq fails
+        console.warn('Groq failed, falling back to pre-built:', groqResult.error);
+        aiReplyText = getFallbackReply();
       }
+
+      setTimeout(() => {
+        const coachMsg: CoachMessage = {
+          id: `c-${Date.now()}`,
+          role: 'coach',
+          text: aiReplyText,
+          timestamp: new Date(),
+          classification,
+          isDeepThink,
+        };
+
+        setIsTyping(false);
+        Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+        setMessages((prev) => [...prev, coachMsg]);
+
+        try {
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (_) {}
+
+        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+      }, latency);
+    } else {
+      // Use pre-built responses (existing logic)
+      replyText = intentResult.coachReply;
+
+      // For feeling check-ins, fall back to the detailed feeling classifier
+      if (intentResult.intent === 'feeling_checkin' || !replyText) {
+        classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
+        replyText = classification.coachReply;
+        if (classification.shouldSaveForWeeklyAnalysis) {
+          setWeeklySignalsCount((prev) => prev + 1);
+        }
+      }
+
+      const latency = isDeepThink ? 1600 : 1100;
+
+      setTimeout(() => {
+        const coachMsg: CoachMessage = {
+          id: `c-${Date.now()}`,
+          role: 'coach',
+          text: replyText,
+          timestamp: new Date(),
+          classification,
+          isDeepThink,
+        };
+
+        setIsTyping(false);
+        Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+        setMessages((prev) => [...prev, coachMsg]);
+
+        try {
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (_) {}
+
+        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+      }, latency);
     }
 
-    const latency = isDeepThink ? 1600 : 1100;
-
-    setTimeout(() => {
-      const coachMsg: CoachMessage = {
-        id: `c-${Date.now()}`,
-        role: 'coach',
-        text: replyText,
-        timestamp: new Date(),
-        classification,
-        isDeepThink,
-      };
-
-      setIsTyping(false);
-      Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-      setMessages((prev) => [...prev, coachMsg]);
-
-      try {
-        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (_) {}
-
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
-    }, latency);
-
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [isDeepThink, answers, typingOpac]);
+  }, [isDeepThink, answers, typingOpac, messages]);
 
   const toggleVoiceRecording = () => {
     if (!isRecordingVoice) {

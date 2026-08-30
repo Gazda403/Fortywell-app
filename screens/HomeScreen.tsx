@@ -306,18 +306,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         return;
       }
     }
-    // Only proceed when we have real data from the server (not loading)
-    // and user has definitively NOT seen the walkthrough (not just the default 'true' stub)
-    if (!userLoading && userProfile.hasSeenWalkthrough === false && !tourShownRef.current) {
-      tourShownRef.current = true;
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem('fortywell_tour_shown_session', 'true');
+
+    async function checkWalkthrough() {
+      try {
+        const stored = await AsyncStorage.getItem('@fortywell_has_seen_walkthrough_v1');
+        const userStored = userProfile?.id ? await AsyncStorage.getItem(`@fortywell_walkthrough_${userProfile.id}`) : null;
+        if (stored === 'true' || userStored === 'true') {
+          return;
+        }
+      } catch (_) {}
+
+      // Only proceed when we have real data from the server (not loading)
+      // and user has definitively NOT seen the walkthrough (not just the default 'true' stub)
+      if (!userLoading && userProfile.hasSeenWalkthrough === false && !tourShownRef.current) {
+        tourShownRef.current = true;
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem('fortywell_tour_shown_session', 'true');
+        }
+        const timer = setTimeout(() => {
+          setTourVisible(true);
+        }, 700);
+        return () => clearTimeout(timer);
       }
-      const timer = setTimeout(() => {
-        setTourVisible(true);
-      }, 700);
-      return () => clearTimeout(timer);
     }
+
+    checkWalkthrough();
   }, [userLoading, userProfile.hasSeenWalkthrough, userProfile?.id]);
 
   const handleTourComplete = React.useCallback(() => {

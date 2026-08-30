@@ -19,6 +19,7 @@ import { LegalDocumentModal, LegalDocType } from "./LegalDocumentModal";
 import { useLanguage } from "../context/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../types/i18n";
 import { useSubscription } from "../context/SubscriptionContext";
+import { useAppSettings } from "../lib/userSettings";
 
 interface SettingsModalProps {
   visible: boolean;
@@ -106,18 +107,7 @@ export function SettingsModal({
   visible, onClose, onSignOut, onRetakeQuiz, onReplayTour,
   userProfile, codeCopied, onCopyCode, onDeleteAccount,
 }: SettingsModalProps) {
-  const [notifWorkout, setNotifWorkout] = useState(true);
-  const [notifMorning, setNotifMorning] = useState(true);
-  const [notifWeekly, setNotifWeekly] = useState(true);
-  const [notifPhase, setNotifPhase] = useState(true);
-  const [soundMilestone, setSoundMilestone] = useState(true);
-  const [soundAmbient, setSoundAmbient] = useState(false);
-  const [hapticFeedback, setHapticFeedback] = useState(true);
-  const [adaptiveRecs, setAdaptiveRecs] = useState(true);
-  const [cycleSync, setCycleSync] = useState(true);
-  const [restDayInsights, setRestDayInsights] = useState(true);
-  const [analyticsOptIn, setAnalyticsOptIn] = useState(true);
-  const [crashReports, setCrashReports] = useState(true);
+  const { settings, updateSetting } = useAppSettings();
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [activeDoc, setActiveDoc] = useState<LegalDocType | null>(null);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
@@ -291,24 +281,24 @@ export function SettingsModal({
 
             <SectionHeader label="PERSONALIZATION" icon={Leaf} color={colors.sageDark} />
             <SettingsCard>
-              <SettingToggle label="AI-Adaptive Recommendations" sublabel="Tailors workouts daily to your cycle phase and energy level" value={adaptiveRecs} onToggle={(v) => { haptic(); setAdaptiveRecs(v); }} icon={Sparkles} iconColor={colors.primary} />
+              <SettingToggle label="AI-Adaptive Recommendations" sublabel="Tailors workouts daily to your cycle phase and energy level" value={settings.adaptiveRecs} onToggle={(v) => { haptic(); updateSetting('adaptiveRecs', v); }} icon={Sparkles} iconColor={colors.primary} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Cycle Phase Sync" sublabel="Aligns movement protocols to your hormonal flow" value={cycleSync} onToggle={(v) => { haptic(); setCycleSync(v); }} icon={Moon} iconColor={colors.rose} />
+              <SettingToggle label="Cycle Phase Sync" sublabel="Aligns movement protocols to your hormonal flow" value={settings.cycleSync} onToggle={(v) => { haptic(); updateSetting('cycleSync', v); }} icon={Moon} iconColor={colors.rose} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Rest Day Insights" sublabel="Recovery and cortisol reduction micro-guides on rest days" value={restDayInsights} onToggle={(v) => { haptic(); setRestDayInsights(v); }} icon={Heart} iconColor={colors.peach} />
+              <SettingToggle label="Rest Day Insights" sublabel="Recovery and cortisol reduction micro-guides on rest days" value={settings.restDayInsights} onToggle={(v) => { haptic(); updateSetting('restDayInsights', v); }} icon={Heart} iconColor={colors.peach} />
               <View style={sStyles.rowDivider} />
               <SettingAction label="Recalibrate Protocol and Quiz" sublabel="Update your phase, goals, and movement preferences" icon={RotateCcw} iconColor={colors.sageDark} onPress={() => { onClose(); onRetakeQuiz?.(); }} />
             </SettingsCard>
 
             <SectionHeader label="NOTIFICATIONS" icon={Bell} color={colors.primary} />
             <SettingsCard>
-              <SettingToggle label="Daily Morning Ritual Prompt" sublabel="A gentle nudge to begin your anchor routine" value={notifMorning} onToggle={(v) => { haptic(); setNotifMorning(v); }} icon={Bell} iconColor={colors.primary} />
+              <SettingToggle label="Daily Morning Ritual Prompt" sublabel="A gentle nudge to begin your anchor routine" value={settings.notifMorning} onToggle={(v) => { haptic(); updateSetting('notifMorning', v); }} icon={Bell} iconColor={colors.primary} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Workout Reminders" sublabel="Notify me when a scheduled session is ready" value={notifWorkout} onToggle={(v) => { haptic(); setNotifWorkout(v); }} icon={Activity} iconColor={colors.rose} />
+              <SettingToggle label="Workout Reminders" sublabel="Notify me when a scheduled session is ready" value={settings.notifWorkout} onToggle={(v) => { haptic(); updateSetting('notifWorkout', v); }} icon={Activity} iconColor={colors.rose} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Cycle Phase Change Alerts" sublabel="Know when your phase shifts so you can adapt your movement" value={notifPhase} onToggle={(v) => { haptic(); setNotifPhase(v); }} icon={Moon} iconColor={colors.sageDark} />
+              <SettingToggle label="Cycle Phase Change Alerts" sublabel="Know when your phase shifts so you can adapt your movement" value={settings.notifPhase} onToggle={(v) => { haptic(); updateSetting('notifPhase', v); }} icon={Moon} iconColor={colors.sageDark} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Weekly Recap Summary" sublabel="Every Monday: review your progress and plan the week ahead" value={notifWeekly} onToggle={(v) => { haptic(); setNotifWeekly(v); }} icon={CheckCircle2} iconColor={colors.peach} />
+              <SettingToggle label="Weekly Recap Summary" sublabel="Every Monday: review your progress and plan the week ahead" value={settings.notifWeekly} onToggle={(v) => { haptic(); updateSetting('notifWeekly', v); }} icon={CheckCircle2} iconColor={colors.peach} />
             </SettingsCard>
 
             <SectionHeader label="SOUND AND HAPTICS" icon={Volume2} color={colors.rose} />
@@ -316,11 +306,10 @@ export function SettingsModal({
               <SettingToggle
                 label="Milestone Sound Effects"
                 sublabel="Celebratory audio cue when finishing workouts and streaks"
-                value={soundMilestone}
+                value={settings.soundMilestone}
                 onToggle={(v) => {
                   haptic();
-                  setSoundMilestone(v);
-                  setSoundEffectsEnabled(v);
+                  updateSetting('soundMilestone', v);
                 }}
                 icon={Volume2}
                 iconColor={colors.rose}
@@ -329,10 +318,10 @@ export function SettingsModal({
               <SettingToggle
                 label="Ambient Workout Audio"
                 sublabel="Soft nature soundscape during active sessions"
-                value={soundAmbient}
+                value={settings.soundAmbient}
                 onToggle={(v) => {
                   haptic();
-                  setSoundAmbient(v);
+                  updateSetting('soundAmbient', v);
                 }}
                 icon={Leaf}
                 iconColor={colors.sageDark}
@@ -341,10 +330,9 @@ export function SettingsModal({
               <SettingToggle
                 label="Haptic Feedback"
                 sublabel="Tactile response on interactions and progress events"
-                value={hapticFeedback}
+                value={settings.hapticFeedback}
                 onToggle={(v) => {
-                  setHapticFeedback(v);
-                  setHapticsEnabled(v);
+                  updateSetting('hapticFeedback', v);
                   if (v) haptic();
                 }}
                 icon={Info}
@@ -370,9 +358,9 @@ export function SettingsModal({
 
             <SectionHeader label="PRIVACY AND DATA" icon={Shield} color={colors.sageDark} />
             <SettingsCard>
-              <SettingToggle label="Anonymous Analytics" sublabel="Help improve FortyWell by sharing anonymous usage patterns" value={analyticsOptIn} onToggle={(v) => { haptic(); setAnalyticsOptIn(v); }} icon={Shield} iconColor={colors.sageDark} />
+              <SettingToggle label="Anonymous Analytics" sublabel="Help improve FortyWell by sharing anonymous usage patterns" value={settings.analyticsOptIn} onToggle={(v) => { haptic(); updateSetting('analyticsOptIn', v); }} icon={Shield} iconColor={colors.sageDark} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Crash Reports" sublabel="Automatically send error reports to help us fix issues faster" value={crashReports} onToggle={(v) => { haptic(); setCrashReports(v); }} icon={Activity} iconColor={colors.textTertiary} />
+              <SettingToggle label="Crash Reports" sublabel="Automatically send error reports to help us fix issues faster" value={settings.crashReports} onToggle={(v) => { haptic(); updateSetting('crashReports', v); }} icon={Activity} iconColor={colors.textTertiary} />
               <View style={sStyles.rowDivider} />
               <SettingAction
                 label="Privacy Policy"

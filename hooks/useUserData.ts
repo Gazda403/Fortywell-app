@@ -6,6 +6,7 @@ import { OnboardingAnswers } from '../types/onboarding';
 
 const STORAGE_KEY_WALKTHROUGH = '@fortywell_has_seen_walkthrough_v1';
 const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
+const STORAGE_KEY_LIFETIME_STATS = '@fortywell_cached_lifetime_stats_v1';
 
 export interface UserProfile {
   id?: string;
@@ -95,6 +96,14 @@ let cachedFeelingCheckins: FeelingCheckinRecord[] | null = null;
 let lastUserDataFetchTime = 0;
 let pendingFetchPromise: Promise<void> | null = null;
 const CACHE_TTL_MS = 60000; // 60 seconds
+
+// Hydrate cachedLifetimeStats from AsyncStorage synchronously/initially
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_LIFETIME_STATS);
+    if (raw) cachedLifetimeStats = JSON.parse(raw);
+  } catch (_) {}
+}
 
 export function useUserData(answers?: OnboardingAnswers | null) {
   const [loading, setLoading] = useState(!cachedUserProfile);
@@ -260,13 +269,19 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         }
       } catch (_) {}
 
-      // Load Supabase logs
+      // Load Supabase logs explicitly filtered by current user
       const exerciseCounts = new Map<string, number>();
       try {
-        const { data: logs } = await supabase
+        let logsQuery = supabase
           .from('workout_logs')
           .select('*')
           .eq('status', 'completed');
+
+        if (user?.id) {
+          logsQuery = logsQuery.eq('user_id', user.id);
+        }
+
+        const { data: logs } = await logsQuery;
 
         if (logs && logs.length > 0) {
           logs.forEach((l: any) => {
@@ -315,6 +330,9 @@ export function useUserData(answers?: OnboardingAnswers | null) {
           STORAGE_KEY_COMPLETED_DATES,
           JSON.stringify(Array.from(completedDates))
         );
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(Array.from(completedDates)));
+        }
       } catch (_) {}
 
       setCompletedDatesSet(new Set(completedDates));
@@ -350,12 +368,26 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       cachedLifetimeStats = newStats;
       setLifetimeStats(newStats);
 
-      // 4. Fetch feeling check-ins
+      // Persist stats locally so they load instantly on next open
       try {
-        const { data: checkinRows } = await supabase
+        await AsyncStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(newStats));
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(newStats));
+        }
+      } catch (_) {}
+
+      // 4. Fetch feeling check-ins explicitly for current user
+      try {
+        let checkinQuery = supabase
           .from('feeling_checkins')
           .select('*')
           .order('date', { ascending: true });
+
+        if (user?.id) {
+          checkinQuery = checkinQuery.eq('user_id', user.id);
+        }
+
+        const { data: checkinRows } = await checkinQuery;
 
         if (checkinRows && checkinRows.length > 0) {
           const parsedFeelings = checkinRows.map((r: any) => ({
@@ -666,19 +698,28 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       setCompletedDatesSet((prev) => {
         const next = new Set(prev);
         next.add(today);
-        AsyncStorage.setItem(
-          STORAGE_KEY_COMPLETED_DATES,
-          JSON.stringify(Array.from(next))
-        ).catch(() => {});
+        const arr = Array.from(next);
+        AsyncStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(arr)).catch(() => {});
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(arr));
+        }
         return next;
       });
 
-      setLifetimeStats((prev) => ({
-        ...prev,
-        totalWorkouts: prev.totalWorkouts + 1,
-        totalTimeHours: Math.round(((prev.totalTimeHours * 60 + minutes) / 60) * 10) / 10,
-        totalVolumeKg: prev.totalVolumeKg + volumeKg,
-      }));
+      setLifetimeStats((prev) => {
+        const nextStats: LifetimeStats = {
+          ...prev,
+          totalWorkouts: prev.totalWorkouts + 1,
+          totalTimeHours: Math.round(((prev.totalTimeHours * 60 + minutes) / 60) * 10) / 10,
+          totalVolumeKg: prev.totalVolumeKg + volumeKg,
+        };
+        cachedLifetimeStats = nextStats;
+        AsyncStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(nextStats)).catch(() => {});
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(nextStats));
+        }
+        return nextStats;
+      });
     },
     []
   );

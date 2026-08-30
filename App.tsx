@@ -28,6 +28,7 @@ import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageProvider } from './context/LanguageContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { getStoredSettings } from './lib/userSettings';
 
 const STORAGE_PROFILE_KEY = '@fortywell_completed_profile';
 const STORAGE_ONBOARDING_COMPLETED_KEY = '@fortywell_onboarding_completed';
@@ -103,6 +104,9 @@ export default function App() {
 
     async function checkAuthSession() {
       try {
+        // Load persistent settings (sound, haptics, notifications)
+        getStoredSettings().catch(() => {});
+
         // 1. Try reading cached profile from local storage immediately
         let localProfile: OnboardingAnswers | null = null;
         try {
