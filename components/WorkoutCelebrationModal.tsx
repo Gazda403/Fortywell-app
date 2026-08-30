@@ -53,6 +53,7 @@ import { WorkoutSummaryData } from './ActiveWorkoutScreen';
 import { playWorkoutCelebrationChime } from '../lib/audioManager';
 import { useFavorites } from '../lib/useFavorites';
 import { useSavedSessions, summaryToSessionData, SavedSession } from '../lib/useSavedSessions';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -342,6 +343,7 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const { saveSession } = useSavedSessions();
+  const { t } = useLanguage();
 
   const sheetY = useSharedValue(H);
   const headerScale = useSharedValue(0.7);
@@ -413,7 +415,14 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
           completedSets: summary.completedSets,
           totalSets: summary.totalSets,
           totalVolumeKg: summary.totalVolumeKg,
-          exercises: summary.exercises,
+          exercises: summary.exercises.map((e) => ({
+            name: e.name,
+            sets: e.sets.map((s) => ({
+              completed: s.completed,
+              reps: parseFloat(s.reps) || 0,
+              weight: parseFloat(s.weight) || 0,
+            })),
+          })),
         }
       );
 
@@ -502,7 +511,7 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
               >
                 <Trophy size={38} color="#FFF" fill="rgba(255,255,255,0.25)" />
               </LinearGradient>
-              <Text style={cel_s.congrats}>Workout Complete!</Text>
+              <Text style={cel_s.congrats}>{t('workout.completedHeader')}</Text>
               <Text style={cel_s.subLine}>{summary.workoutTitle}</Text>
             </Animated.View>
 
@@ -518,17 +527,17 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
             <View style={cel_s.statsRow}>
               <StatPill
                 icon={<CheckCircle2 size={18} color={colors.sage} />}
-                label="SETS DONE"
+                label={t('workout.setsDone').toUpperCase()}
                 value={`${summary.completedSets}/${summary.totalSets}`}
               />
               <StatPill
                 icon={<Flame size={18} color={colors.primaryDark} />}
-                label="DURATION"
+                label={t('workout.totalTime').toUpperCase()}
                 value={durationStr}
               />
               <StatPill
                 icon={<Target size={18} color={colors.warning} />}
-                label="VOLUME"
+                label={t('workout.totalVolume').toUpperCase()}
                 value={`${summary.totalVolumeKg}kg`}
               />
             </View>
@@ -592,7 +601,7 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
                       />
                     </Animated.View>
                     <Text style={[cel_s.favBtnText, sessionSaved && cel_s.favBtnTextActive]}>
-                      {sessionSaved ? 'Saved!' : 'Save Session'}
+                      {sessionSaved ? t('celebration.savedButton') : t('workout.saveRoutine')}
                     </Text>
                   </>
                 )}
@@ -606,7 +615,7 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
                 accessibilityLabel="Share workout achievement on social media"
               >
                 <Share2 size={16} color={colors.primaryDark} strokeWidth={2.2} />
-                <Text style={cel_s.shareBtnText}>Share Story</Text>
+                <Text style={cel_s.shareBtnText}>{t('workout.shareStory')}</Text>
               </Pressable>
             </View>
 

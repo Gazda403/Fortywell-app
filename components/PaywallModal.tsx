@@ -207,8 +207,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onDismissToGarden })
                 {selectedInterval === 'annual' && (
                   <LinearGradient
                     colors={['rgba(201,99,116,0.06)', 'rgba(159,66,82,0.03)']}
-                    style={StyleSheet.absoluteFillObject}
-                    borderRadius={16}
+                    style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
                   />
                 )}
 
@@ -246,8 +245,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onDismissToGarden })
                 {selectedInterval === 'monthly' && (
                   <LinearGradient
                     colors={['rgba(201,99,116,0.06)', 'rgba(159,66,82,0.03)']}
-                    style={StyleSheet.absoluteFillObject}
-                    borderRadius={16}
+                    style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
                   />
                 )}
 

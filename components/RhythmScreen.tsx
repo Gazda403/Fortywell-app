@@ -54,6 +54,7 @@ import { SessionClassificationModal } from './SessionClassificationModal';
 import { ErrorBanner } from './ErrorBanner';
 import { ErrorToast, ErrorToastVariant } from './ErrorToast';
 import { CycleSetupSheet } from './CycleSetupSheet';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -85,6 +86,8 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({ answers, onStartWork
     toggleCycleOptIn,
     updateCycleStart,
   } = useRhythmData(answers);
+
+  const { t } = useLanguage();
 
   // Selected day for the expanded view (defaults to today)
   const todaySummary = weekDays.find((d) => d.isToday) || weekDays[0];
@@ -254,11 +257,11 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({ answers, onStartWork
         <View style={styles.header}>
         <View style={styles.kickerRow}>
           <View style={styles.activeDot} />
-          <Text style={styles.headerKicker}>YOUR RHYTHM</Text>
+          <Text style={styles.headerKicker}>{t('rhythm.headerKicker')}</Text>
         </View>
-        <Text style={styles.headline}>Your Week, At a Glance</Text>
+        <Text style={styles.headline}>{t('rhythm.title')}</Text>
         <Text style={styles.subtitle}>
-          See your resets, your cycle, and what's ahead.
+          {t('rhythm.dragToReorder')}
         </Text>
       </View>
 
@@ -267,8 +270,8 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({ answers, onStartWork
         <View style={styles.weekStripCard}>
           <View style={styles.weekStripHeaderRow}>
             <View>
-              <Text style={styles.sectionKicker}>7-DAY RESET PROGRESS</Text>
-              <Text style={styles.weekStripSubtitle}>Weekly consistency across Morning, Main & Night slots</Text>
+              <Text style={styles.sectionKicker}>{t('rhythm.weeklyPlan')}</Text>
+              <Text style={styles.weekStripSubtitle}>{t('rhythm.dragToReorder')}</Text>
             </View>
             <View style={styles.weeklyCountBadge}>
               <Text style={styles.weeklyCountText}>

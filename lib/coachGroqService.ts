@@ -25,7 +25,7 @@ User Profile Context:
 - Weekly training frequency goal: ${answers.weekly_frequency || '3-4 days'}
 - Time commitment: ${answers.time_commitment === '15_min' ? '15 minutes' : answers.time_commitment === '45_min' ? '45 minutes' : '25-30 minutes'}
 - Training location: ${answers.training_location === 'gym' ? 'Gym' : 'Home'}
-- Menstrual cycle status: ${answers.menstrual_status || 'Not specified'}
+- Target focus: ${answers.target_focus?.join(', ') || 'General longevity & joint care'}
 ${recentData?.lastWorkout ? `- Last workout performed: ${recentData.lastWorkout}` : ''}
 ${recentData?.currentFeeling ? `- User's current reported feeling: ${recentData.currentFeeling}` : ''}
 ` : '';

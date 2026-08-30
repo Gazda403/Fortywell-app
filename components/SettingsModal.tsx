@@ -112,7 +112,7 @@ export function SettingsModal({
   const [activeDoc, setActiveDoc] = useState<LegalDocType | null>(null);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
 
-  const { language, setLanguage, languageOptions } = useLanguage();
+  const { language, setLanguage, languageOptions, t } = useLanguage();
   const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   const {
@@ -163,44 +163,33 @@ export function SettingsModal({
             </LinearGradient>
             <Text style={sStyles.heroName}>{fullName}</Text>
             {email ? <Text style={sStyles.heroEmail}>{email}</Text> : null}
-
             <View style={sStyles.statsPillRow}>
               <View style={sStyles.statsPill}>
-                <Clock size={11} color={colors.primary} />
-                <Text style={sStyles.statsPillLabel}>CADENCE</Text>
-                <Text style={sStyles.statsPillVal}>{cadence}</Text>
+                <Sparkles size={11} color={colors.primaryDark} strokeWidth={2.2} />
+                <Text style={sStyles.statsPillVal}>
+                  {isSubscribed ? t('settings.activeSubscription') : isPaused ? "PAUSED" : t('settings.trialActive')}
+                </Text>
               </View>
               <View style={sStyles.statsPillDivider} />
               <View style={sStyles.statsPill}>
-                <Activity size={11} color={colors.sageDark} />
-                <Text style={sStyles.statsPillLabel}>SESSION</Text>
-                <Text style={sStyles.statsPillVal}>{sessionWindow}</Text>
+                <Clock size={11} color={colors.sageDark} strokeWidth={2.2} />
+                <Text style={[sStyles.statsPillVal, { color: colors.sageDark }]}>{sessionWindow}</Text>
               </View>
-              {userProfile.isEmailVerified ? (
-                <>
-                  <View style={sStyles.statsPillDivider} />
-                  <View style={sStyles.statsPill}>
-                    <CheckCircle2 size={11} color={colors.sageDark} />
-                    <Text style={[sStyles.statsPillVal, { color: colors.sageDark }]}>VERIFIED</Text>
-                  </View>
-                </>
-              ) : null}
             </View>
           </LinearGradient>
 
           <ScrollView style={sStyles.scrollBody} contentContainerStyle={sStyles.scrollContent} showsVerticalScrollIndicator={false}>
-            <SectionHeader label="MEMBERSHIP & ACCESS" icon={Crown} color={colors.primaryDark} />
+            <SectionHeader label={t('settings.membership')} icon={Crown} color={colors.primary} />
             <SettingsCard>
-              {/* ── Status ── */}
               <View style={sStyles.membershipStatusHeader}>
                 <View style={sStyles.statusIndicatorRow}>
                   <View style={[
                     sStyles.statusDot,
-                    isSubscribed ? sStyles.statusDotSubscribed : isPaused ? sStyles.statusDotPaused : sStyles.statusDotTrial,
+                    { backgroundColor: isSubscribed ? colors.sageDark : isPaused ? colors.error : colors.warning }
                   ]} />
                   <Text style={sStyles.statusKicker}>
                     {isSubscribed
-                      ? "ACTIVE SUBSCRIBER"
+                      ? t('settings.activeSubscription').toUpperCase()
                       : isPaused
                       ? "TRIAL EXPIRED · PAUSED"
                       : `7-DAY FREE TRIAL · DAY ${trialDayNumber}`}
@@ -208,7 +197,7 @@ export function SettingsModal({
                 </View>
                 <Text style={sStyles.statusTitle}>
                   {isSubscribed
-                    ? "Full Access Member"
+                    ? t('settings.activeSubscription')
                     : isPaused
                     ? "Read-Only Mode Active"
                     : `${trialDaysRemaining} day${trialDaysRemaining !== 1 ? "s" : ""} remaining`}
@@ -222,7 +211,6 @@ export function SettingsModal({
                 </Text>
               </View>
 
-              {/* ── Actions ── */}
               {!isSubscribed && (
                 <>
                   <View style={sStyles.rowDivider} />
@@ -270,7 +258,7 @@ export function SettingsModal({
                       <ExternalLink size={17} color={colors.textSecondary} strokeWidth={2} />
                     </View>
                     <View style={sStyles.settingRowTextWrap}>
-                      <Text style={sStyles.settingRowLabel}>Manage Subscription</Text>
+                      <Text style={sStyles.settingRowLabel}>{t('settings.manageSubscription')}</Text>
                       <Text style={sStyles.settingRowSublabel}>Pause, upgrade, or cancel via Lemon Squeezy portal</Text>
                     </View>
                     <ChevronRight size={17} color={colors.textTertiary} strokeWidth={2} />
@@ -279,9 +267,9 @@ export function SettingsModal({
               )}
             </SettingsCard>
 
-            <SectionHeader label="PERSONALIZATION" icon={Leaf} color={colors.sageDark} />
+            <SectionHeader label={t('settings.personalization')} icon={Leaf} color={colors.sageDark} />
             <SettingsCard>
-              <SettingToggle label="AI-Adaptive Recommendations" sublabel="Tailors workouts daily to your cycle phase and energy level" value={settings.adaptiveRecs} onToggle={(v) => { haptic(); updateSetting('adaptiveRecs', v); }} icon={Sparkles} iconColor={colors.primary} />
+              <SettingToggle label={t('settings.aiAdaptive')} sublabel={t('settings.aiAdaptiveSub')} value={settings.adaptiveRecs} onToggle={(v) => { haptic(); updateSetting('adaptiveRecs', v); }} icon={Sparkles} iconColor={colors.primary} />
               <View style={sStyles.rowDivider} />
               <SettingToggle label="Cycle Phase Sync" sublabel="Aligns movement protocols to your hormonal flow" value={settings.cycleSync} onToggle={(v) => { haptic(); updateSetting('cycleSync', v); }} icon={Moon} iconColor={colors.rose} />
               <View style={sStyles.rowDivider} />
@@ -290,22 +278,22 @@ export function SettingsModal({
               <SettingAction label="Recalibrate Protocol and Quiz" sublabel="Update your phase, goals, and movement preferences" icon={RotateCcw} iconColor={colors.sageDark} onPress={() => { onClose(); onRetakeQuiz?.(); }} />
             </SettingsCard>
 
-            <SectionHeader label="NOTIFICATIONS" icon={Bell} color={colors.primary} />
+            <SectionHeader label={t('settings.notifications')} icon={Bell} color={colors.primary} />
             <SettingsCard>
-              <SettingToggle label="Daily Morning Ritual Prompt" sublabel="A gentle nudge to begin your anchor routine" value={settings.notifMorning} onToggle={(v) => { haptic(); updateSetting('notifMorning', v); }} icon={Bell} iconColor={colors.primary} />
+              <SettingToggle label={t('settings.dailyReminders')} sublabel={t('settings.dailyRemindersSub')} value={settings.notifMorning} onToggle={(v) => { haptic(); updateSetting('notifMorning', v); }} icon={Bell} iconColor={colors.primary} />
               <View style={sStyles.rowDivider} />
               <SettingToggle label="Workout Reminders" sublabel="Notify me when a scheduled session is ready" value={settings.notifWorkout} onToggle={(v) => { haptic(); updateSetting('notifWorkout', v); }} icon={Activity} iconColor={colors.rose} />
               <View style={sStyles.rowDivider} />
               <SettingToggle label="Cycle Phase Change Alerts" sublabel="Know when your phase shifts so you can adapt your movement" value={settings.notifPhase} onToggle={(v) => { haptic(); updateSetting('notifPhase', v); }} icon={Moon} iconColor={colors.sageDark} />
               <View style={sStyles.rowDivider} />
-              <SettingToggle label="Weekly Recap Summary" sublabel="Every Monday: review your progress and plan the week ahead" value={settings.notifWeekly} onToggle={(v) => { haptic(); updateSetting('notifWeekly', v); }} icon={CheckCircle2} iconColor={colors.peach} />
+              <SettingToggle label={t('settings.cycleInsights')} sublabel={t('settings.cycleInsightsSub')} value={settings.notifWeekly} onToggle={(v) => { haptic(); updateSetting('notifWeekly', v); }} icon={CheckCircle2} iconColor={colors.peach} />
             </SettingsCard>
 
-            <SectionHeader label="SOUND AND HAPTICS" icon={Volume2} color={colors.rose} />
+            <SectionHeader label={t('settings.audioHaptics')} icon={Volume2} color={colors.rose} />
             <SettingsCard>
               <SettingToggle
-                label="Milestone Sound Effects"
-                sublabel="Celebratory audio cue when finishing workouts and streaks"
+                label={t('settings.soundEffects')}
+                sublabel={t('settings.soundEffectsSub')}
                 value={settings.soundMilestone}
                 onToggle={(v) => {
                   haptic();
@@ -328,8 +316,8 @@ export function SettingsModal({
               />
               <View style={sStyles.rowDivider} />
               <SettingToggle
-                label="Haptic Feedback"
-                sublabel="Tactile response on interactions and progress events"
+                label={t('settings.hapticFeedback')}
+                sublabel={t('settings.hapticFeedbackSub')}
                 value={settings.hapticFeedback}
                 onToggle={(v) => {
                   updateSetting('hapticFeedback', v);
@@ -343,7 +331,7 @@ export function SettingsModal({
             <SectionHeader label="APP EXPERIENCE" icon={Compass} color={colors.primary} />
             <SettingsCard>
               <SettingAction
-                label="App Language"
+                label={t('settings.appLanguage')}
                 sublabel={`${currentLang.flag}  ${currentLang.nativeLabel}`}
                 icon={Globe}
                 iconColor={colors.primary}
@@ -351,7 +339,7 @@ export function SettingsModal({
                 rightLabel={currentLang.flag}
               />
               <View style={sStyles.rowDivider} />
-              <SettingAction label="Take the Guided App Tour" sublabel="Rediscover every feature with a curated walkthrough" icon={Compass} iconColor={colors.primary} onPress={() => { onClose(); onReplayTour?.(); }} />
+              <SettingAction label={t('settings.replayTour')} sublabel="Rediscover every feature with a curated walkthrough" icon={Compass} iconColor={colors.primary} onPress={() => { onClose(); onReplayTour?.(); }} />
               <View style={sStyles.rowDivider} />
               <SettingAction label="App Version" sublabel="FortyWell PWA" icon={Info} iconColor={colors.textTertiary} onPress={() => {}} rightLabel="1.0.0" />
             </SettingsCard>
@@ -363,7 +351,7 @@ export function SettingsModal({
               <SettingToggle label="Crash Reports" sublabel="Automatically send error reports to help us fix issues faster" value={settings.crashReports} onToggle={(v) => { haptic(); updateSetting('crashReports', v); }} icon={Activity} iconColor={colors.textTertiary} />
               <View style={sStyles.rowDivider} />
               <SettingAction
-                label="Privacy Policy"
+                label={t('settings.privacyPolicy')}
                 sublabel="How we collect, store, and protect your data"
                 icon={Lock}
                 iconColor={colors.sageDark}
@@ -374,7 +362,7 @@ export function SettingsModal({
               />
               <View style={sStyles.rowDivider} />
               <SettingAction
-                label="Terms of Service"
+                label={t('settings.termsOfService')}
                 sublabel="Your rights and responsibilities as a member"
                 icon={FileText}
                 iconColor={colors.sageDark}
@@ -409,7 +397,7 @@ export function SettingsModal({
               />
               <View style={sStyles.rowDivider} />
               <SettingAction
-                label="Medical Disclaimer"
+                label={t('settings.medicalDisclaimer')}
                 sublabel="FortyWell is not a substitute for professional medical advice"
                 icon={Info}
                 iconColor={colors.warning}
@@ -442,7 +430,7 @@ export function SettingsModal({
             <SettingsCard>
               {onSignOut && (
                 <>
-                  <SettingAction label="Sign Out" sublabel="You can sign back in at any time" icon={LogOut} onPress={() => { onClose(); onSignOut(); }} destructive />
+                  <SettingAction label={t('settings.signOut')} sublabel="You can sign back in at any time" icon={LogOut} onPress={() => { onClose(); onSignOut(); }} destructive />
                   <View style={sStyles.rowDivider} />
                 </>
               )}
@@ -564,6 +552,7 @@ const sStyles = StyleSheet.create({
   statusDotTrial: { backgroundColor: "#B87D2B" },
   statusKicker: { fontSize: 10, fontFamily: fontFamilies.monoBold, color: colors.textTertiary, letterSpacing: 1.2 },
   statusTitle: { fontSize: 16, fontFamily: fontFamilies.soria, fontWeight: "700", color: colors.textPrimary, marginBottom: 2 },
+  statusDesc: { fontSize: 12.5, fontFamily: fontFamilies.sansRegular, color: colors.textSecondary, lineHeight: 18 },
   subscribeNowBtn: {
     marginHorizontal: 16,
     marginVertical: 12,

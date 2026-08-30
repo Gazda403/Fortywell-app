@@ -55,6 +55,7 @@ import {
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { workoutSessionManager } from '../lib/workoutSessionManager';
+import { useLanguage } from '../context/LanguageContext';
 
 const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 
@@ -512,6 +513,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   const [showCancelSheet, setShowCancelSheet] = useState(false);
   const [showFinishSheet, setShowFinishSheet] = useState(false);
   const [celebration, setCelebration] = useState<WorkoutSummaryData | null>(null);
+  const { t } = useLanguage();
 
   const slideY = useSharedValue(SCREEN_H);
 
@@ -947,7 +949,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                   style={s.finishGrad}
                 >
                   <Check size={14} color="#FFF" strokeWidth={2.5} />
-                  <Text style={s.finishTxt}>DONE</Text>
+                  <Text style={s.finishTxt}>{t('common.done').toUpperCase()}</Text>
                 </LinearGradient>
               </Pressable>
             </View>
@@ -981,7 +983,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
               {/* Add Exercise Button */}
               <Pressable style={s.addExBtn} onPress={() => setAddExVisible(true)}>
                 <Plus size={16} color={colors.primaryDark} strokeWidth={2} />
-                <Text style={s.addExTxt}>ADD EXERCISE</Text>
+                <Text style={s.addExTxt}>{t('workout.addSet').toUpperCase()}</Text>
               </Pressable>
             </ScrollView>
           </SafeAreaView>

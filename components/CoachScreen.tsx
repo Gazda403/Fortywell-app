@@ -72,6 +72,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { useUserData } from '../hooks/useUserData';
 import { useSubscription } from '../context/SubscriptionContext';
+import { useLanguage } from '../context/LanguageContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -473,6 +474,7 @@ const FeelingCheckIn: React.FC<{
 export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   const { userProfile, feelingCheckins, logFeeling } = useUserData(answers);
   const { isPaused, openPaywall } = useSubscription();
+  const { t } = useLanguage();
   const [feelingHistory, setFeelingHistory] = useState<FeelingEntry[]>([]);
 
   // 1:1 Texting Coach ($55/mo) preferred app
@@ -856,8 +858,8 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         {/* ── HEADER ── */}
         <View style={s.header}>
           <View style={{ flex: 1 }}>
-            <Text style={s.headerKicker}>YOUR PERSONAL COACH</Text>
-            <Text style={s.headerTitle}>Coach</Text>
+            <Text style={s.headerKicker}>{t('coach.headerKicker')}</Text>
+            <Text style={s.headerTitle}>{t('coach.title')}</Text>
           </View>
           <View style={s.avatarWrap}>
             <LinearGradient colors={['#D07887', '#9F4252']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.avatar}>
@@ -874,14 +876,14 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         <View style={s.disclaimer}>
           <Info size={12} color={colors.textTertiary} strokeWidth={1.8} />
           <Text style={s.disclaimerText}>
-            Wellness guidance only. For pain or health symptoms, always see a professional.
+            {t('coach.disclaimer')}
           </Text>
         </View>
 
         {/* ── TODAY'S INSIGHT — DARK HERO CARD ── */}
         <View style={s.section}>
           <View style={s.sectionRow}>
-            <Text style={s.sectionKicker}>TODAY'S INSIGHT</Text>
+            <Text style={s.sectionKicker}>{t('coach.todaysInsight')}</Text>
             <View style={s.dotRow}>
               {dailyInsights.map((_, i) => (
                 <View key={i} style={[s.dot, i === activeInsight && s.dotActive]} />
@@ -922,10 +924,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         {/* ── TODAY'S HABITS ── */}
         <View style={s.section}>
           <View style={s.sectionRow}>
-            <Text style={s.sectionKicker}>TODAY'S HABITS</Text>
+            <Text style={s.sectionKicker}>{t('coach.todaysHabits')}</Text>
             <View style={[s.pillBadge, { backgroundColor: colors.sageSoft, borderColor: colors.sageBorder }]}>
               <Text style={[s.pillBadgeText, { color: colors.sageDark }]}>
-                {checkedCount}/{habits.length} done
+                {t('coach.habitsDone', { done: checkedCount, total: habits.length })}
               </Text>
             </View>
           </View>
@@ -969,7 +971,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
             {checkedCount === habits.length && (
               <View style={s.allDoneBanner}>
                 <Sparkles size={14} color={colors.sageDark} strokeWidth={1.8} />
-                <Text style={s.allDoneText}>All habits done today — you're building something real.</Text>
+                <Text style={s.allDoneText}>{t('coach.allHabitsDone')}</Text>
               </View>
             )}
           </View>
@@ -980,23 +982,23 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
           {/* Section header */}
           <View style={s.sectionRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={s.sectionKicker}>TALK TO YOUR COACH</Text>
+              <Text style={s.sectionKicker}>{t('coach.talkToCoach')}</Text>
               <View style={s.warmPill}>
                 <Sparkles size={9} color={colors.primaryDark} strokeWidth={2} />
-                <Text style={s.warmPillText}>ADAPTS TO YOU</Text>
+                <Text style={s.warmPillText}>{t('coach.adaptsToYou')}</Text>
               </View>
             </View>
             <View style={s.weeklySignalsBadge}>
               <Database size={10} color={colors.sageDark} strokeWidth={2} />
-              <Text style={s.weeklySignalsText}>{weeklySignalsCount} insights saved</Text>
+              <Text style={s.weeklySignalsText}>{t('coach.insightsSaved', { count: weeklySignalsCount })}</Text>
             </View>
           </View>
 
           {/* Warm conversational prompt */}
           <View style={s.chatPromptBanner}>
-            <Text style={s.chatHeroPromptTitle}>How are you feeling right now?</Text>
+            <Text style={s.chatHeroPromptTitle}>{t('coach.howAreYouFeeling')}</Text>
             <Text style={s.chatHeroPromptSubtitle}>
-              Tell your coach what’s going on with your body or energy today. We'll adapt your workout and log insights for your weekly recovery profile.
+              {t('coach.logMoodEnergySubtitle')}
             </Text>
           </View>
 

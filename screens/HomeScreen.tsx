@@ -78,6 +78,7 @@ import { useOfflineSync, getActiveSessionCheckpoint, clearActiveSessionCheckpoin
 import { useLanguage } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { PaywallModal } from '../components/PaywallModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 

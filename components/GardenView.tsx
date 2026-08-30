@@ -46,6 +46,7 @@ import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
 import { useUserData, GardenProgress, LifetimeStats, TopExerciseItem } from '../hooks/useUserData';
+import { useLanguage } from '../context/LanguageContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -91,6 +92,7 @@ export interface GardenViewProps {
 
 export const GardenView: React.FC<GardenViewProps> = (props) => {
   const hookData = useUserData();
+  const { t } = useLanguage();
   const gardenProgress = props.gardenProgress || hookData.gardenProgress;
   const lifetimeStats = props.lifetimeStats || hookData.lifetimeStats;
   const topExercises = props.topExercises || hookData.topExercises || DEFAULT_FAVORITE_EXERCISES;
@@ -250,11 +252,11 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
       <View style={styles.header}>
         <View style={styles.kickerRow}>
           <Sparkles size={13} color={colors.primary} />
-          <Text style={styles.kickerText}>SANCTUARY & BIORHYTHM</Text>
+          <Text style={styles.kickerText}>{t('garden.headerKicker')}</Text>
         </View>
-        <Text style={styles.headerTitle}>Here is your garden</Text>
+        <Text style={styles.headerTitle}>{t('garden.title')}</Text>
         <Text style={styles.headerSubtitle}>
-          A living reflection of your weekly consistency. Every movement session nourishes your sanctuary.
+          {t('garden.subtitle')}
         </Text>
       </View>
 
@@ -610,15 +612,15 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
       <View style={styles.statsSection}>
         <View style={styles.kickerRow}>
           <Trophy size={13} color={colors.primary} />
-          <Text style={styles.kickerText}>LIFETIME MILESTONES</Text>
+          <Text style={styles.kickerText}>{t('garden.lifetimeImpact')}</Text>
         </View>
-        <Text style={styles.sectionHeading}>Your Sanctuary Impact</Text>
+        <Text style={styles.sectionHeading}>{t('garden.lifetimeImpact')}</Text>
 
         <View style={styles.statsGrid}>
           <View style={styles.statBox}>
             <Trophy size={18} color={colors.primary} />
             <Text style={styles.statBoxVal}>{lifetimeStats.totalWorkouts}</Text>
-            <Text style={styles.statBoxLbl}>WORKOUTS</Text>
+            <Text style={styles.statBoxLbl}>{t('nav.today').toUpperCase()}</Text>
           </View>
           <View style={styles.statBox}>
             <Dumbbell size={18} color={colors.sageDark} />
@@ -634,7 +636,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
               {lifetimeStats.currentStreak}
               <Text style={{ fontSize: 11 }}>d</Text>
             </Text>
-            <Text style={styles.statBoxLbl}>STREAK</Text>
+            <Text style={styles.statBoxLbl}>{t('home.activeStreak').toUpperCase()}</Text>
           </View>
           <View style={styles.statBox}>
             <Clock size={18} color={colors.primaryDark} />
