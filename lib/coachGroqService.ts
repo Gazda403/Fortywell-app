@@ -13,7 +13,10 @@ export interface GroqResponse {
 /**
  * Context to provide to the AI about the FortyWell app
  */
-function buildSystemContext(answers?: OnboardingAnswers | null): string {
+function buildSystemContext(
+  answers?: OnboardingAnswers | null,
+  recentData?: { lastWorkout?: string; currentFeeling?: string }
+): string {
   const userContext = answers ? `
 User Profile Context:
 - Name: ${answers.first_name || 'User'}
@@ -23,6 +26,8 @@ User Profile Context:
 - Time commitment: ${answers.time_commitment === '15_min' ? '15 minutes' : answers.time_commitment === '45_min' ? '45 minutes' : '25-30 minutes'}
 - Training location: ${answers.training_location === 'gym' ? 'Gym' : 'Home'}
 - Menstrual cycle status: ${answers.menstrual_status || 'Not specified'}
+${recentData?.lastWorkout ? `- Last workout performed: ${recentData.lastWorkout}` : ''}
+${recentData?.currentFeeling ? `- User's current reported feeling: ${recentData.currentFeeling}` : ''}
 ` : '';
 
   return `You are FortyWell's AI Coach — a compassionate, science-informed fitness coach specifically designed for women 40+.
@@ -57,27 +62,25 @@ Remember: You're coaching women over 40. Adapt your recommendations for:
 }
 
 /**
- * Determine if a message should be handled by AI instead of pre-built responses
+ * Determine if a message should be handled by Groq AI instead of a pre-built response.
+ *
+ * DESIGN PRINCIPLE: Groq AI is the primary responder for all real conversation.
+ * Pre-built canned replies are only used for extremely short/simple messages
+ * (≤3 words or bare greetings) where adding AI latency is unnecessary.
  */
-export function shouldUseGroqAI(input: string, intentType: string): boolean {
+export function shouldUseGroqAI(input: string, _intentType: string): boolean {
   const text = input.toLowerCase().trim();
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
 
-  // Always use AI for general chat and questions not covered by intent engine
-  if (intentType === 'general_chat') {
-    // But skip AI for simple greetings
-    const simpleGreetings = ['hello', 'hi ', 'hey', 'good morning', 'good evening', 'good afternoon'];
-    if (simpleGreetings.some(g => text === g || text.startsWith(g + ' '))) {
-      return false;
-    }
-    return true;
-  }
+  // Very short messages (≤3 words) get fast pre-built replies
+  if (wordCount <= 3) return false;
 
-  // Use AI for vague or unclear intents
-  if (intentType === 'question' && text.length > 100) {
-    return true; // Complex questions benefit from AI
-  }
+  // Bare greeting phrases → pre-built
+  const bareGreetings = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'good afternoon', 'good night', 'thanks', 'thank you', 'ok', 'okay'];
+  if (bareGreetings.some(g => text === g || text === g + '!')) return false;
 
-  return false;
+  // Everything else (4+ words) → Groq AI for a real, personalised response
+  return true;
 }
 
 /**
@@ -86,15 +89,16 @@ export function shouldUseGroqAI(input: string, intentType: string): boolean {
 export async function sendToGroq(
   userMessage: string,
   conversationHistory: Array<{ role: 'user' | 'assistant' | 'coach'; content: string }>,
-  answers?: OnboardingAnswers | null
+  answers?: OnboardingAnswers | null,
+  recentData?: { lastWorkout?: string; currentFeeling?: string }
 ): Promise<GroqResponse> {
   try {
-    const systemMessage = buildSystemContext(answers);
+    const systemMessage = buildSystemContext(answers, recentData);
 
-    // Build conversation messages
+    // Build conversation messages — keep last 8 turns for better continuity
     const messages = [
       { role: 'system' as const, content: systemMessage },
-      ...conversationHistory.slice(-6).map(msg => ({
+      ...conversationHistory.slice(-8).map(msg => ({
         role: msg.role === 'coach' ? 'assistant' as const : msg.role as 'user' | 'assistant',
         content: msg.content,
       })),

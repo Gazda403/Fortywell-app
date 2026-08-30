@@ -702,10 +702,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     setIsTyping(true);
     Animated.timing(typingOpac, { toValue: 1, duration: 200, useNativeDriver: true }).start();
 
-    // Step 1: Detect intent of the message
+    // Step 1: Detect intent — used for DB side-effects regardless of who replies
     const intentResult = detectIntent(cleanText, answers);
 
-    // Step 2: If it's a goal preference, save it to Supabase and update signals count
+    // Step 2: If it's a goal preference, always save it to Supabase
     if (intentResult.intent === 'goal_preference' && intentResult.trainingPreference) {
       setWeeklySignalsCount((prev) => prev + 1);
       try {
@@ -716,58 +716,64 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
       } catch (_) {}
     }
 
-    // Step 3: Determine if we should use Groq AI
+    // Step 3: Decide who generates the reply
     const useAI = shouldUseGroqAI(cleanText, intentResult.intent);
 
-    let replyText: string = '';
+    let replyText = '';
     let classification: ClassificationResult | undefined;
 
     if (useAI) {
-      // Use Groq for general chat and complex questions
-      const conversationHistory = messages.map(m => ({
-        role: m.role,
-        content: m.text,
-      }));
+      // ── Groq AI path (primary for all 4+ word messages) ────────────────
+      const todayFeeling = todayEntry
+        ? `Mood ${todayEntry.mood}/5, Energy ${todayEntry.energy}/5`
+        : undefined;
 
-      const latency = isDeepThink ? 2000 : 1500;
+      const conversationHistory = messages.map(m => ({ role: m.role, content: m.text }));
 
-      // Get AI response first
-      let aiReplyText = '';
-      const groqResult = await sendToGroq(cleanText, conversationHistory, answers);
+      const groqResult = await sendToGroq(cleanText, conversationHistory, answers, {
+        currentFeeling: todayFeeling,
+      });
 
-      if (groqResult.success && groqResult.reply) {
-        aiReplyText = groqResult.reply;
-      } else {
-        // Fallback to pre-built if Groq fails
-        console.warn('Groq failed, falling back to pre-built:', groqResult.error);
-        aiReplyText = getFallbackReply();
+      replyText = (groqResult.success && groqResult.reply)
+        ? groqResult.reply
+        : (intentResult.coachReply || getFallbackReply());
+
+      if (!groqResult.success) {
+        console.warn('Groq failed, using fallback:', groqResult.error);
       }
 
-      setTimeout(() => {
-        const coachMsg: CoachMessage = {
-          id: `c-${Date.now()}`,
-          role: 'coach',
-          text: aiReplyText,
-          timestamp: new Date(),
-          classification,
-          isDeepThink,
-        };
+      // Still run feeling classifier for DB side-effects even when Groq replies
+      if (intentResult.intent === 'feeling_checkin') {
+        classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
+        if (classification.shouldSaveForWeeklyAnalysis) {
+          setWeeklySignalsCount((prev) => prev + 1);
+        }
+      }
 
-        setIsTyping(false);
-        Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-        setMessages((prev) => [...prev, coachMsg]);
+      // Groq already took real time — deliver reply immediately
+      const coachMsg: CoachMessage = {
+        id: `c-${Date.now()}`,
+        role: 'coach',
+        text: replyText,
+        timestamp: new Date(),
+        classification,
+        isDeepThink,
+      };
 
-        try {
-          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (_) {}
+      setIsTyping(false);
+      Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+      setMessages((prev) => [...prev, coachMsg]);
 
-        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
-      }, latency);
+      try {
+        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (_) {}
+
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+
     } else {
-      // Use pre-built responses (existing logic)
+      // ── Pre-built path (simple greetings / ≤3 word messages) ───────────
       replyText = intentResult.coachReply;
 
-      // For feeling check-ins, fall back to the detailed feeling classifier
       if (intentResult.intent === 'feeling_checkin' || !replyText) {
         classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
         replyText = classification.coachReply;
@@ -801,7 +807,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     }
 
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [isDeepThink, answers, typingOpac, messages]);
+  }, [isDeepThink, answers, typingOpac, messages, todayEntry, isPaused, openPaywall]);
 
   const toggleVoiceRecording = () => {
     if (!isRecordingVoice) {
