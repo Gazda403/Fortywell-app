@@ -909,7 +909,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
 
   const totalSets = exercises.reduce((a, e) => a + e.sets.length, 0);
   const doneSets = exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
-  const currentElapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+  const currentElapsed = getElapsedSeconds();
 
   return (
     <RNModal

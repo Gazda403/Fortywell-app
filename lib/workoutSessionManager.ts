@@ -107,18 +107,22 @@ class WorkoutSessionManager {
       const repsDetail = currentSetReps ? ` • ${currentSetReps} reps${weightDetail}` : '';
       const overallProgress = totalSetsAll > 0 ? ` [${completedSetsTotal}/${totalSetsAll} sets done]` : '';
 
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: workoutTitle || 'FortyWell Active Workout',
-        artist: `${exerciseProgress}${currentExerciseName || 'Active Routine'}`,
-        album: `${setProgress}${repsDetail}${overallProgress}`,
-        artwork: [
-          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-          { src: '/web-app-manifest-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png' },
-        ],
-      });
+      if (typeof window !== 'undefined' && 'MediaMetadata' in window) {
+        navigator.mediaSession.metadata = new (window as any).MediaMetadata({
+          title: workoutTitle || 'FortyWell Active Workout',
+          artist: `${exerciseProgress}${currentExerciseName || 'Active Routine'}`,
+          album: `${setProgress}${repsDetail}${overallProgress}`,
+          artwork: [
+            { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+            { src: '/web-app-manifest-192x192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png' },
+          ],
+        });
+      }
 
-      navigator.mediaSession.playbackState = isPaused ? 'paused' : 'playing';
+      if ('playbackState' in navigator.mediaSession) {
+        navigator.mediaSession.playbackState = isPaused ? 'paused' : 'playing';
+      }
 
       // Attach system lockscreen action listeners
       this.attachMediaSessionHandlers();
@@ -137,9 +141,11 @@ class WorkoutSessionManager {
       if (this.wakeLockSentinel && !this.wakeLockSentinel.released) return;
 
       this.wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
-      this.wakeLockSentinel.addEventListener('release', () => {
-        // Released (e.g. user briefly backgrounded)
-      });
+      if (this.wakeLockSentinel) {
+        this.wakeLockSentinel.addEventListener('release', () => {
+          // Released (e.g. user briefly backgrounded)
+        });
+      }
     } catch (_) {}
   }
 
@@ -178,7 +184,7 @@ class WorkoutSessionManager {
    * Start a looping audio element to maintain active WebKit / Chrome media context
    */
   private startAudioKeepAlive(): void {
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined' || !document.body) return;
 
     try {
       if (!this.audioElement) {
@@ -217,29 +223,33 @@ class WorkoutSessionManager {
   private attachMediaSessionHandlers(): void {
     if (!('mediaSession' in navigator)) return;
 
-    try {
-      navigator.mediaSession.setActionHandler('play', () => {
-        if (this.callbacks.onTogglePause) this.callbacks.onTogglePause();
-      });
+    const setHandler = (action: MediaSessionAction, handler: (() => void) | null) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (_) {}
+    };
 
-      navigator.mediaSession.setActionHandler('pause', () => {
-        if (this.callbacks.onTogglePause) this.callbacks.onTogglePause();
-      });
+    setHandler('play', () => {
+      if (this.callbacks.onTogglePause) this.callbacks.onTogglePause();
+    });
 
-      // "Next Track" -> Checked current set and moves forward!
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        if (this.callbacks.onNextSet) this.callbacks.onNextSet();
-      });
+    setHandler('pause', () => {
+      if (this.callbacks.onTogglePause) this.callbacks.onTogglePause();
+    });
 
-      // "Previous Track" -> Goes to previous set
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        if (this.callbacks.onPrevSet) this.callbacks.onPrevSet();
-      });
+    // "Next Track" -> Checked current set and moves forward!
+    setHandler('nexttrack', () => {
+      if (this.callbacks.onNextSet) this.callbacks.onNextSet();
+    });
 
-      navigator.mediaSession.setActionHandler('stop', () => {
-        if (this.callbacks.onFinish) this.callbacks.onFinish();
-      });
-    } catch (_) {}
+    // "Previous Track" -> Goes to previous set
+    setHandler('previoustrack', () => {
+      if (this.callbacks.onPrevSet) this.callbacks.onPrevSet();
+    });
+
+    setHandler('stop', () => {
+      if (this.callbacks.onFinish) this.callbacks.onFinish();
+    });
   }
 
   /**
