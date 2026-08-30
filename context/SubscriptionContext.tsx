@@ -10,6 +10,11 @@ const STORAGE_KEY_TRIAL_START = '@fortywell_trial_start_date';
 const TRIAL_DURATION_DAYS = 7;
 const TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
 
+// Whitelist of test/developer/VIP accounts that are completely immune to paywalls
+const PAYWALL_EXEMPT_EMAILS: string[] = [
+  'imenoprezimeno324@gmail.com',
+];
+
 export interface SubscriptionPricing {
   monthlyPrice: number;
   annualPrice: number;
@@ -56,6 +61,12 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [devDateOverride, setDevDateOverride] = useState<Date | null>(null);
   const [initialTrialStart, setInitialTrialStart] = useState<Date | null>(null);
 
+  // Check if current user is an exempt test/VIP account
+  const isExemptAccount = useMemo(() => {
+    const email = (userProfile?.email || '').trim().toLowerCase();
+    return PAYWALL_EXEMPT_EMAILS.some((e) => e.toLowerCase() === email);
+  }, [userProfile?.email]);
+
   // Initialize trial start date and stored subscription state
   useEffect(() => {
     async function loadSubscriptionState() {
@@ -90,6 +101,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Determine if active from backend database profile status or local storage
   const hasActiveBackendSubscription = useMemo(() => {
+    if (isExemptAccount) return true;
     if (userProfile.subscriptionStatus === 'active') {
       if (userProfile.subscriptionEndsAt) {
         return new Date(userProfile.subscriptionEndsAt) > new Date();
@@ -97,12 +109,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return true;
     }
     return false;
-  }, [userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
+  }, [isExemptAccount, userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
 
-  const effectiveIsSubscribed = isSubscribed || hasActiveBackendSubscription;
+  const effectiveIsSubscribed = isExemptAccount || isSubscribed || hasActiveBackendSubscription;
 
   // If subscription status is explicitly cancelled, expired, or paused from backend
   const isExplicitlyBlocked = useMemo(() => {
+    if (isExemptAccount) return false;
     if (
       userProfile.subscriptionStatus === 'cancelled' ||
       userProfile.subscriptionStatus === 'expired' ||
@@ -114,10 +127,20 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return true;
     }
     return false;
-  }, [userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
+  }, [isExemptAccount, userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
 
   // Compute trial status
   const { isTrialActive, trialDaysRemaining, trialDayNumber, trialExpiryDate, isPaused } = useMemo(() => {
+    if (isExemptAccount) {
+      return {
+        isTrialActive: false,
+        trialDaysRemaining: 999,
+        trialDayNumber: 1,
+        trialExpiryDate: new Date('2099-12-31T23:59:59Z'),
+        isPaused: false,
+      };
+    }
+
     const now = new Date();
     const startTime = accountCreationDate.getTime();
     const endTime = startTime + TRIAL_DURATION_MS;
@@ -140,7 +163,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       trialExpiryDate: expiryDate,
       isPaused: paused,
     };
-  }, [accountCreationDate, effectiveIsSubscribed, isExplicitlyBlocked]);
+  }, [isExemptAccount, accountCreationDate, effectiveIsSubscribed, isExplicitlyBlocked]);
 
   // Dynamic pricing calculation (Single Plan: $19.99/mo or $149/yr)
   const pricing: SubscriptionPricing = useMemo(() => {
@@ -155,9 +178,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const openPaywall = useCallback((source?: string) => {
+    if (isExemptAccount) return;
     setPaywallSource(source || 'user_action');
     setIsPaywallVisible(true);
-  }, []);
+  }, [isExemptAccount]);
 
   const closePaywall = useCallback(() => {
     setIsPaywallVisible(false);
@@ -167,13 +191,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Action guard: blocks actions if paused
   const guardAction = useCallback(
     (action: () => void, actionName?: string) => {
-      if (isPaused) {
+      if (isPaused && !isExemptAccount) {
         openPaywall(actionName || 'blocked_action');
         return;
       }
       action();
     },
-    [isPaused, openPaywall]
+    [isPaused, isExemptAccount, openPaywall]
   );
 
   // Official Lemon Squeezy Checkout URL (configured with Annual & Monthly options)
