@@ -24,10 +24,18 @@ const KEY_PENDING_LOGS = '@fortywell_pending_logs_v1';
 export interface ActiveSessionCheckpoint {
   workoutSlug: string;
   workoutTitle: string;
+  workoutData?: any; // full Workout object for restoration
   exercises: any[];
   elapsedSeconds: number;
-  startedAt: string; // ISO string
+  startedAt: string; // ISO string of when the workout began
   savedAt: string;
+  // ── Pause / Resume tracking ───────────────────────
+  isPaused?: boolean;
+  pausedAt?: string;       // ISO string of when user paused
+  totalPausedMs?: number;  // accumulated paused time so timer never drifts
+  // ── Current position (for lock-screen metadata) ──
+  currentExerciseIndex?: number;
+  currentSetIndex?: number;
 }
 
 export interface PendingWorkoutLog {

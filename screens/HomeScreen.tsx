@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -72,7 +72,7 @@ import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
 import { useFavorites } from '../lib/useFavorites';
-import { useOfflineSync } from '../lib/useOfflineSync';
+import { useOfflineSync, getActiveSessionCheckpoint, clearActiveSessionCheckpoint, ActiveSessionCheckpoint } from '../lib/useOfflineSync';
 import { useLanguage } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { PaywallModal } from '../components/PaywallModal';
@@ -155,6 +155,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     userProfile,
     currentWeekDays,
     lifetimeStats,
+    gardenProgress,
+    topExercises,
+    recordCompletedWorkout,
+    refreshUserData,
     markWalkthroughCompleted,
     verifyEmailWithOtp,
     resendVerificationEmail,
@@ -204,6 +208,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [exerciseDetailName, setExerciseDetailName] = useState<string | null>(null);
   const [exerciseDetailVisible, setExerciseDetailVisible] = useState<boolean>(false);
   const [profileModalVisible, setProfileModalVisible] = useState<boolean>(false);
+
+  // ── In-Progress Workout Resume Banner ─────────────────────────────
+  const [resumeCheckpoint, setResumeCheckpoint] = useState<ActiveSessionCheckpoint | null>(null);
+  const [activeWorkoutCheckpoint, setActiveWorkoutCheckpoint] = useState<ActiveSessionCheckpoint | null>(null);
+  const checkpointCheckedRef = useRef(false);
+
+  // Check for in-progress checkpoint on mount
+  useEffect(() => {
+    if (checkpointCheckedRef.current) return;
+    checkpointCheckedRef.current = true;
+    getActiveSessionCheckpoint().then((cp) => {
+      if (cp) setResumeCheckpoint(cp);
+    });
+  }, []);
+
+  // Re-check when app comes back to foreground (tab visible again)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !activeWorkoutVisible) {
+        getActiveSessionCheckpoint().then((cp) => {
+          if (cp) setResumeCheckpoint(cp);
+          else setResumeCheckpoint(null);
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [activeWorkoutVisible]);
 
   // Email verification & 5% reward state in Profile modal
   const [profileOtpInput, setProfileOtpInput] = useState('');
@@ -359,16 +392,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     setExerciseDetailVisible(true);
   };
 
-  const launchWorkout = (workout: Workout | null) => {
+  const launchWorkout = useCallback((workout: Workout | null) => {
     if (isPaused) {
       openPaywall('start_workout');
       return;
     }
+    // Clear any stale resume checkpoint so fresh workout starts clean
+    setResumeCheckpoint(null);
+    setActiveWorkoutCheckpoint(null);
+    clearActiveSessionCheckpoint();
     setActiveWorkoutData(workout);
     setActiveWorkoutVisible(true);
     setQuickLaunchVisible(false);
     setModalVisible(false);
-  };
+  }, [isPaused, openPaywall]);
+
+  const handleResumeWorkout = useCallback(() => {
+    if (!resumeCheckpoint) return;
+    if (isPaused) {
+      openPaywall('start_workout');
+      return;
+    }
+    // Restore workout object from checkpoint if available
+    const workoutData: Workout | null = resumeCheckpoint.workoutData ?? null;
+    setActiveWorkoutData(workoutData);
+    setActiveWorkoutCheckpoint(resumeCheckpoint);
+    setResumeCheckpoint(null);
+    setActiveWorkoutVisible(true);
+    setQuickLaunchVisible(false);
+    setModalVisible(false);
+  }, [resumeCheckpoint, isPaused, openPaywall]);
+
+  const handleDiscardResume = useCallback(async () => {
+    await clearActiveSessionCheckpoint();
+    setResumeCheckpoint(null);
+  }, []);
 
   // Compute smart recommendations based on quiz answers
   const recommendations = useMemo(() => {
@@ -491,7 +549,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* ── TAB VIEWS (PRESERVED FOR ZERO-LATENCY INSTANT NAVIGATION) ── */}
       <View style={[styles.tabContainer, { display: selectedTab === 'garden' ? 'flex' : 'none' }]}>
-        <GardenView onStartWorkout={handleStartWorkout} />
+        <GardenView
+          onStartWorkout={handleStartWorkout}
+          gardenProgress={gardenProgress}
+          lifetimeStats={lifetimeStats}
+          topExercises={topExercises}
+          onRefresh={() => refreshUserData(true)}
+        />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'coach' ? 'flex' : 'none' }]}>
         <CoachScreen answers={answers} />
@@ -1195,17 +1259,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ActiveWorkoutScreen
         visible={activeWorkoutVisible}
         workout={activeWorkoutData}
+        checkpoint={activeWorkoutCheckpoint}
         onFinish={(summary: WorkoutSummary) => {
           setActiveWorkoutVisible(false);
-          // TODO: persist summary to Supabase
+          setActiveWorkoutCheckpoint(null);
+          setResumeCheckpoint(null);
+          const today = new Date().toISOString().split('T')[0];
+          recordCompletedWorkout(today, Math.round(summary.durationSeconds / 60), summary.totalVolumeKg);
+          refreshUserData(true);
           try {
             if (Platform.OS !== 'web') {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
           } catch (_) {}
         }}
-        onCancel={() => setActiveWorkoutVisible(false)}
+        onCancel={() => {
+          setActiveWorkoutVisible(false);
+          setActiveWorkoutCheckpoint(null);
+        }}
       />
+
+      {/* ── WORKOUT IN PROGRESS RESUME BANNER ── */}
+      {resumeCheckpoint && !activeWorkoutVisible && (
+        <WorkoutInProgressBanner
+          checkpoint={resumeCheckpoint}
+          onResume={handleResumeWorkout}
+          onDiscard={handleDiscardResume}
+        />
+      )}
 
       {/* ── WEEKLY RECAP MODAL (MONDAY SUMMARY CARD) ── */}
       <WeeklyRecapModal
@@ -1236,6 +1317,155 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     </SafeAreaView>
   );
 };
+
+// \u2500\u2500 WorkoutInProgressBanner \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Spotify-style floating bar shown when re-opening app mid-workout
+
+function formatElapsed(cp: ActiveSessionCheckpoint): string {
+  const startMs = new Date(cp.startedAt).getTime();
+  const totalPausedMs = cp.totalPausedMs ?? 0;
+  const s = Math.max(0, Math.floor((Date.now() - startMs - totalPausedMs) / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+  return `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+}
+
+function WorkoutInProgressBanner({
+  checkpoint,
+  onResume,
+  onDiscard,
+}: {
+  checkpoint: ActiveSessionCheckpoint;
+  onResume: () => void;
+  onDiscard: () => void;
+}) {
+  const [elapsed, setElapsed] = React.useState(() => formatElapsed(checkpoint));
+
+  React.useEffect(() => {
+    if (checkpoint.isPaused) return;
+    const interval = setInterval(() => setElapsed(formatElapsed(checkpoint)), 1000);
+    return () => clearInterval(interval);
+  }, [checkpoint]);
+
+  // Find first non-completed exercise name from checkpoint
+  const currentExName = React.useMemo(() => {
+    if (!checkpoint.exercises || checkpoint.exercises.length === 0) return 'Workout';
+    const active = checkpoint.exercises.find((e: any) =>
+      e.sets && e.sets.some((s: any) => !s.completed)
+    );
+    return active?.name || checkpoint.exercises[0]?.name || 'Workout';
+  }, [checkpoint]);
+
+  const doneSets = React.useMemo(() => {
+    return checkpoint.exercises.reduce((a: number, e: any) =>
+      a + (e.sets?.filter((s: any) => s.completed).length ?? 0), 0);
+  }, [checkpoint]);
+
+  const totalSets = React.useMemo(() => {
+    return checkpoint.exercises.reduce((a: number, e: any) =>
+      a + (e.sets?.length ?? 0), 0);
+  }, [checkpoint]);
+
+  return (
+    <View style={wip.overlay} pointerEvents="box-none">
+      <View style={wip.card}>
+        {/* Pulsing dot */}
+        <View style={wip.dot} />
+
+        {/* Info */}
+        <View style={wip.info}>
+          <Text style={wip.title} numberOfLines={1}>
+            {checkpoint.workoutTitle}
+          </Text>
+          <Text style={wip.sub} numberOfLines={1}>
+            {currentExName} · {doneSets}/{totalSets} sets · {elapsed}
+            {checkpoint.isPaused ? ' · ⏸ Paused' : ''}
+          </Text>
+        </View>
+
+        {/* Actions */}
+        <Pressable style={wip.discardBtn} onPress={onDiscard} hitSlop={8}>
+          <X size={16} color={colors.textTertiary} />
+        </Pressable>
+        <Pressable style={wip.resumeBtn} onPress={onResume}>
+          <Play size={14} color="#FFF" fill="#FFF" />
+          <Text style={wip.resumeTxt}>RESUME</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const wip = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    bottom: 88,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 9999,
+    pointerEvents: 'box-none',
+  } as any,
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30,22,14,0.92)',
+    borderRadius: 20,
+    marginHorizontal: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 16,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    flexShrink: 0,
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: '#FFFFFF',
+    marginBottom: 1,
+  },
+  sub: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.55)',
+  },
+  discardBtn: {
+    padding: 4,
+    flexShrink: 0,
+  },
+  resumeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    flexShrink: 0,
+  },
+  resumeTxt: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+});
 
 const styles = StyleSheet.create({
   safeArea: {

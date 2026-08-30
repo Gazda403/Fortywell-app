@@ -45,7 +45,7 @@ import {
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
-import { useUserData } from '../hooks/useUserData';
+import { useUserData, GardenProgress, LifetimeStats, TopExerciseItem } from '../hooks/useUserData';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -72,33 +72,49 @@ const GARDEN_LEVELS = [
   { level: 6, name: 'Celestial Sanctuary', daysReq: '36+ Days', desc: 'Full cosmic bloom of eternal joint vitality' },
 ];
 
-// Area Chart Dataset (10 months, 3 series)
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+const DEFAULT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
 
-const CHART_DATA = {
-  consistency: [45, 52, 53, 46, 42, 49, 40, 48, 46, 51], // Rose Pink
-  mobility:    [28, 42, 41, 29, 34, 45, 33, 28, 38, 35], // Sage Green
-  fluidity:    [20, 34, 18, 22, 24, 10, 7, 23, 18, 27],  // Warm Gold
-};
-
-// Favorite Exercises Dataset
-const FAVORITE_EXERCISES = [
+const DEFAULT_FAVORITE_EXERCISES = [
   { name: 'Cat-Cow Segmental Mobility', sets: 24, muscle: 'Spine & Lumbar', tag: 'Mobility' },
   { name: 'Iso-Hold Glute Bridge with Heel Drive', sets: 32, muscle: 'Glutes & Pelvic', tag: 'Strength' },
   { name: 'Deadbug with Opposite Arm/Leg Reach', sets: 28, muscle: 'Deep Core', tag: 'Stability' },
   { name: 'Dumbbell Romanian Deadlift', sets: 18, muscle: 'Hamstrings', tag: 'Posterior' },
 ];
 
-interface GardenViewProps {
+export interface GardenViewProps {
   onStartWorkout?: () => void;
+  gardenProgress?: GardenProgress;
+  lifetimeStats?: LifetimeStats;
+  topExercises?: TopExerciseItem[];
+  onRefresh?: () => void;
 }
 
-export const GardenView: React.FC<GardenViewProps> = () => {
-  const { gardenProgress, lifetimeStats } = useUserData();
-  const [previewLevel, setPreviewLevel] = useState<number>(1);
+export const GardenView: React.FC<GardenViewProps> = (props) => {
+  const hookData = useUserData();
+  const gardenProgress = props.gardenProgress || hookData.gardenProgress;
+  const lifetimeStats = props.lifetimeStats || hookData.lifetimeStats;
+  const topExercises = props.topExercises || hookData.topExercises || DEFAULT_FAVORITE_EXERCISES;
+
+  const months = gardenProgress.vitalityTrends?.months || DEFAULT_MONTHS;
+  const chartData = useMemo(() => {
+    if (gardenProgress.vitalityTrends) {
+      return {
+        consistency: gardenProgress.vitalityTrends.consistency,
+        mobility: gardenProgress.vitalityTrends.mobility,
+        fluidity: gardenProgress.vitalityTrends.fluidity,
+      };
+    }
+    return {
+      consistency: [45, 52, 53, 46, 42, 49, 40, 48, 46, 51],
+      mobility: [28, 42, 41, 29, 34, 45, 33, 28, 38, 35],
+      fluidity: [20, 34, 18, 22, 24, 10, 7, 23, 18, 27],
+    };
+  }, [gardenProgress.vitalityTrends]);
+
+  const [previewLevel, setPreviewLevel] = useState<number>(gardenProgress.currentLevel || 1);
   const [isHowItGrowsOpen, setIsHowItGrowsOpen] = useState<boolean>(false);
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(9);
-  const [favorites, setFavorites] = useState<string[]>(FAVORITE_EXERCISES.map((f) => f.name));
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(months.length - 1);
+  const [favorites, setFavorites] = useState<string[]>(topExercises.map((f) => f.name));
 
   // Sync preview level with real calculated garden level
   React.useEffect(() => {
@@ -106,6 +122,13 @@ export const GardenView: React.FC<GardenViewProps> = () => {
       setPreviewLevel(gardenProgress.currentLevel);
     }
   }, [gardenProgress.currentLevel]);
+
+  // Sync selected month index with months length
+  React.useEffect(() => {
+    if (months.length > 0) {
+      setSelectedMonthIdx(months.length - 1);
+    }
+  }, [months]);
 
   const activeLevelMeta = GARDEN_LEVELS.find((l) => l.level === previewLevel) || GARDEN_LEVELS[0];
 
@@ -137,8 +160,8 @@ export const GardenView: React.FC<GardenViewProps> = () => {
   const handleTouchX = (touchX: number) => {
     const relativeX = touchX - paddingLeft;
     const clampedX = Math.max(0, Math.min(graphW, relativeX));
-    const index = Math.round((clampedX / graphW) * (MONTHS.length - 1));
-    if (index >= 0 && index < MONTHS.length && index !== selectedMonthIdx) {
+    const index = Math.round((clampedX / graphW) * (months.length - 1));
+    if (index >= 0 && index < months.length && index !== selectedMonthIdx) {
       setSelectedMonthIdx(index);
       try {
         if (Platform.OS !== 'web') {
@@ -206,15 +229,16 @@ export const GardenView: React.FC<GardenViewProps> = () => {
     return `${linePath} L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
   };
 
-  const consistencyCoords = getCoords(CHART_DATA.consistency);
-  const mobilityCoords = getCoords(CHART_DATA.mobility);
-  const fluidityCoords = getCoords(CHART_DATA.fluidity);
+  const consistencyCoords = getCoords(chartData.consistency);
+  const mobilityCoords = getCoords(chartData.mobility);
+  const fluidityCoords = getCoords(chartData.fluidity);
 
-  const selectedConsistency = CHART_DATA.consistency[selectedMonthIdx];
-  const selectedMobility = CHART_DATA.mobility[selectedMonthIdx];
-  const selectedFluidity = CHART_DATA.fluidity[selectedMonthIdx];
-  const selectedMonthName = MONTHS[selectedMonthIdx];
-  const selectedX = consistencyCoords[selectedMonthIdx].x;
+  const safeMonthIdx = Math.min(selectedMonthIdx, months.length - 1);
+  const selectedConsistency = chartData.consistency[safeMonthIdx] || 0;
+  const selectedMobility = chartData.mobility[safeMonthIdx] || 0;
+  const selectedFluidity = chartData.fluidity[safeMonthIdx] || 0;
+  const selectedMonthName = months[safeMonthIdx] || 'Today';
+  const selectedX = consistencyCoords[safeMonthIdx]?.x || paddingLeft;
 
   return (
     <ScrollView
@@ -514,12 +538,12 @@ export const GardenView: React.FC<GardenViewProps> = () => {
                 ))}
 
                 {/* X-Axis Month Labels */}
-                {MONTHS.map((m, i) => {
-                  const x = paddingLeft + (i / (MONTHS.length - 1)) * graphW;
+                {months.map((m, i) => {
+                  const x = paddingLeft + (i / (months.length - 1)) * graphW;
                   const isSelected = selectedMonthIdx === i;
                   return (
                     <SvgText
-                      key={m}
+                      key={`${m}-${i}`}
                       x={x}
                       y={chartHeight - 8}
                       fontSize={isSelected ? '10' : '9'}
@@ -635,7 +659,7 @@ export const GardenView: React.FC<GardenViewProps> = () => {
           </View>
 
           <View style={styles.favList}>
-            {FAVORITE_EXERCISES.map((item) => {
+            {topExercises.map((item) => {
               const info = getExerciseInfo(item.name);
               const isFav = favorites.includes(item.name);
               return (
@@ -653,7 +677,7 @@ export const GardenView: React.FC<GardenViewProps> = () => {
                       <Text style={styles.favSets}>{item.sets} sets logged</Text>
                     </View>
                     <Text style={styles.favName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.favMuscle} numberOfLines={1}>{item.muscle} • {info.equipment}</Text>
+                    <Text style={styles.favMuscle} numberOfLines={1}>{item.muscle} • {info.equipment || 'No equipment'}</Text>
                   </View>
                   <Pressable
                     onPress={() => toggleFavorite(item.name)}

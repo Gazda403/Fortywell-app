@@ -50,6 +50,13 @@ export interface FeelingCheckinRecord {
   notes?: string;
 }
 
+export interface TopExerciseItem {
+  name: string;
+  sets: number;
+  muscle: string;
+  tag: string;
+}
+
 export interface GardenProgress {
   currentLevel: number;
   daysCompletedInLevel: number;
@@ -121,6 +128,12 @@ export function useUserData(answers?: OnboardingAnswers | null) {
   const [feelingCheckins, setFeelingCheckins] = useState<FeelingCheckinRecord[]>(() => {
     return cachedFeelingCheckins || [];
   });
+  const [topExercises, setTopExercises] = useState<TopExerciseItem[]>([
+    { name: 'Cat-Cow Segmental Mobility', sets: 24, muscle: 'Spine & Lumbar', tag: 'Mobility' },
+    { name: 'Iso-Hold Glute Bridge with Heel Drive', sets: 32, muscle: 'Glutes & Pelvic', tag: 'Strength' },
+    { name: 'Deadbug with Opposite Arm/Leg Reach', sets: 28, muscle: 'Deep Core', tag: 'Stability' },
+    { name: 'Dumbbell Romanian Deadlift', sets: 18, muscle: 'Hamstrings', tag: 'Posterior' },
+  ]);
 
   // Fetch Supabase data for the current user (with deduplication & cache)
   const loadUserData = useCallback(async (force = false) => {
@@ -248,6 +261,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       } catch (_) {}
 
       // Load Supabase logs
+      const exerciseCounts = new Map<string, number>();
       try {
         const { data: logs } = await supabase
           .from('workout_logs')
@@ -262,9 +276,38 @@ export function useUserData(answers?: OnboardingAnswers | null) {
             totalMinutes += Number(l.duration_minutes || 20);
             totalVolume += Number(l.volume_kg || 0);
             totalWorkoutsCount += 1;
+
+            if (l.exercises_json) {
+              try {
+                const parsed = typeof l.exercises_json === 'string' ? JSON.parse(l.exercises_json) : l.exercises_json;
+                if (Array.isArray(parsed)) {
+                  parsed.forEach((ex: any) => {
+                    if (ex.name) {
+                      const doneSets = Array.isArray(ex.sets)
+                        ? ex.sets.filter((s: any) => s.completed).length || ex.sets.length
+                        : 3;
+                      exerciseCounts.set(ex.name, (exerciseCounts.get(ex.name) || 0) + doneSets);
+                    }
+                  });
+                }
+              } catch (_) {}
+            }
           });
         }
       } catch (_) {}
+
+      if (exerciseCounts.size > 0) {
+        const topList: TopExerciseItem[] = Array.from(exerciseCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, sets]) => ({
+            name,
+            sets,
+            muscle: 'Functional Chains',
+            tag: 'Core & Mobility',
+          }));
+        setTopExercises(topList);
+      }
 
       // Cache merged dates to local storage
       try {
@@ -544,7 +587,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     return week;
   }, [completedDatesSet]);
 
-  // Compute Garden Level & Growth Progress
+  // Compute Garden Level & Dynamic Vitality Trends
   const gardenProgress: GardenProgress = useMemo(() => {
     const totalActiveDays = completedDatesSet.size;
 
@@ -560,7 +603,44 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     const daysCompletedInLevel = totalActiveDays % 7;
     const daysToNextLevel = 7 - daysCompletedInLevel;
 
-    const hasEnoughData = totalActiveDays >= 7 || feelingCheckins.length >= 7;
+    // Build real 10-month timeline dynamically
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const months: string[] = [];
+    const consistency: number[] = [];
+    const mobility: number[] = [];
+    const fluidity: number[] = [];
+
+    for (let i = 9; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mName = monthNames[d.getMonth()];
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      months.push(mName);
+
+      let countInMonth = 0;
+      completedDatesSet.forEach((dateStr) => {
+        const parts = dateStr.split('-');
+        if (parts.length >= 2) {
+          const dy = parseInt(parts[0], 10);
+          const dm = parseInt(parts[1], 10);
+          if (dy === y && dm === m + 1) {
+            countInMonth++;
+          }
+        }
+      });
+
+      // Target ~12 sessions/mo
+      const cPct = countInMonth > 0 ? Math.min(100, Math.round((countInMonth / 12) * 100)) : 0;
+      const mPts = countInMonth > 0 ? Math.min(50, countInMonth * 5) : 0;
+      const fHrs = countInMonth > 0 ? Math.min(30, countInMonth * 3) : 0;
+
+      consistency.push(cPct);
+      mobility.push(mPts);
+      fluidity.push(fHrs);
+    }
+
+    const hasEnoughData = totalActiveDays >= 1 || feelingCheckins.length >= 1;
 
     return {
       currentLevel: level,
@@ -572,10 +652,10 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       levelDesc: meta.desc,
       hasEnoughDataForTrends: hasEnoughData,
       vitalityTrends: {
-        months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-        consistency: [0, 0, 0, 0, 0, 0, 0, 0, 0, totalActiveDays > 0 ? Math.min(100, totalActiveDays * 14) : 0],
-        mobility: [0, 0, 0, 0, 0, 0, 0, 0, 0, totalActiveDays > 0 ? Math.min(50, totalActiveDays * 7) : 0],
-        fluidity: [0, 0, 0, 0, 0, 0, 0, 0, 0, totalActiveDays > 0 ? Math.min(30, totalActiveDays * 4) : 0],
+        months,
+        consistency,
+        mobility,
+        fluidity,
       },
     };
   }, [completedDatesSet, feelingCheckins]);
@@ -610,6 +690,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     currentWeekDays,
     gardenProgress,
     feelingCheckins,
+    topExercises,
     logFeeling,
     recordCompletedWorkout,
     markWalkthroughCompleted,

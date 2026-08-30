@@ -50,9 +50,11 @@ import {
   saveActiveSessionCheckpoint,
   clearActiveSessionCheckpoint,
   enqueuePendingLog,
+  ActiveSessionCheckpoint,
 } from '../lib/useOfflineSync';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { workoutSessionManager } from '../lib/workoutSessionManager';
 
 const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 
@@ -97,6 +99,8 @@ export interface ActiveWorkoutScreenProps {
   workout: Workout | null;
   onFinish: (summary: WorkoutSummaryData) => void;
   onCancel: () => void;
+  /** Optional: pre-loaded checkpoint to resume from (passed by HomeScreen) */
+  checkpoint?: ActiveSessionCheckpoint | null;
 }
 
 // --- Helper Timer Formatter -------------------------------------------------
@@ -109,16 +113,32 @@ function formatTime(s: number) {
   return `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
-const WorkoutTimer = React.memo(function WorkoutTimer({ startTime }: { startTime: number }) {
+const WorkoutTimer = React.memo(function WorkoutTimer({
+  startTime,
+  totalPausedMs,
+  isPaused,
+  pausedAt,
+}: {
+  startTime: number;
+  totalPausedMs: number;
+  isPaused: boolean;
+  pausedAt: number | null;
+}) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    setElapsed(Math.floor((Date.now() - startTime) / 1000));
-    const timer = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
+    const calc = () => {
+      if (isPaused && pausedAt != null) {
+        // Frozen at the moment we paused
+        return Math.floor((pausedAt - startTime - totalPausedMs) / 1000);
+      }
+      return Math.floor((Date.now() - startTime - totalPausedMs) / 1000);
+    };
+    setElapsed(Math.max(0, calc()));
+    if (isPaused) return; // don't tick while paused
+    const timer = setInterval(() => setElapsed(Math.max(0, calc())), 1000);
     return () => clearInterval(timer);
-  }, [startTime]);
+  }, [startTime, totalPausedMs, isPaused, pausedAt]);
 
   return (
     <View style={s.timerRow}>
@@ -474,8 +494,18 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   workout,
   onFinish,
   onCancel,
+  checkpoint,
 }) => {
-  const startTimeRef = useRef<number>(Date.now());
+  // ── Wall-clock timer (never drifts in background) ─────────────────────────
+  // startedAtMs = epoch ms when workout actually started (restored from checkpoint)
+  const startedAtMsRef = useRef<number>(Date.now());
+  // Track total pause time so elapsed is always accurate after resume
+  const totalPausedMsRef = useRef<number>(0);
+  const pausedAtMsRef = useRef<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [pausedAtState, setPausedAtState] = useState<number | null>(null);
+  const [totalPausedMsState, setTotalPausedMsState] = useState(0);
+
   const [exercises, setExercises] = useState<LoggedExercise[]>([]);
   const [addExVisible, setAddExVisible] = useState(false);
   const [detailExName, setDetailExName] = useState<string | null>(null);
@@ -485,54 +515,221 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
 
   const slideY = useSharedValue(SCREEN_H);
 
-  // Animate in/out
+  // Helper: current elapsed accounting for pauses (for checkpoint saving)
+  const getElapsedSeconds = useCallback(() => {
+    if (isPaused && pausedAtMsRef.current != null) {
+      return Math.max(0, Math.floor((pausedAtMsRef.current - startedAtMsRef.current - totalPausedMsRef.current) / 1000));
+    }
+    return Math.max(0, Math.floor((Date.now() - startedAtMsRef.current - totalPausedMsRef.current) / 1000));
+  }, [isPaused]);
+
+  // ── Animate in/out & initialise from scratch or checkpoint ────────────────
   useEffect(() => {
     if (visible) {
       slideY.value = withSpring(0, { damping: 20, stiffness: 120 });
-      startTimeRef.current = Date.now();
-      const initialExercises = buildInitialExercises(workout);
-      setExercises(initialExercises);
 
-      // Prefetch all workout exercise images into memory
-      const urlsToPrefetch = initialExercises
-        .flatMap((e) => [e.image_url, e.gif_url].filter(Boolean) as string[]);
-      if (urlsToPrefetch.length > 0) {
-        Image.prefetch(urlsToPrefetch);
+      if (checkpoint) {
+        // ── Resume from saved checkpoint ──────────────────────────────
+        const checkpointStartMs = new Date(checkpoint.startedAt).getTime();
+        startedAtMsRef.current = checkpointStartMs;
+        totalPausedMsRef.current = checkpoint.totalPausedMs ?? 0;
+        pausedAtMsRef.current = null;
+        setTotalPausedMsState(checkpoint.totalPausedMs ?? 0);
+        setPausedAtState(null);
+        setIsPaused(false);
+        setExercises(checkpoint.exercises as LoggedExercise[]);
+      } else {
+        // ── Fresh workout ─────────────────────────────────────────────
+        startedAtMsRef.current = Date.now();
+        totalPausedMsRef.current = 0;
+        pausedAtMsRef.current = null;
+        setTotalPausedMsState(0);
+        setPausedAtState(null);
+        setIsPaused(false);
+        const initialExercises = buildInitialExercises(workout);
+        setExercises(initialExercises);
+
+        // Prefetch all workout exercise images
+        const urlsToPrefetch = initialExercises
+          .flatMap((e) => [e.image_url, e.gif_url].filter(Boolean) as string[]);
+        if (urlsToPrefetch.length > 0) Image.prefetch(urlsToPrefetch);
       }
     } else {
       slideY.value = withTiming(SCREEN_H, { duration: 300 });
     }
-  }, [visible, workout]);
+  }, [visible, workout, checkpoint]);
 
-  // ── Offline Checkpoint: Save progress every 30s ──────────────────────────
-  // Like hitting "Save" on a document — runs silently in the background.
-  const checkpointIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+  // ── Background session: Wake Lock + Media Session (Spotify-style) ─────────
   useEffect(() => {
     if (!visible || !workout) return;
 
-    const save = () => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      saveActiveSessionCheckpoint({
-        workoutSlug: workout.slug || 'custom',
-        workoutTitle: workout.title,
-        exercises,
-        elapsedSeconds: elapsed,
-        startedAt: new Date(startTimeRef.current).toISOString(),
-      });
-    };
+    const totalSets = exercises.reduce((a, e) => a + e.sets.length, 0);
+    const doneSets = exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
+    // Find the first uncompleted exercise/set for lockscreen metadata
+    let currentExIdx = 0;
+    let currentSetIdx = 0;
+    for (let i = 0; i < exercises.length; i++) {
+      const undoneSets = exercises[i].sets.findIndex((s) => !s.completed);
+      if (undoneSets >= 0) { currentExIdx = i; currentSetIdx = undoneSets; break; }
+    }
+    const currentEx = exercises[currentExIdx];
+    const currentSet = currentEx?.sets[currentSetIdx];
 
-    checkpointIntervalRef.current = setInterval(save, 30_000);
+    workoutSessionManager.startSession(
+      {
+        workoutTitle: workout.title,
+        workoutSlug: workout.slug,
+        currentExerciseName: currentEx?.name ?? '',
+        currentExerciseIndex: currentExIdx,
+        totalExercises: exercises.length,
+        currentSetIndex: currentSetIdx,
+        totalSetsInExercise: currentEx?.sets.length ?? 0,
+        currentSetReps: currentSet?.reps ?? '',
+        currentSetWeight: currentSet?.weight ?? '',
+        completedSetsTotal: doneSets,
+        totalSetsAll: totalSets,
+        elapsedSeconds: getElapsedSeconds(),
+        isPaused,
+        exerciseImageUrl: currentEx?.image_url,
+      },
+      {
+        // Lock-screen "Next" button → complete the current active set
+        onNextSet: () => {
+          if (!currentEx || !currentSet) return;
+          setExercises((prev) =>
+            prev.map((e) => {
+              if (e.id !== currentEx.id) return e;
+              return {
+                ...e,
+                sets: e.sets.map((s) => {
+                  if (s.id === currentSet.id && !s.completed) {
+                    playSetCompleteSound();
+                    return { ...s, completed: true };
+                  }
+                  return s;
+                }),
+              };
+            })
+          );
+        },
+        // Lock-screen "Prev" button → uncheck the most recently completed set
+        onPrevSet: () => {
+          setExercises((prev) => {
+            const copy = prev.map((e) => ({ ...e, sets: [...e.sets] }));
+            for (let i = copy.length - 1; i >= 0; i--) {
+              const lastDone = [...copy[i].sets].reverse().find((s) => s.completed);
+              if (lastDone) {
+                copy[i].sets = copy[i].sets.map((s) =>
+                  s.id === lastDone.id ? { ...s, completed: false } : s
+                );
+                return copy;
+              }
+            }
+            return prev;
+          });
+        },
+        onTogglePause: () => {
+          setIsPaused((prev) => {
+            const now = Date.now();
+            if (!prev) {
+              // Pausing
+              pausedAtMsRef.current = now;
+              setPausedAtState(now);
+            } else {
+              // Resuming
+              if (pausedAtMsRef.current != null) {
+                const pauseDelta = now - pausedAtMsRef.current;
+                totalPausedMsRef.current += pauseDelta;
+                setTotalPausedMsState((p) => p + pauseDelta);
+              }
+              pausedAtMsRef.current = null;
+              setPausedAtState(null);
+            }
+            return !prev;
+          });
+        },
+        onFinish: () => handleFinish(),
+      }
+    );
 
     return () => {
-      if (checkpointIntervalRef.current) clearInterval(checkpointIntervalRef.current);
+      workoutSessionManager.endSession();
     };
+  // Only re-run when visibility or workout changes (not on every exercises tick)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, workout, exercises]);
+  }, [visible, workout]);
+
+  // ── Update lock-screen metadata whenever exercise/set state changes ────────
+  useEffect(() => {
+    if (!visible || !workout || exercises.length === 0) return;
+    const totalSets = exercises.reduce((a, e) => a + e.sets.length, 0);
+    const doneSets = exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
+    let currentExIdx = 0;
+    let currentSetIdx = 0;
+    for (let i = 0; i < exercises.length; i++) {
+      const undone = exercises[i].sets.findIndex((s) => !s.completed);
+      if (undone >= 0) { currentExIdx = i; currentSetIdx = undone; break; }
+    }
+    const currentEx = exercises[currentExIdx];
+    const currentSet = currentEx?.sets[currentSetIdx];
+    workoutSessionManager.updateMediaSession({
+      workoutTitle: workout.title,
+      workoutSlug: workout.slug,
+      currentExerciseName: currentEx?.name ?? '',
+      currentExerciseIndex: currentExIdx,
+      totalExercises: exercises.length,
+      currentSetIndex: currentSetIdx,
+      totalSetsInExercise: currentEx?.sets.length ?? 0,
+      currentSetReps: currentSet?.reps ?? '',
+      currentSetWeight: currentSet?.weight ?? '',
+      completedSetsTotal: doneSets,
+      totalSetsAll: totalSets,
+      elapsedSeconds: getElapsedSeconds(),
+      isPaused,
+      exerciseImageUrl: currentEx?.image_url,
+    });
+  }, [exercises, isPaused, visible, workout, getElapsedSeconds]);
+
+  // ── Instant Checkpoint: Save on EVERY state change ────────────────────────
+  // Saves immediately whenever exercises change — wall-clock preserving resume
+  useEffect(() => {
+    if (!visible || !workout || exercises.length === 0) return;
+    saveActiveSessionCheckpoint({
+      workoutSlug: workout.slug || 'custom',
+      workoutTitle: workout.title,
+      workoutData: workout,
+      exercises,
+      elapsedSeconds: getElapsedSeconds(),
+      startedAt: new Date(startedAtMsRef.current).toISOString(),
+      isPaused,
+      pausedAt: pausedAtMsRef.current ? new Date(pausedAtMsRef.current).toISOString() : undefined,
+      totalPausedMs: totalPausedMsRef.current,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercises, isPaused, visible, workout]);
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: slideY.value }],
   }));
+
+  const handleTogglePause = useCallback(() => {
+    const now = Date.now();
+    setIsPaused((prev) => {
+      if (!prev) {
+        pausedAtMsRef.current = now;
+        setPausedAtState(now);
+      } else {
+        if (pausedAtMsRef.current != null) {
+          const delta = now - pausedAtMsRef.current;
+          totalPausedMsRef.current += delta;
+          setTotalPausedMsState((p) => p + delta);
+        }
+        pausedAtMsRef.current = null;
+        setPausedAtState(null);
+      }
+      return !prev;
+    });
+  }, []);
 
   const toggleExpand = useCallback((id: string) => {
     setExercises((prev) =>
@@ -628,7 +825,8 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
 
   const confirmFinish = async (slot: ResetSlot = 'main') => {
     setShowFinishSheet(false);
-    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    workoutSessionManager.endSession();
+    const elapsed = getElapsedSeconds();
     const totalSets = exercises.reduce((a, e) => a + e.sets.length, 0);
     const doneSets = exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
     const volume = exercises.reduce((a, e) => {
@@ -736,7 +934,12 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
                 <Text style={s.titleTxt} numberOfLines={1}>
                   {workout?.title || 'Active Workout'}
                 </Text>
-                <WorkoutTimer startTime={startTimeRef.current} />
+                <WorkoutTimer
+                  startTime={startedAtMsRef.current}
+                  totalPausedMs={totalPausedMsState}
+                  isPaused={isPaused}
+                  pausedAt={pausedAtState}
+                />
               </View>
               <Pressable style={s.finishBtn} onPress={handleFinish}>
                 <LinearGradient
