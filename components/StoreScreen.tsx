@@ -71,7 +71,8 @@ const HERITAGE_OIL_PRODUCT: Product = {
   subtitle: 'Small-Batch Handcrafted Restorative Elixir',
   tag: 'HANDCRAFTED',
   tagColor: colors.sageDark,
-  price: 48,
+  price: 24.99,
+  originalPrice: 49.99,
   description: 'A traditional, all-natural botanical blend passed down through generations to soothe joints, relieve muscle fatigue, and support restorative recovery.',
   storyTitle: 'The Story Behind The Blend',
   storySubtitle: 'Generations of care, crafted in small batches',
@@ -183,9 +184,11 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (_) {}
+    const priceText = `$${product.price.toFixed(2)}`;
+    const origText = product.originalPrice ? ` (50% Off Special, Regular $${product.originalPrice.toFixed(2)})` : '';
     const subject = encodeURIComponent(`Inquiry: Order ${product.name} (FortyWell Store)`);
     const body = encodeURIComponent(
-      `Hello FortyWell Team,\n\nI would like to inquire about purchasing the ${product.name} ($${product.price}).\n\nPlease let me know availability and shipping details.\n\nThank you!`
+      `Hello FortyWell Team,\n\nI would like to inquire about purchasing the ${product.name} at the special price of ${priceText}${origText}.\n\nPlease let me know availability and shipping details.\n\nThank you!`
     );
     Linking.openURL(`mailto:hello@fortywell.app?subject=${subject}&body=${body}`);
   };
@@ -312,11 +315,17 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                   <Text style={styles.productSubtitle}>{product.subtitle}</Text>
 
                   <View style={styles.priceRow}>
-                    <Text style={styles.productPrice}>${product.price}</Text>
+                    <View style={styles.saleBadge}>
+                      <Text style={styles.saleBadgeText}>50% OFF</Text>
+                    </View>
+                    {product.originalPrice && (
+                      <Text style={styles.originalPrice}>${product.originalPrice.toFixed(2)}</Text>
+                    )}
+                    <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
                     {isEmailVerified && (
                       <View style={styles.verifiedDiscountPill}>
                         <Sparkles size={11} color={colors.primary} />
-                        <Text style={styles.verifiedDiscountText}>5% Member Privilege Unlocked</Text>
+                        <Text style={styles.verifiedDiscountText}>Member 5% Extra Off</Text>
                       </View>
                     )}
                   </View>
@@ -529,8 +538,14 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                   <Text style={styles.detailSubtitle}>{selectedProduct.subtitle}</Text>
 
                   <View style={styles.detailPriceRow}>
-                    <Text style={styles.detailPriceBig}>${selectedProduct.price}</Text>
-                    <Text style={styles.detailPriceNote}>Includes standard shipping inquiry</Text>
+                    <View style={styles.saleBadge}>
+                      <Text style={styles.saleBadgeText}>50% OFF</Text>
+                    </View>
+                    {selectedProduct.originalPrice && (
+                      <Text style={styles.detailOriginalPrice}>${selectedProduct.originalPrice.toFixed(2)}</Text>
+                    )}
+                    <Text style={styles.detailPriceBig}>${selectedProduct.price.toFixed(2)}</Text>
+                    <Text style={styles.detailPriceNote}>Includes shipping inquiry</Text>
                   </View>
 
                   {isEmailVerified && (
@@ -649,8 +664,11 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
               {/* ── STICKY BOTTOM INQUIRY ACTION BAR ── */}
               <View style={styles.bottomActionBar}>
                 <View style={styles.bottomPriceCol}>
-                  <Text style={styles.bottomPriceLabel}>TOTAL INQUIRY</Text>
-                  <Text style={styles.bottomPriceValue}>${selectedProduct.price}</Text>
+                  <Text style={styles.bottomPriceLabel}>SPECIAL PRICE</Text>
+                  {selectedProduct.originalPrice && (
+                    <Text style={styles.bottomOriginalPrice}>${selectedProduct.originalPrice.toFixed(2)}</Text>
+                  )}
+                  <Text style={styles.bottomPriceValue}>${selectedProduct.price.toFixed(2)}</Text>
                 </View>
 
                 <Pressable
@@ -1491,6 +1509,39 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: fontFamilies.monoBold,
     color: colors.textPrimary,
+  },
+  bottomOriginalPrice: {
+    fontSize: 12,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+    textDecorationLine: 'line-through',
+    marginBottom: 1,
+  },
+  originalPrice: {
+    fontSize: 15,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  detailOriginalPrice: {
+    fontSize: 18,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  saleBadge: {
+    backgroundColor: '#E53935',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  saleBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   bottomInquireBtn: {
     flex: 1,
