@@ -52,6 +52,32 @@ class WorkoutSessionManager {
   private visibilityHandler: (() => void) | null = null;
 
   /**
+   * MUST be called directly inside a user tap/click handler (e.g. "Start Workout" button).
+   * Browsers block audio autoplay unless triggered synchronously during a user gesture.
+   * This primes the audio context so MediaSession lock screen controls will appear.
+   */
+  public primeAudio(): void {
+    if (Platform.OS !== 'web' || typeof document === 'undefined' || !document.body) return;
+
+    try {
+      if (!this.audioElement) {
+        this.audioElement = document.createElement('audio');
+        this.audioElement.src = SILENT_AUDIO_URI;
+        this.audioElement.loop = true;
+        this.audioElement.volume = 0.01;
+        this.audioElement.setAttribute('playsinline', 'true');
+        this.audioElement.setAttribute('webkit-playsinline', 'true');
+        this.audioElement.setAttribute('preload', 'auto');
+        this.audioElement.style.display = 'none';
+        document.body.appendChild(this.audioElement);
+      }
+
+      // This play() call works because we are inside a user gesture
+      this.audioElement.play().catch(() => {});
+    } catch (_) {}
+  }
+
+  /**
    * Start or resume background session with Screen Wake Lock & Media Controls
    */
   public async startSession(
@@ -70,7 +96,7 @@ class WorkoutSessionManager {
     // 2. Setup Visibility Listener for wake lock auto-reacquisition
     this.setupVisibilityListener();
 
-    // 3. Start Background Audio Keep-Alive
+    // 3. Start Background Audio Keep-Alive (if not already primed via primeAudio())
     this.startAudioKeepAlive();
 
     // 4. Register Media Session (Spotify-style Lockscreen Card)

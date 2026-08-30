@@ -60,6 +60,7 @@ import { WorkoutDetailModal } from '../components/WorkoutDetailModal';
 import { getPersonalizedRecommendations } from '../lib/recommendationEngine';
 import { QuickLaunchSheet } from '../components/QuickLaunchSheet';
 import { ActiveWorkoutScreen, WorkoutSummary } from '../components/ActiveWorkoutScreen';
+import { workoutSessionManager } from '../lib/workoutSessionManager';
 import { MorningRoutineCard } from '../components/MorningRoutineCard';
 import { ExerciseDetailModal } from '../components/ExerciseDetailModal';
 import { CoachScreen } from '../components/CoachScreen';
@@ -397,6 +398,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       openPaywall('start_workout');
       return;
     }
+    // Prime audio HERE — directly inside user gesture so browsers allow autoplay.
+    // Without this, MediaSession lock screen controls won't appear.
+    workoutSessionManager.primeAudio();
     // Clear any stale resume checkpoint so fresh workout starts clean
     setResumeCheckpoint(null);
     setActiveWorkoutCheckpoint(null);
@@ -413,6 +417,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       openPaywall('start_workout');
       return;
     }
+    // Prime audio HERE — directly inside user gesture
+    workoutSessionManager.primeAudio();
     // Restore workout object from checkpoint if available
     const workoutData: Workout | null = resumeCheckpoint.workoutData ?? null;
     setActiveWorkoutData(workoutData);
