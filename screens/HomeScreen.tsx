@@ -73,6 +73,7 @@ import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
 import { useFavorites } from '../lib/useFavorites';
+import { useSavedSessions } from '../lib/useSavedSessions';
 import { useOfflineSync, getActiveSessionCheckpoint, clearActiveSessionCheckpoint, ActiveSessionCheckpoint } from '../lib/useOfflineSync';
 import { useLanguage } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
@@ -182,6 +183,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   }, [currentWeekDays, weeklyPlan]);
   // ── Favorites & Offline Protection ────────────────────────────────────────
   const { favoriteSlugs, toggleFavorite, isFavorite } = useFavorites();
+  const { savedSessions } = useSavedSessions();
   const { hasPendingLogs, isSyncing } = useOfflineSync();
   const { t } = useLanguage();
   const { isPaused, openPaywall, isTrialActive, trialDaysRemaining, isSubscribed } = useSubscription();
@@ -1260,6 +1262,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         personalizedWorkout={recommendations.featuredWorkout}
         matchReason={recommendations.matchReason}
         savedWorkouts={savedWorkouts}
+        savedSessions={savedSessions}
         onToggleFavorite={toggleFavorite}
         onSelectWorkout={(w) => {
           launchWorkout(w);

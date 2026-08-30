@@ -22,10 +22,13 @@ import {
   ArrowRight,
   Heart,
   Bookmark,
+  History,
+  Calendar,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { Workout } from '../hooks/useWorkouts';
+import { SavedSession } from '../lib/useSavedSessions';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_H * 0.78;
@@ -39,6 +42,7 @@ interface QuickLaunchSheetProps {
   onExploreAll: () => void;
   onStartEmpty: () => void;
   savedWorkouts?: Workout[];
+  savedSessions?: SavedSession[];
   onToggleFavorite?: (slug: string) => void;
 }
 
@@ -51,6 +55,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
   onExploreAll,
   onStartEmpty,
   savedWorkouts = [],
+  savedSessions = [],
   onToggleFavorite,
 }) => {
   if (!visible) return null;
@@ -211,6 +216,68 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 </View>
               )}
             </View>
+
+            {/* ── SAVED SESSIONS SECTION (Full workout data with stats) ── */}
+            {savedSessions.length > 0 && (
+              <View style={styles.savedSection}>
+                <View style={styles.savedHeaderRow}>
+                  <View style={styles.savedTitleLeft}>
+                    <History size={14} color={colors.sageDark} />
+                    <Text style={styles.savedSectionTitle}>YOUR SESSIONS</Text>
+                  </View>
+                  <View style={[styles.savedCountPill, { backgroundColor: colors.sageSoft, borderColor: colors.sageBorder }]}>
+                    <Text style={[styles.savedCountText, { color: colors.sageDark }]}>{savedSessions.length} SESSIONS</Text>
+                  </View>
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.savedScrollList}
+                >
+                  {savedSessions.slice(0, 10).map((session) => {
+                    const sessionDate = new Date(session.completedAt);
+                    const dateStr = sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const durationMin = Math.floor(session.durationSeconds / 60);
+
+                    return (
+                      <Pressable
+                        key={session.id}
+                        onPress={() => {
+                          // TODO: Load session data and start workout
+                          // For now, show a toast or find the workout by slug
+                        }}
+                        style={styles.savedCard}
+                      >
+                        <LinearGradient
+                          colors={['#E8F0E4', '#D7E5D0']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={StyleSheet.absoluteFillObject}
+                        />
+                        <View style={styles.savedCardTop}>
+                          <View style={[styles.savedCardBadge, { backgroundColor: colors.sageSoft }]}>
+                            <Calendar size={10} color={colors.sageDark} />
+                            <Text style={[styles.savedCardDuration, { color: colors.sageDark }]}>{dateStr}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.savedCardTitle} numberOfLines={2}>
+                          {session.workoutTitle}
+                        </Text>
+                        <View style={styles.savedCardFooter}>
+                          <Text style={styles.savedCardEq} numberOfLines={1}>
+                            {session.completedSets}/{session.totalSets} sets • {durationMin}m
+                          </Text>
+                          <View style={[styles.savedCardPlayBubble, { backgroundColor: colors.sage }]}>
+                            <Play size={10} color="#FFFFFF" fill="#FFFFFF" />
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             {/* ── CARD 2: USE PERSONALIZED WORKOUT (HERO) ── */}
             {personalizedWorkout && (

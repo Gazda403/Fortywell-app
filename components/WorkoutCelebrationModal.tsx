@@ -52,6 +52,7 @@ import { fontFamilies } from '../theme/typography';
 import { WorkoutSummaryData } from './ActiveWorkoutScreen';
 import { playWorkoutCelebrationChime } from '../lib/audioManager';
 import { useFavorites } from '../lib/useFavorites';
+import { useSavedSessions, summaryToSessionData, SavedSession } from '../lib/useSavedSessions';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -336,8 +337,11 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
   const [favNotice, setFavNotice] = useState<string | null>(null);
+  const [sessionSaved, setSessionSaved] = useState(false);
+  const [isSavingSession, setIsSavingSession] = useState(false);
 
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { saveSession } = useSavedSessions();
 
   const sheetY = useSharedValue(H);
   const headerScale = useSharedValue(0.7);
@@ -394,6 +398,40 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
     setFavNotice(willBeFav ? 'Saved to Your Favorite Routines! ♥' : 'Removed from Favorites');
     setTimeout(() => setFavNotice(null), 3000);
   }, [summary, workoutSlug, isFav, toggleFavorite, heartScale]);
+
+  const handleSaveSession = useCallback(async () => {
+    if (!summary || sessionSaved || isSavingSession) return;
+
+    setIsSavingSession(true);
+    try {
+      // Build session data from summary
+      const sessionData = summaryToSessionData(
+        workoutSlug,
+        summary.workoutTitle,
+        {
+          durationSeconds: summary.durationSeconds,
+          completedSets: summary.completedSets,
+          totalSets: summary.totalSets,
+          totalVolumeKg: summary.totalVolumeKg,
+          exercises: summary.exercises,
+        }
+      );
+
+      const success = await saveSession(sessionData);
+
+      if (success) {
+        setSessionSaved(true);
+        try {
+          if (Platform.OS !== 'web') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        } catch (_) {}
+        setFavNotice('Session Saved with All Data! 📊');
+        setTimeout(() => setFavNotice(null), 3000);
+      }
+    } catch (_) {}
+    setIsSavingSession(false);
+  }, [summary, sessionSaved, isSavingSession, workoutSlug, saveSession]);
 
   if (!visible || !summary) return null;
 
@@ -534,24 +572,30 @@ export function WorkoutCelebrationModal({ visible, summary, onClose }: Props) {
 
             {/* ── DUAL CELEBRATION ACTION BUTTONS: SAVE & SHARE ── */}
             <View style={cel_s.actionButtonsRow}>
-              {/* Save / Favorite Routine Button */}
+              {/* Save Session Button - saves full workout data */}
               <Pressable
-                onPress={handleToggleFav}
-                style={[cel_s.favBtn, isFav && cel_s.favBtnActive]}
+                onPress={handleSaveSession}
+                style={[cel_s.favBtn, sessionSaved && cel_s.favBtnActive]}
+                disabled={sessionSaved || isSavingSession}
                 accessibilityRole="button"
-                accessibilityLabel="Save routine to favorites"
+                accessibilityLabel="Save this workout session"
               >
-                <Animated.View style={heartAnimStyle}>
-                  <Heart
-                    size={17}
-                    color={isFav ? '#FFFFFF' : colors.primaryDark}
-                    fill={isFav ? '#FFFFFF' : 'transparent'}
-                    strokeWidth={2.2}
-                  />
-                </Animated.View>
-                <Text style={[cel_s.favBtnText, isFav && cel_s.favBtnTextActive]}>
-                  {isFav ? 'Saved Routine ♥' : 'Save Routine'}
-                </Text>
+                {isSavingSession ? (
+                  <Text style={[cel_s.favBtnText, { fontSize: 11 }]}>Saving...</Text>
+                ) : (
+                  <>
+                    <Animated.View style={heartAnimStyle}>
+                      <CheckCircle2
+                        size={17}
+                        color={sessionSaved ? '#FFFFFF' : colors.sageDark}
+                        strokeWidth={2.2}
+                      />
+                    </Animated.View>
+                    <Text style={[cel_s.favBtnText, sessionSaved && cel_s.favBtnTextActive]}>
+                      {sessionSaved ? 'Saved!' : 'Save Session'}
+                    </Text>
+                  </>
+                )}
               </Pressable>
 
               {/* Share Button */}
