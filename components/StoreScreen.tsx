@@ -16,16 +16,16 @@ import {
   ArrowLeft,
   ShoppingBag,
   Sparkles,
-  CheckCircle2,
   ChevronRight,
   Leaf,
   Droplet,
   HandHeart,
   ShieldCheck,
-  Star,
-  Award,
   ArrowUpRight,
   Mail,
+  CheckCircle2,
+  Award,
+  Star,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
@@ -167,31 +167,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
             </LinearGradient>
           </View>
 
-          {/* ── MEMBER DISCOUNT ── */}
-          {isEmailVerified && (
-            <View style={styles.discountCard}>
-              <View style={styles.discountHeader}>
-                <Award size={15} color={colors.primary} />
-                <Text style={styles.discountKicker}>✦ MEMBER PERK</Text>
-              </View>
-              <Text style={styles.discountTitle}>5% Off Your Order</Text>
-              <Text style={styles.discountDesc}>
-                Your verified account unlocks exclusive member pricing on all apothecary items.
-              </Text>
-              <Pressable
-                style={styles.promoCodeBox}
-                onPress={handleCopyDiscount}
-                accessibilityRole="button"
-              >
-                <Text style={styles.promoCodeText}>FORTY5</Text>
-                <View style={styles.promoTag}>
-                  <Text style={styles.promoTagText}>
-                    {copiedCode ? 'Copied! ✓' : 'Tap to Copy'}
-                  </Text>
-                </View>
-              </Pressable>
-            </View>
-          )}
+          {/* ── MEMBER DISCOUNT (REMOVED) ── */}
 
           {/* ── PRODUCT: HERITAGE OIL ── */}
           {PRODUCTS.map((product) => (

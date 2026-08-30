@@ -631,21 +631,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   }, [messages]);
 
   const scrollRef = useRef<ScrollView>(null);
-  const isUserNearBottomRef = useRef<boolean>(true);
   const typingOpac = useRef(new Animated.Value(0)).current;
-
-  const handleScroll = useCallback((event: any) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 160;
-    isUserNearBottomRef.current =
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-  }, []);
-
-  const scrollToBottomIfNear = useCallback((force = false) => {
-    if (force || isUserNearBottomRef.current) {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }
-  }, []);
 
   const HABIT_ICON_COLORS: Record<HabitItem['iconType'], string> = {
     heart: colors.rose,
@@ -784,8 +770,6 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (_) {}
 
-      setTimeout(() => scrollToBottomIfNear(false), 120);
-
     } else {
       // ── Pre-built path (simple greetings / ≤3 word messages) ───────────
       replyText = intentResult.coachReply;
@@ -817,13 +801,9 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         try {
           if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (_) {}
-
-        setTimeout(() => scrollToBottomIfNear(false), 120);
       }, latency);
     }
-
-    setTimeout(() => scrollToBottomIfNear(true), 100);
-  }, [isDeepThink, answers, typingOpac, messages, todayEntry, isPaused, openPaywall, scrollToBottomIfNear]);
+  }, [isDeepThink, answers, typingOpac, messages, todayEntry, isPaused, openPaywall]);
 
   const toggleVoiceRecording = () => {
     if (!isRecordingVoice) {
@@ -852,8 +832,6 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
       >
         {/* ── HEADER ── */}
         <View style={s.header}>

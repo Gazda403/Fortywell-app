@@ -1,7 +1,7 @@
 import { OnboardingAnswers } from '../types/onboarding';
 
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
-const GROQ_MODEL = 'llama-3.1-8b-instant';
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export interface GroqResponse {
@@ -69,17 +69,8 @@ Remember: You're coaching women over 40. Adapt your recommendations for:
  * (≤3 words or bare greetings) where adding AI latency is unnecessary.
  */
 export function shouldUseGroqAI(input: string, _intentType: string): boolean {
-  const text = input.toLowerCase().trim();
-  const wordCount = text.split(/\s+/).filter(Boolean).length;
-
-  // Very short messages (≤3 words) get fast pre-built replies
-  if (wordCount <= 3) return false;
-
-  // Bare greeting phrases → pre-built
-  const bareGreetings = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'good afternoon', 'good night', 'thanks', 'thank you', 'ok', 'okay'];
-  if (bareGreetings.some(g => text === g || text === g + '!')) return false;
-
-  // Everything else (4+ words) → Groq AI for a real, personalised response
+  if (!input || !input.trim()) return false;
+  // Always use real AI for all conversations
   return true;
 }
 
@@ -139,7 +130,8 @@ export async function sendToGroq(
       };
     }
 
-    const reply = data.choices[0].message?.content || '';
+    const rawReply = data.choices[0].message?.content || '';
+    const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
     return {
       reply,
