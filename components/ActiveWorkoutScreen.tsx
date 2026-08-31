@@ -63,14 +63,14 @@ const { height: SCREEN_H } = Dimensions.get('window');
 
 // --- Types -------------------------------------------------------------------
 
-interface LoggedSet {
+export interface LoggedSet {
   id: string;
   weight: string;
   reps: string;
   completed: boolean;
 }
 
-interface LoggedExercise {
+export interface LoggedExercise {
   id: string;
   name: string;
   sets: LoggedSet[];
@@ -102,6 +102,8 @@ export interface ActiveWorkoutScreenProps {
   onCancel: () => void;
   /** Optional: pre-loaded checkpoint to resume from (passed by HomeScreen) */
   checkpoint?: ActiveSessionCheckpoint | null;
+  /** Optional: pre-populated exercises with sets & weights (e.g. replaying a SavedSession) */
+  initialExercises?: LoggedExercise[] | null;
 }
 
 // --- Helper Timer Formatter -------------------------------------------------
@@ -155,10 +157,32 @@ function buildInitialExercises(w: Workout | null): LoggedExercise[] {
   if (!w) return [];
   const list: LoggedExercise[] = [];
 
-  const addEx = (name: string, cue?: string, defaultReps = '10', raw_img?: string, raw_gif?: string) => {
+  const addEx = (
+    name: string,
+    cue?: string,
+    defaultReps = '10',
+    raw_img?: string,
+    raw_gif?: string,
+    setCount = 1
+  ) => {
     const info = getExerciseInfo(name);
-    const cdnRawImg = raw_img ? raw_img.replace('raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises', 'cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises') : undefined;
-    const cdnRawGif = raw_gif ? raw_gif.replace('raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises', 'cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises') : undefined;
+    const cdnRawImg = raw_img
+      ? raw_img.replace('raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises', 'cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises')
+      : undefined;
+    const cdnRawGif = raw_gif
+      ? raw_gif.replace('raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises', 'cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises')
+      : undefined;
+
+    const count = Math.max(1, typeof setCount === 'number' && !isNaN(setCount) ? setCount : 1);
+    const sets: LoggedSet[] = [];
+    for (let i = 0; i < count; i++) {
+      sets.push({
+        id: Math.random().toString(36).substr(2, 9),
+        weight: '',
+        reps: defaultReps,
+        completed: false,
+      });
+    }
 
     list.push({
       id: Math.random().toString(36).substr(2, 9),
@@ -167,13 +191,11 @@ function buildInitialExercises(w: Workout | null): LoggedExercise[] {
       image_url: info.image_url || cdnRawImg,
       gif_url: info.gif_url || cdnRawGif,
       expanded: true,
-      sets: [
-        { id: Math.random().toString(36).substr(2, 9), weight: '', reps: defaultReps, completed: false },
-      ],
+      sets,
     });
   };
 
-  (w.warmup || []).forEach((e) => addEx(e.name, e.notes, e.duration || '60s', e.image_url, e.gif_url));
+  (w.warmup || []).forEach((e) => addEx(e.name, e.notes, e.duration || '60s', e.image_url, e.gif_url, e.sets || 1));
   (w.main_blocks || []).forEach((b) =>
     (b.exercises || []).forEach((e) =>
       addEx(
@@ -181,11 +203,12 @@ function buildInitialExercises(w: Workout | null): LoggedExercise[] {
         e.coaching_cue,
         e.reps ? String(e.reps) : '10',
         e.image_url,
-        e.gif_url
+        e.gif_url,
+        e.sets || 3
       )
     )
   );
-  (w.cooldown || []).forEach((e) => addEx(e.name, e.notes, e.duration || '60s', e.image_url, e.gif_url));
+  (w.cooldown || []).forEach((e) => addEx(e.name, e.notes, e.duration || '60s', e.image_url, e.gif_url, e.sets || 1));
 
   return list;
 }
@@ -496,6 +519,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   onFinish,
   onCancel,
   checkpoint,
+  initialExercises,
 }) => {
   // ── Wall-clock timer (never drifts in background) ─────────────────────────
   // startedAtMs = epoch ms when workout actually started (restored from checkpoint)
@@ -525,7 +549,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
     return Math.max(0, Math.floor((Date.now() - startedAtMsRef.current - totalPausedMsRef.current) / 1000));
   }, [isPaused]);
 
-  // ── Animate in/out & initialise from scratch or checkpoint ────────────────
+  // ── Animate in/out & initialise from scratch, saved session, or checkpoint ──
   useEffect(() => {
     if (visible) {
       slideY.value = withSpring(0, { damping: 20, stiffness: 120 });
@@ -540,26 +564,40 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
         setPausedAtState(null);
         setIsPaused(false);
         setExercises(checkpoint.exercises as LoggedExercise[]);
-      } else {
-        // ── Fresh workout ─────────────────────────────────────────────
+      } else if (initialExercises && initialExercises.length > 0) {
+        // ── Fresh workout from Saved Session / Custom routine ─────────
         startedAtMsRef.current = Date.now();
         totalPausedMsRef.current = 0;
         pausedAtMsRef.current = null;
         setTotalPausedMsState(0);
         setPausedAtState(null);
         setIsPaused(false);
-        const initialExercises = buildInitialExercises(workout);
         setExercises(initialExercises);
 
-        // Prefetch all workout exercise images
+        // Prefetch images for initial exercises
         const urlsToPrefetch = initialExercises
+          .flatMap((e) => [e.image_url, e.gif_url].filter(Boolean) as string[]);
+        if (urlsToPrefetch.length > 0) Image.prefetch(urlsToPrefetch);
+      } else {
+        // ── Fresh workout from standard template ──────────────────────
+        startedAtMsRef.current = Date.now();
+        totalPausedMsRef.current = 0;
+        pausedAtMsRef.current = null;
+        setTotalPausedMsState(0);
+        setPausedAtState(null);
+        setIsPaused(false);
+        const initialList = buildInitialExercises(workout);
+        setExercises(initialList);
+
+        // Prefetch all workout exercise images
+        const urlsToPrefetch = initialList
           .flatMap((e) => [e.image_url, e.gif_url].filter(Boolean) as string[]);
         if (urlsToPrefetch.length > 0) Image.prefetch(urlsToPrefetch);
       }
     } else {
       slideY.value = withTiming(SCREEN_H, { duration: 300 });
     }
-  }, [visible, workout, checkpoint]);
+  }, [visible, workout, checkpoint, initialExercises]);
 
   // ── Background session: Wake Lock + Media Session (Spotify-style) ─────────
   useEffect(() => {

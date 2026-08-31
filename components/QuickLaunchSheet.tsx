@@ -44,6 +44,8 @@ interface QuickLaunchSheetProps {
   savedWorkouts?: Workout[];
   savedSessions?: SavedSession[];
   onToggleFavorite?: (slug: string) => void;
+  /** Called when user taps a saved session to replay it */
+  onLoadSession?: (session: SavedSession) => void;
 }
 
 export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
@@ -57,6 +59,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
   savedWorkouts = [],
   savedSessions = [],
   onToggleFavorite,
+  onLoadSession,
 }) => {
   if (!visible) return null;
 
@@ -169,8 +172,20 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                   {savedWorkouts.map((item) => (
                     <Pressable
                       key={item.slug}
-                      onPress={() => onSelectWorkout(item)}
-                      style={styles.savedCard}
+                      onPress={() => {
+                        try {
+                          if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          }
+                        } catch (_) {}
+                        onSelectWorkout(item);
+                      }}
+                      style={({ pressed }) => [
+                        styles.savedCard,
+                        pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Start favorite routine: ${item.title}`}
                     >
                       <LinearGradient
                         colors={['#F7DFE4', '#EAEFE6']}
@@ -188,6 +203,8 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                             onPress={() => onToggleFavorite(item.slug)}
                             hitSlop={8}
                             style={styles.savedHeartIconBtn}
+                            accessibilityRole="button"
+                            accessibilityLabel="Toggle favorite"
                           >
                             <Heart size={14} color={colors.rose} fill={colors.rose} />
                           </Pressable>
@@ -217,13 +234,13 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
               )}
             </View>
 
-            {/* ── SAVED SESSIONS SECTION (Full workout data with stats) ── */}
+            {/* ── SAVED SESSIONS SECTION (Full workout data with sets & weights) ── */}
             {savedSessions.length > 0 && (
               <View style={styles.savedSection}>
                 <View style={styles.savedHeaderRow}>
                   <View style={styles.savedTitleLeft}>
                     <History size={14} color={colors.sageDark} />
-                    <Text style={styles.savedSectionTitle}>YOUR SESSIONS</Text>
+                    <Text style={styles.savedSectionTitle}>SAVED SESSIONS (LOGGED SETS)</Text>
                   </View>
                   <View style={[styles.savedCountPill, { backgroundColor: colors.sageSoft, borderColor: colors.sageBorder }]}>
                     <Text style={[styles.savedCountText, { color: colors.sageDark }]}>{savedSessions.length} SESSIONS</Text>
@@ -237,17 +254,29 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 >
                   {savedSessions.slice(0, 10).map((session) => {
                     const sessionDate = new Date(session.completedAt);
-                    const dateStr = sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    const durationMin = Math.floor(session.durationSeconds / 60);
+                    const dateStr = isNaN(sessionDate.getTime())
+                      ? 'Recent'
+                      : sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const durationMin = Math.max(1, Math.floor((session.durationSeconds || 60) / 60));
+                    const totalSetsCount = session.totalSets || (session.exercises || []).reduce((acc, e) => acc + (e.sets?.length || 0), 0);
 
                     return (
                       <Pressable
                         key={session.id}
                         onPress={() => {
-                          // TODO: Load session data and start workout
-                          // For now, show a toast or find the workout by slug
+                          try {
+                            if (Platform.OS !== 'web') {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            }
+                          } catch (_) {}
+                          onLoadSession?.(session);
                         }}
-                        style={styles.savedCard}
+                        style={({ pressed }) => [
+                          styles.savedCard,
+                          pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Start saved session: ${session.workoutTitle}`}
                       >
                         <LinearGradient
                           colors={['#E8F0E4', '#D7E5D0']}
@@ -266,7 +295,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                         </Text>
                         <View style={styles.savedCardFooter}>
                           <Text style={styles.savedCardEq} numberOfLines={1}>
-                            {session.completedSets}/{session.totalSets} sets • {durationMin}m
+                            {totalSetsCount} sets • {durationMin}m
                           </Text>
                           <View style={[styles.savedCardPlayBubble, { backgroundColor: colors.sage }]}>
                             <Play size={10} color="#FFFFFF" fill="#FFFFFF" />

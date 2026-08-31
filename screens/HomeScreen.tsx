@@ -59,7 +59,8 @@ import { useWorkouts, Workout } from '../hooks/useWorkouts';
 import { WorkoutDetailModal } from '../components/WorkoutDetailModal';
 import { getPersonalizedRecommendations } from '../lib/recommendationEngine';
 import { QuickLaunchSheet } from '../components/QuickLaunchSheet';
-import { ActiveWorkoutScreen, WorkoutSummary } from '../components/ActiveWorkoutScreen';
+import { ActiveWorkoutScreen, WorkoutSummary, LoggedExercise } from '../components/ActiveWorkoutScreen';
+import { getExerciseInfo } from '../lib/exerciseDatabase';
 import { workoutSessionManager } from '../lib/workoutSessionManager';
 import { MorningRoutineCard } from '../components/MorningRoutineCard';
 import { ExerciseDetailModal } from '../components/ExerciseDetailModal';
@@ -73,7 +74,7 @@ import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
 import { useFavorites } from '../lib/useFavorites';
-import { useSavedSessions } from '../lib/useSavedSessions';
+import { useSavedSessions, SavedSession } from '../lib/useSavedSessions';
 import { useOfflineSync, getActiveSessionCheckpoint, clearActiveSessionCheckpoint, ActiveSessionCheckpoint } from '../lib/useOfflineSync';
 import { useLanguage } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
@@ -209,6 +210,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null);
   const [activeWorkoutVisible, setActiveWorkoutVisible] = useState<boolean>(false);
   const [activeWorkoutData, setActiveWorkoutData] = useState<Workout | null>(null);
+  const [activeWorkoutInitialExercises, setActiveWorkoutInitialExercises] = useState<LoggedExercise[] | null>(null);
   const [exerciseDetailName, setExerciseDetailName] = useState<string | null>(null);
   const [exerciseDetailVisible, setExerciseDetailVisible] = useState<boolean>(false);
   const [profileModalVisible, setProfileModalVisible] = useState<boolean>(false);
@@ -420,11 +422,87 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     // Clear any stale resume checkpoint so fresh workout starts clean
     setResumeCheckpoint(null);
     setActiveWorkoutCheckpoint(null);
+    setActiveWorkoutInitialExercises(null);
     clearActiveSessionCheckpoint();
     setActiveWorkoutData(workout);
     setActiveWorkoutVisible(true);
     setQuickLaunchVisible(false);
     setModalVisible(false);
+  }, [isPaused, openPaywall]);
+
+  const loadSessionAsWorkout = useCallback((session: SavedSession) => {
+    if (isPaused) {
+      openPaywall('load_session');
+      return;
+    }
+
+    // Convert SavedSession to a Workout structure
+    const workoutFromSession: Workout = {
+      slug: session.workoutSlug || 'custom-session',
+      title: session.workoutTitle || 'Custom Workout',
+      description: 'Replaying saved session with logged sets & weights',
+      equipment: 'home_bodyweight',
+      duration_minutes: Math.max(10, Math.ceil((session.durationSeconds || 1200) / 60)),
+      target_focus: [],
+      joint_sensitivities_safe: [],
+      energy_level: 'moderate',
+      warmup: [],
+      main_blocks: [
+        {
+          block_name: 'Session Exercises',
+          exercises: (session.exercises || []).map((ex) => ({
+            name: ex.name,
+            sets: ex.sets?.length || 3,
+            reps: ex.sets?.[0]?.reps ? String(ex.sets[0].reps) : '10',
+            tempo: '2-0-2-0',
+            rest: '60s',
+          })),
+        },
+      ],
+      cooldown: [],
+    };
+
+    // Pre-populate LoggedExercise[] with the exact exercises, sets, weights and reps from this saved session
+    const initialExercises: LoggedExercise[] = (session.exercises || []).map((ex) => {
+      const info = getExerciseInfo(ex.name);
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        name: ex.name,
+        coaching_cue: info.coaching_cues,
+        image_url: info.image_url,
+        gif_url: info.gif_url,
+        expanded: true,
+        sets: (ex.sets && ex.sets.length > 0)
+          ? ex.sets.map((s) => ({
+              id: Math.random().toString(36).substr(2, 9),
+              weight: s.weight != null && s.weight !== 0 ? String(s.weight) : '',
+              reps: s.reps != null && s.reps !== 0 ? String(s.reps) : '10',
+              completed: false, // Reset so user can execute and log today's fresh workout!
+            }))
+          : [
+              {
+                id: Math.random().toString(36).substr(2, 9),
+                weight: '',
+                reps: '10',
+                completed: false,
+              },
+            ],
+      };
+    });
+
+    // Prime audio and launch
+    workoutSessionManager.primeAudio();
+    setResumeCheckpoint(null);
+    setActiveWorkoutCheckpoint(null);
+    clearActiveSessionCheckpoint();
+    setActiveWorkoutData(workoutFromSession);
+    setActiveWorkoutInitialExercises(initialExercises);
+    setActiveWorkoutVisible(true);
+    setQuickLaunchVisible(false);
+
+    try {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (_) {}
   }, [isPaused, openPaywall]);
 
   const handleResumeWorkout = useCallback(() => {
@@ -438,6 +516,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     // Restore workout object from checkpoint if available
     const workoutData: Workout | null = resumeCheckpoint.workoutData ?? null;
     setActiveWorkoutData(workoutData);
+    setActiveWorkoutInitialExercises(null);
     setActiveWorkoutCheckpoint(resumeCheckpoint);
     setResumeCheckpoint(null);
     setActiveWorkoutVisible(true);
@@ -1276,6 +1355,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onStartEmpty={() => {
           launchWorkout(null);
         }}
+        onLoadSession={loadSessionAsWorkout}
       />
 
       {/* ── ACTIVE WORKOUT TRACKER ── */}
@@ -1283,9 +1363,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         visible={activeWorkoutVisible}
         workout={activeWorkoutData}
         checkpoint={activeWorkoutCheckpoint}
+        initialExercises={activeWorkoutInitialExercises}
         onFinish={(summary: WorkoutSummary) => {
           setActiveWorkoutVisible(false);
           setActiveWorkoutCheckpoint(null);
+          setActiveWorkoutInitialExercises(null);
           setResumeCheckpoint(null);
           const today = new Date().toISOString().split('T')[0];
           recordCompletedWorkout(today, Math.round(summary.durationSeconds / 60), summary.totalVolumeKg);
@@ -1299,6 +1381,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onCancel={() => {
           setActiveWorkoutVisible(false);
           setActiveWorkoutCheckpoint(null);
+          setActiveWorkoutInitialExercises(null);
         }}
       />
 
