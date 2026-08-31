@@ -77,6 +77,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
+// Message retention: show only messages from last 5 hours (stored history can be longer)
+const MESSAGE_DISPLAY_WINDOW_MS = 5 * 60 * 60 * 1000; // 5 hours
+
 // ── TYPES ────────────────────────────────────────────────────────────────────
 
 interface CoachMessage {
@@ -605,7 +608,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     return () => { isMounted = false; };
   }, []);
 
-  // Load persistent chat messages
+  // Load persistent chat messages (all stored, but display only recent ones)
   React.useEffect(() => {
     let isMounted = true;
     async function loadSavedChat() {
@@ -614,7 +617,18 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         if (raw && isMounted) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+            const now = Date.now();
+            const allMessages = parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+            // Filter display to only show messages from last 5 hours
+            const recentMessages = allMessages.filter(
+              (m: CoachMessage) => now - m.timestamp.getTime() < MESSAGE_DISPLAY_WINDOW_MS
+            );
+            // Always include at least the welcome message if no recent messages
+            setMessages(recentMessages.length > 0 ? recentMessages : [allMessages[0] || { id: 'welcome', role: 'coach' as const, text: '', timestamp: new Date() }]);
+            // Store full history in a separate key for potential future use (e.g., analytics)
+            if (allMessages.length > 0) {
+              AsyncStorage.setItem('@fortywell_coach_chat_history_full', JSON.stringify(allMessages.slice(-50))).catch(() => {});
+            }
           }
         }
       } catch (_) {}
@@ -626,6 +640,21 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   // Save chat messages whenever new message is sent/received
   React.useEffect(() => {
     if (messages.length > 1) {
+      // Save full history (up to 50 messages) to preserve older conversations
+      AsyncStorage.getItem('@fortywell_coach_chat_history_full').then((raw) => {
+        let fullHistory: CoachMessage[] = [];
+        if (raw) {
+          try {
+            fullHistory = JSON.parse(raw).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+          } catch (_) {}
+        }
+        // Merge new messages with history, remove duplicates by id
+        const existingIds = new Set(fullHistory.map((m) => m.id));
+        const newMsgs = messages.filter((m) => !existingIds.has(m.id));
+        const merged = [...fullHistory, ...newMsgs].slice(-50);
+        AsyncStorage.setItem('@fortywell_coach_chat_history_full', JSON.stringify(merged)).catch(() => {});
+      });
+      // Display only recent messages (up to 30)
       AsyncStorage.setItem('@fortywell_coach_chat_history', JSON.stringify(messages.slice(-30))).catch(() => {});
     }
   }, [messages]);
@@ -725,7 +754,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     let classification: ClassificationResult | undefined;
 
     if (useAI) {
-      // ── Groq AI path (primary for all 4+ word messages) ────────────────
+      // ── Groq AI path ────────────────────────────────────────────────────
       const todayFeeling = todayEntry
         ? `Mood ${todayEntry.mood}/5, Energy ${todayEntry.energy}/5`
         : undefined;
@@ -736,16 +765,34 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         currentFeeling: todayFeeling,
       });
 
-      replyText = (groqResult.success && groqResult.reply)
-        ? groqResult.reply
-        : (intentResult.coachReply || getFallbackReply());
-
-      if (!groqResult.success) {
-        console.warn('Groq failed, using fallback:', groqResult.error);
+      if (groqResult.success && groqResult.reply) {
+        replyText = groqResult.reply;
+      } else {
+        // Groq failed — use canned reply as true last resort
+        console.warn('[Coach] Groq failed, using fallback. Error:', groqResult.error);
+        replyText = intentResult.coachReply || getFallbackReply();
       }
 
-      // Still run feeling classifier for DB side-effects even when Groq replies
-      if (intentResult.intent === 'feeling_checkin') {
+      // ── AI-determined weekly analysis saving (replaces keyword classifier) ──
+      // groqResult.weeklySignal is set by the AI itself based on message content.
+      // This correctly catches energy, sleep, stress, soreness etc even when
+      // the intent engine didn't keyword-match them as 'feeling_checkin'.
+      if (groqResult.weeklySignal?.shouldSave) {
+        setWeeklySignalsCount((prev) => prev + 1);
+        // Build a minimal ClassificationResult so the UI can show the tag
+        classification = {
+          category: 'General Coaching',
+          categoryIcon: 'sparkles',
+          confidence: 0.9,
+          sentiment: 'neutral',
+          extractedSignals: [groqResult.weeklySignal.insight],
+          workoutAdaptation: '',
+          weeklyAnalysisTag: `💾 ${groqResult.weeklySignal.tag}`,
+          shouldSaveForWeeklyAnalysis: true,
+          coachReply: replyText,
+        };
+      } else if (intentResult.intent === 'feeling_checkin') {
+        // Fallback: if Groq had no signal but intent was feeling_checkin, still classify
         classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
         if (classification.shouldSaveForWeeklyAnalysis) {
           setWeeklySignalsCount((prev) => prev + 1);

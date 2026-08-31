@@ -2,16 +2,31 @@ import { OnboardingAnswers } from '../types/onboarding';
 
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
 const GROQ_MODEL = 'qwen/qwen3.8-27b';
+/** Fallback model used if the primary model fails (rate limit, timeout, etc.) */
+const GROQ_FALLBACK_MODEL = 'groq/compound-mini';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+export interface WeeklySignal {
+  /** Whether this message should be saved for weekly workout analysis */
+  shouldSave: boolean;
+  /** Category tag for the weekly analysis */
+  tag: string;
+  /** Short extracted insight (1 sentence) */
+  insight: string;
+}
 
 export interface GroqResponse {
   reply: string;
   success: boolean;
   error?: string;
+  /** AI-determined weekly analysis signal — replaces keyword-based classifier */
+  weeklySignal?: WeeklySignal;
 }
 
 /**
- * Context to provide to the AI about the FortyWell app
+ * Build system prompt with user context.
+ * The prompt instructs Groq to append a structured JSON block AFTER the reply
+ * so we can parse weekly-analysis metadata without a second API call.
  */
 function buildSystemContext(
   answers?: OnboardingAnswers | null,
@@ -58,24 +73,54 @@ Remember: You're coaching women over 40. Adapt your recommendations for:
 - Joint sensitivity and protection
 - Hormonal fluctuations affecting energy and recovery
 - Time-efficient workouts (many women 40+ are busy)
-- Sustainable, long-term habit building over quick fixes`;
+- Sustainable, long-term habit building over quick fixes
+
+AFTER your coaching reply, on a NEW LINE, append EXACTLY this JSON block (no markdown fences, no extra text):
+[[SIGNAL:{"shouldSave":true/false,"tag":"Category • Label","insight":"One sentence summary of the health/fitness signal in this message"}]]
+
+Set shouldSave=true if the message contains any of: energy level, sleep quality, soreness, mood, stress, workout readiness, pain, fatigue, motivation, hormonal symptoms, or any body signal relevant to weekly fitness analysis.
+Set shouldSave=false for greetings, general questions about exercises, or unrelated topics.`;
 }
 
 /**
- * Determine if a message should be handled by Groq AI instead of a pre-built response.
- *
- * DESIGN PRINCIPLE: Groq AI is the primary responder for all real conversation.
- * Pre-built canned replies are only used for extremely short/simple messages
- * (≤3 words or bare greetings) where adding AI latency is unnecessary.
+ * Determine if a message should be handled by Groq AI.
+ * Always true — Groq is the primary responder for all real conversation.
  */
 export function shouldUseGroqAI(input: string, _intentType: string): boolean {
   if (!input || !input.trim()) return false;
-  // Always use real AI for all conversations
   return true;
 }
 
 /**
- * Send a message to Groq and get an AI response
+ * Parse the [[SIGNAL:...]] block appended by Groq at the end of its reply.
+ */
+function parseWeeklySignal(raw: string): { reply: string; weeklySignal?: WeeklySignal } {
+  const signalMatch = raw.match(/\[\[SIGNAL:([\s\S]*?)\]\]/);
+  if (!signalMatch) {
+    return { reply: raw.trim() };
+  }
+
+  // Strip the signal block from the visible reply
+  const reply = raw.replace(/\n?\[\[SIGNAL:[\s\S]*?\]\]/g, '').trim();
+
+  try {
+    const parsed = JSON.parse(signalMatch[1].trim());
+    const weeklySignal: WeeklySignal = {
+      shouldSave: Boolean(parsed.shouldSave),
+      tag: String(parsed.tag || '💾 Weekly Analysis'),
+      insight: String(parsed.insight || ''),
+    };
+    return { reply, weeklySignal };
+  } catch {
+    // JSON parse failed — still return the clean reply
+    return { reply };
+  }
+}
+
+/**
+ * Send a message to Groq and get an AI response.
+ * Returns both the coaching reply and a weekly analysis signal
+ * determined by the AI (not by keyword matching).
  */
 export async function sendToGroq(
   userMessage: string,
@@ -83,6 +128,11 @@ export async function sendToGroq(
   answers?: OnboardingAnswers | null,
   recentData?: { lastWorkout?: string; currentFeeling?: string }
 ): Promise<GroqResponse> {
+  if (!GROQ_API_KEY) {
+    console.error('Groq API key is missing — check EXPO_PUBLIC_GROQ_API_KEY in .env');
+    return { reply: '', success: false, error: 'Missing API key' };
+  }
+
   try {
     const systemMessage = buildSystemContext(answers, recentData);
 
@@ -96,49 +146,61 @@ export async function sendToGroq(
       { role: 'user' as const, content: userMessage },
     ];
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages,
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
-    });
+    /**
+     * Inner helper — attempt a single model and return raw text or throw.
+     */
+    async function attemptModel(model: string): Promise<string> {
+      const response = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.7,
+          max_tokens: 600,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Groq API error:', response.status, errorData);
-      return {
-        reply: '',
-        success: false,
-        error: `API error: ${response.status}`,
-      };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API error ${response.status}: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      if (!data.choices?.[0]) throw new Error('No choices in response');
+
+      return (data.choices[0].message?.content || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .trim();
     }
 
-    const data = await response.json();
-
-    if (!data.choices || !data.choices[0]) {
-      return {
-        reply: '',
-        success: false,
-        error: 'No response from AI',
-      };
+    // Try primary model first; fall back to lighter model on failure
+    let rawReply = '';
+    try {
+      rawReply = await attemptModel(GROQ_MODEL);
+    } catch (primaryErr) {
+      console.warn(`[Groq] Primary model (${GROQ_MODEL}) failed:`, primaryErr, '— retrying with fallback model');
+      try {
+        rawReply = await attemptModel(GROQ_FALLBACK_MODEL);
+      } catch (fallbackErr) {
+        console.error('[Groq] Fallback model also failed:', fallbackErr);
+        throw fallbackErr;
+      }
     }
 
-    const rawReply = data.choices[0].message?.content || '';
-    const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    if (!rawReply) {
+      console.warn('[Groq] Empty reply after stripping think blocks.');
+      return { reply: '', success: false, error: 'Empty reply' };
+    }
 
-    return {
-      reply,
-      success: true,
-    };
+    const { reply, weeklySignal } = parseWeeklySignal(rawReply);
+    return { reply, success: true, weeklySignal };
+
   } catch (error) {
-    console.error('Groq service error:', error);
+    console.error('[Groq] Service error:', error);
     return {
       reply: '',
       success: false,
@@ -151,5 +213,5 @@ export async function sendToGroq(
  * Fallback response when Groq fails
  */
 export function getFallbackReply(): string {
-  return `I'm having a bit of trouble processing that right now. Could you try rephrasing, or let me know how you're feeling specifically? I'm here to help you move better and feel stronger.`;
+  return `I'm having a bit of trouble connecting right now. Could you try again in a moment? I'm here to help you move better and feel stronger.`;
 }
