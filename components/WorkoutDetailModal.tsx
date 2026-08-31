@@ -29,6 +29,7 @@ import { fontFamilies } from '../theme/typography';
 import { Workout, Exercise } from '../hooks/useWorkouts';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
 import { useFavorites } from '../lib/useFavorites';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WorkoutDetailModalProps {
   workout: Workout | null;
@@ -48,6 +49,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
   isFavorite: isFavoriteProp,
   onToggleFavorite,
 }) => {
+  const { t } = useLanguage();
   // Internal favorites support when not controlled externally
   const { isFavorite: isFavHook, toggleFavorite: toggleFavHook } = useFavorites();
   const heartScale = useSharedValue(1);
@@ -91,11 +93,11 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
   const getEquipmentLabel = (eq: string) => {
     switch (eq) {
       case 'home_bodyweight':
-        return 'Home • Bodyweight';
+        return t('workoutDetail.equipmentLabels.bodyweight');
       case 'home_dumbbells_bands':
-        return 'Home • Dumbbells & Bands';
+        return t('workoutDetail.equipmentLabels.dumbbellsBands');
       case 'gym_machines_free_weights':
-        return 'Gym • Machines & Weights';
+        return t('workoutDetail.equipmentLabels.gym');
       default:
         return eq;
     }
@@ -113,7 +115,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
           {/* Header Bar */}
           <View style={styles.modalHeader}>
             <View style={styles.headerTitleWrap}>
-              <Text style={styles.kickerText}>FORTYWELL PROTOCOL</Text>
+              <Text style={styles.kickerText}>{t('workoutDetail.kicker')}</Text>
               <Text style={styles.modalTitle}>{workout.title}</Text>
             </View>
             <View style={styles.headerActions}>
@@ -143,7 +145,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
             <View style={styles.badgeRow}>
               <View style={styles.pillBadge}>
                 <Clock size={12} color={colors.primaryDark} />
-                <Text style={styles.pillBadgeText}>{workout.duration_minutes} Mins</Text>
+                <Text style={styles.pillBadgeText}>{t('home.minutesCount', { count: workout.duration_minutes })}</Text>
               </View>
               <View style={[styles.pillBadge, { backgroundColor: colors.sageSoft }]}>
                 <Dumbbell size={12} color={colors.sageDark} />
@@ -165,10 +167,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
               <View style={styles.jointSafetyCard}>
                 <ShieldCheck size={16} color={colors.sageDark} />
                 <Text style={styles.jointSafetyText}>
-                  Calibrated Joint-Safe for:{' '}
-                  <Text style={styles.boldText}>
-                    {workout.joint_sensitivities_safe.join(', ').toUpperCase()}
-                  </Text>
+                  {t('workoutDetail.jointSafeFor', { areas: workout.joint_sensitivities_safe.join(', ').toUpperCase() })}
                 </Text>
               </View>
             )}
@@ -176,7 +175,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
             {/* WARMUP BLOCK */}
             {workout.warmup && workout.warmup.length > 0 && (
               <View style={styles.sectionBlock}>
-                <Text style={styles.sectionTitle}>🔥 WARMUP & MOBILIZATION</Text>
+                <Text style={styles.sectionTitle}>{t('workoutDetail.warmupSection')}</Text>
                 {workout.warmup.map((ex, idx) => {
                   const imgUri = ex.image_url || getExerciseInfo(ex.name).image_url;
                   return (
@@ -192,7 +191,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                       ) : null}
                       <View style={styles.exerciseDetails}>
                         <Text style={styles.exerciseName}>{ex.name}</Text>
-                        {ex.duration && <Text style={styles.exerciseMeta}>Duration: {ex.duration}</Text>}
+                        {ex.duration && <Text style={styles.exerciseMeta}>{t('workoutDetail.durationLabel', { duration: ex.duration })}</Text>}
                         {ex.notes && <Text style={styles.exerciseNotes}>💡 {ex.notes}</Text>}
                       </View>
                     </View>
@@ -204,7 +203,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
             {/* MAIN BLOCKS */}
             {workout.main_blocks && workout.main_blocks.length > 0 && (
               <View style={styles.sectionBlock}>
-                <Text style={styles.sectionTitle}>💪 MAIN STRENGTH BLOCKS</Text>
+                <Text style={styles.sectionTitle}>{t('workoutDetail.strengthSection')}</Text>
                 {workout.main_blocks.map((block, bIdx) => (
                   <View key={`b-${bIdx}`} style={styles.mainBlockWrap}>
                     <Text style={styles.blockName}>{block.block_name}</Text>
@@ -224,13 +223,13 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                           <View style={styles.exerciseDetails}>
                             <Text style={styles.exerciseName}>{ex.name}</Text>
                             <View style={styles.prescRow}>
-                              {ex.sets && <Text style={styles.prescBadge}>{ex.sets} Sets</Text>}
+                              {ex.sets && <Text style={styles.prescBadge}>{t('workoutDetail.setsCount', { count: ex.sets })}</Text>}
                               {ex.reps && <Text style={styles.prescBadge}>{ex.reps}</Text>}
-                              {ex.tempo && <Text style={styles.prescBadge}>Tempo {ex.tempo}</Text>}
-                              {ex.rest && <Text style={styles.prescBadge}>Rest {ex.rest}</Text>}
+                              {ex.tempo && <Text style={styles.prescBadge}>{t('workoutDetail.tempoLabel', { tempo: ex.tempo })}</Text>}
+                              {ex.rest && <Text style={styles.prescBadge}>{t('workoutDetail.restLabel', { rest: ex.rest })}</Text>}
                             </View>
                             {ex.coaching_cue && (
-                              <Text style={styles.coachingCue}>🎯 <Text style={{ fontFamily: fontFamilies.monoBold }}>Coach Cue:</Text> {ex.coaching_cue}</Text>
+                              <Text style={styles.coachingCue}>🎯 <Text style={{ fontFamily: fontFamilies.monoBold }}>{t('workoutDetail.coachCueLabel')}</Text> {ex.coaching_cue}</Text>
                             )}
                           </View>
                         </View>
@@ -244,7 +243,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
             {/* COOLDOWN BLOCK */}
             {workout.cooldown && workout.cooldown.length > 0 && (
               <View style={styles.sectionBlock}>
-                <Text style={styles.sectionTitle}>🍃 COOLDOWN & DECOMPRESSION</Text>
+                <Text style={styles.sectionTitle}>{t('workoutDetail.cooldownSection')}</Text>
                 {workout.cooldown.map((ex, idx) => {
                   const imgUri = ex.image_url || getExerciseInfo(ex.name).image_url;
                   return (
@@ -260,7 +259,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                       ) : null}
                       <View style={styles.exerciseDetails}>
                         <Text style={styles.exerciseName}>{ex.name}</Text>
-                        {ex.duration && <Text style={styles.exerciseMeta}>Duration: {ex.duration}</Text>}
+                        {ex.duration && <Text style={styles.exerciseMeta}>{t('workoutDetail.durationLabel', { duration: ex.duration })}</Text>}
                         {ex.notes && <Text style={styles.exerciseNotes}>💡 {ex.notes}</Text>}
                       </View>
                     </View>
@@ -288,7 +287,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                 style={StyleSheet.absoluteFillObject}
               />
               <Play size={16} color="#FFFFFF" fill="#FFFFFF" />
-              <Text style={styles.startBtnText}>START THIS SESSION</Text>
+              <Text style={styles.startBtnText}>{t('workoutDetail.startSessionBtn')}</Text>
             </Pressable>
           </View>
         </View>

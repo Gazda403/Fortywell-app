@@ -29,6 +29,7 @@ import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { Workout } from '../hooks/useWorkouts';
 import { SavedSession } from '../lib/useSavedSessions';
+import { useLanguage } from '../context/LanguageContext';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_H * 0.78;
@@ -61,6 +62,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
   onToggleFavorite,
   onLoadSession,
 }) => {
+  const { t } = useLanguage();
   if (!visible) return null;
 
   const handleMinimize = () => {
@@ -97,7 +99,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
             <View style={styles.grabberPill} />
             <View style={styles.minimizeBtn}>
               <ChevronDown size={20} color={colors.primaryDark} strokeWidth={2.6} />
-              <Text style={styles.minimizeText}>MINIMIZE</Text>
+              <Text style={styles.minimizeText}>{t('quickLaunch.minimize')}</Text>
             </View>
           </Pressable>
 
@@ -110,11 +112,11 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
             <View style={styles.sheetHeader}>
               <View style={styles.headerKickerRow}>
                 <Sparkles size={13} color={colors.primaryDark} />
-                <Text style={styles.headerKicker}>QUICK LAUNCH & BUILD</Text>
+                <Text style={styles.headerKicker}>{t('quickLaunch.headerKicker')}</Text>
               </View>
-              <Text style={styles.sheetTitle}>Create or Launch Workout</Text>
+              <Text style={styles.sheetTitle}>{t('quickLaunch.sheetTitle')}</Text>
               <Text style={styles.sheetSubtitle}>
-                Access your bookmarked routines, build a session from scratch, or follow your daily plan.
+                {t('quickLaunch.sheetSubtitle')}
               </Text>
             </View>
 
@@ -125,7 +127,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
               }}
               style={styles.actionCardEmpty}
               accessibilityRole="button"
-              accessibilityLabel="Start empty workout session"
+              accessibilityLabel={t('quickLaunch.buildYourOwn')}
             >
               <View style={styles.emptyLeft}>
                 <View style={styles.emptyIconWrap}>
@@ -133,14 +135,14 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 </View>
                 <View style={styles.emptyTextWrap}>
                   <View style={styles.buildBadgeRow}>
-                    <Text style={styles.emptyTag}>CUSTOM BUILD</Text>
+                    <Text style={styles.emptyTag}>{t('quickLaunch.customBuild')}</Text>
                     <View style={styles.instantBadge}>
-                      <Text style={styles.instantBadgeText}>BLANK CANVAS</Text>
+                      <Text style={styles.instantBadgeText}>{t('quickLaunch.blankCanvas')}</Text>
                     </View>
                   </View>
-                  <Text style={styles.emptyTitle}>Build Your Own Workout</Text>
+                  <Text style={styles.emptyTitle}>{t('quickLaunch.buildYourOwn')}</Text>
                   <Text style={styles.emptySub}>
-                    Start a custom session and freely pick exercises from our 870+ movement library.
+                    {t('quickLaunch.buildYourOwnSub')}
                   </Text>
                 </View>
               </View>
@@ -154,11 +156,11 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
               <View style={styles.savedHeaderRow}>
                 <View style={styles.savedTitleLeft}>
                   <Heart size={14} color={colors.rose} fill={colors.rose} />
-                  <Text style={styles.savedSectionTitle}>SAVED &amp; FAVORITE ROUTINES</Text>
+                  <Text style={styles.savedSectionTitle}>{t('quickLaunch.savedRoutinesTitle')}</Text>
                 </View>
                 {savedWorkouts.length > 0 && (
                   <View style={styles.savedCountPill}>
-                    <Text style={styles.savedCountText}>{savedWorkouts.length} SAVED</Text>
+                    <Text style={styles.savedCountText}>{t('quickLaunch.savedCount', { count: savedWorkouts.length })}</Text>
                   </View>
                 )}
               </View>
@@ -228,7 +230,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 <View style={styles.savedEmptyNotice}>
                   <Bookmark size={16} color={colors.textTertiary} />
                   <Text style={styles.savedEmptyText}>
-                    Tap the <Text style={{ color: colors.rose, fontWeight: '700' }}>♥</Text> heart icon on any routine in the library to bookmark it here for instant 1-tap access.
+                    {t('quickLaunch.savedEmpty')}
                   </Text>
                 </View>
               )}
@@ -240,10 +242,10 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 <View style={styles.savedHeaderRow}>
                   <View style={styles.savedTitleLeft}>
                     <History size={14} color={colors.sageDark} />
-                    <Text style={styles.savedSectionTitle}>SAVED SESSIONS (LOGGED SETS)</Text>
+                    <Text style={styles.savedSectionTitle}>{t('quickLaunch.savedSessionsTitle')}</Text>
                   </View>
                   <View style={[styles.savedCountPill, { backgroundColor: colors.sageSoft, borderColor: colors.sageBorder }]}>
-                    <Text style={[styles.savedCountText, { color: colors.sageDark }]}>{savedSessions.length} SESSIONS</Text>
+                    <Text style={[styles.savedCountText, { color: colors.sageDark }]}>{t('quickLaunch.sessionsCount', { count: savedSessions.length })}</Text>
                   </View>
                 </View>
 
@@ -295,7 +297,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                         </Text>
                         <View style={styles.savedCardFooter}>
                           <Text style={styles.savedCardEq} numberOfLines={1}>
-                            {totalSetsCount} sets • {durationMin}m
+                            {t('quickLaunch.sessionSetsMeta', { sets: totalSetsCount, duration: durationMin })}
                           </Text>
                           <View style={[styles.savedCardPlayBubble, { backgroundColor: colors.sage }]}>
                             <Play size={10} color="#FFFFFF" fill="#FFFFFF" />
@@ -328,11 +330,11 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 <View style={styles.cardHeroBadgeRow}>
                   <View style={styles.heroMatchBadge}>
                     <Sparkles size={10} color="#FFFFFF" />
-                    <Text style={styles.heroMatchBadgeText}>TODAY'S PRESCRIBED PLAN</Text>
+                    <Text style={styles.heroMatchBadgeText}>{t('quickLaunch.prescribedPlanBadge')}</Text>
                   </View>
                   <View style={styles.heroDurationPill}>
                     <Clock size={11} color="#FFFFFF" />
-                    <Text style={styles.heroDurationText}>{personalizedWorkout.duration_minutes} Mins</Text>
+                    <Text style={styles.heroDurationText}>{t('home.minutesCount', { count: personalizedWorkout.duration_minutes })}</Text>
                   </View>
                 </View>
 
@@ -350,7 +352,7 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 {/* Action Button inside card */}
                 <View style={styles.cardHeroBtn}>
                   <Play size={14} color="#C9465B" fill="#C9465B" />
-                  <Text style={styles.cardHeroBtnText}>START PRESCRIBED WORKOUT</Text>
+                  <Text style={styles.cardHeroBtnText}>{t('quickLaunch.startPrescribedBtn')}</Text>
                   <ArrowRight size={14} color="#C9465B" strokeWidth={2.2} />
                 </View>
               </Pressable>
@@ -371,11 +373,11 @@ export const QuickLaunchSheet: React.FC<QuickLaunchSheetProps> = ({
                 </View>
                 <View style={styles.secondaryTextWrap}>
                   <View style={styles.secondaryTagRow}>
-                    <Text style={styles.secondaryTag}>20+ S&amp;C PROTOCOLS</Text>
+                    <Text style={styles.secondaryTag}>{t('quickLaunch.exploreAllTag')}</Text>
                   </View>
-                  <Text style={styles.secondaryTitle}>Explore All Workouts</Text>
+                  <Text style={styles.secondaryTitle}>{t('quickLaunch.exploreAllTitle')}</Text>
                   <Text style={styles.secondarySubtitle}>
-                    Choose from Bodyweight, Dumbbells, Gym, or Somatic Recovery.
+                    {t('quickLaunch.exploreAllSubtitle')}
                   </Text>
                 </View>
               </View>

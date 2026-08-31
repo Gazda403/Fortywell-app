@@ -23,6 +23,7 @@ import {
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface MorningStretchItem {
   id: string;
@@ -119,6 +120,7 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
     reflection: false,
   });
 
+  const { t } = useLanguage();
   // Get current day of week (0-6)
   const todayIndex = new Date().getDay();
   const todayRoutine = WEEKLY_STRETCH_ROUTINES[todayIndex] || WEEKLY_STRETCH_ROUTINES[3];
@@ -145,18 +147,18 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
         <View style={s.headerLeft}>
           <View style={s.kickerBadge}>
             <Sun size={12} color={colors.primaryDark} />
-            <Text style={s.kickerText}>MORNING ANCHOR ROUTINE</Text>
+            <Text style={s.kickerText}>{t('morningRoutine.kicker')}</Text>
           </View>
-          <Text style={s.title}>Daily Vitality Routine</Text>
+          <Text style={s.title}>{t('morningRoutine.title')}</Text>
           <Text style={s.subtitle}>
-            3 simple habits to prime your fascia &amp; nervous system
+            {t('morningRoutine.subtitle')}
           </Text>
         </View>
 
         <View style={[s.progressBadge, completedCount === 3 && s.progressBadgeDone]}>
           <Sparkles size={11} color={completedCount === 3 ? '#FFFFFF' : colors.primaryDark} />
           <Text style={[s.progressText, completedCount === 3 && s.progressTextDone]}>
-            {completedCount} / 3 Done
+            {t('morningRoutine.progressDone', { done: completedCount })}
           </Text>
         </View>
       </View>
@@ -177,11 +179,11 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
           <View style={s.itemTitleRow}>
             <Droplets size={14} color={colors.primaryDark} style={s.itemIcon} />
             <Text style={[s.itemTitle, checkedItems.water && s.itemTitleDone]}>
-              Drink 3 Glasses of Water
+              {t('morningRoutine.waterTitle')}
             </Text>
           </View>
           <Text style={s.itemDesc}>
-            Drink 3 full glasses upon waking to rehydrate spinal discs &amp; boost metabolism.
+            {t('morningRoutine.waterDesc')}
           </Text>
         </View>
       </Pressable>
@@ -205,7 +207,7 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
             <View style={s.itemTitleRow}>
               <Activity size={14} color={colors.primaryDark} style={s.itemIcon} />
               <Text style={[s.itemTitle, checkedItems.stretching && s.itemTitleDone]}>
-                10-Min Daily Mobility &amp; Stretching
+                {t('morningRoutine.mobilityTitle')}
               </Text>
             </View>
             <Text style={s.itemDesc}>
@@ -217,10 +219,10 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
         {/* ── SUB-ITEMS: 10 MIN WORTH OF TODAY'S STRETCHES ── */}
         <View style={s.stretchListCard}>
           <View style={s.stretchListHeader}>
-            <Text style={s.todayThemeKicker}>{todayRoutine.dayName.toUpperCase()} ROUTINE</Text>
+            <Text style={s.todayThemeKicker}>{t('morningRoutine.routineKicker', { day: todayRoutine.dayName.toUpperCase() })}</Text>
             <View style={s.timeBadge}>
               <Clock size={10} color={colors.textSecondary} />
-              <Text style={s.timeBadgeText}>10 MIN TOTAL</Text>
+              <Text style={s.timeBadgeText}>{t('morningRoutine.tenMinTotal')}</Text>
             </View>
           </View>
 
@@ -278,14 +280,14 @@ const MorningRoutineCardComponent: React.FC<MorningRoutineCardProps> = ({
           <View style={s.itemTitleRow}>
             <Brain size={14} color={colors.primaryDark} style={s.itemIcon} />
             <Text style={[s.itemTitle, checkedItems.reflection && s.itemTitleDone]}>
-              5-Min Self-Reflection &amp; Breathwork
+              {t('morningRoutine.reflectionTitle')}
             </Text>
             <View style={s.optionalTag}>
-              <Text style={s.optionalTagText}>OPTIONAL</Text>
+              <Text style={s.optionalTagText}>{t('morningRoutine.optionalTag')}</Text>
             </View>
           </View>
           <Text style={s.itemDesc}>
-            5 slow diaphragmatic breaths + set 1 positive intention for your nervous system today.
+            {t('morningRoutine.reflectionDesc')}
           </Text>
         </View>
       </Pressable>
