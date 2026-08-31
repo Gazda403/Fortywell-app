@@ -1,9 +1,17 @@
 import { OnboardingAnswers } from '../types/onboarding';
 
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
-const GROQ_MODEL = 'qwen/qwen3.8-27b';
-/** Fallback model used if the primary model fails (rate limit, timeout, etc.) */
-const GROQ_FALLBACK_MODEL = 'groq/compound-mini';
+/**
+ * Primary model: qwen/qwen3-32b — high quality chat model available on Groq.
+ * Previous value 'qwen/qwen3.8-27b' did not exist (404).
+ */
+const GROQ_MODEL = 'qwen/qwen3-32b';
+/**
+ * Fallback model: llama-3.1-8b-instant — fast, small, always available Groq chat model.
+ * Previous value 'groq/compound-mini' is an AGENTIC system, not a chat model — it cannot
+ * be used in /v1/chat/completions and always returns 400/404.
+ */
+const GROQ_FALLBACK_MODEL = 'llama-3.1-8b-instant';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export interface WeeklySignal {
@@ -166,7 +174,18 @@ export async function sendToGroq(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`API error ${response.status}: ${JSON.stringify(errorData)}`);
+        const errMsg = errorData?.error?.message || JSON.stringify(errorData);
+        // Specific guidance for common error codes
+        if (response.status === 401) {
+          throw new Error(`[Auth 401] Invalid or missing API key. Check EXPO_PUBLIC_GROQ_API_KEY in .env`);
+        } else if (response.status === 404) {
+          throw new Error(`[Model 404] Model "${model}" not found on Groq. Check the model ID is correct.`);
+        } else if (response.status === 400) {
+          throw new Error(`[Bad Request 400] ${errMsg}`);
+        } else if (response.status === 429) {
+          throw new Error(`[Rate Limit 429] Too many requests. ${errMsg}`);
+        }
+        throw new Error(`[API ${response.status}] ${errMsg}`);
       }
 
       const data = await response.json();
