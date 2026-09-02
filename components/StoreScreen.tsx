@@ -32,9 +32,11 @@ import {
   Share2,
   Check,
   Flame,
+  CreditCard,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
+import { PayPalCheckoutModal } from './PayPalCheckoutModal';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -152,6 +154,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
   isEmailVerified = false,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
   const [notified, setNotified] = useState(false);
 
@@ -661,7 +664,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                 <View style={{ height: 110 }} />
               </ScrollView>
 
-              {/* ── STICKY BOTTOM INQUIRY ACTION BAR ── */}
+              {/* ── STICKY BOTTOM CHECKOUT ACTION BAR ── */}
               <View style={styles.bottomActionBar}>
                 <View style={styles.bottomPriceCol}>
                   <Text style={styles.bottomPriceLabel}>SPECIAL PRICE</Text>
@@ -673,9 +676,9 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
 
                 <Pressable
                   style={styles.bottomInquireBtn}
-                  onPress={() => handleInquirePurchase(selectedProduct)}
+                  onPress={() => setCheckoutProduct(selectedProduct)}
                   accessibilityRole="button"
-                  accessibilityLabel="Inquire to purchase this product"
+                  accessibilityLabel="Purchase Heritage Muscle Oil with Card or PayPal"
                 >
                   <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
@@ -683,13 +686,29 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                     end={{ x: 1, y: 0 }}
                     style={styles.bottomInquireGrad}
                   >
-                    <Text style={styles.bottomInquireText}>Inquire to Purchase</Text>
-                    <ArrowUpRight size={18} color="#FFFFFF" strokeWidth={2.2} />
+                    <CreditCard size={18} color="#FFFFFF" strokeWidth={2.2} />
+                    <Text style={styles.bottomInquireText}>Buy with Card / PayPal</Text>
                   </LinearGradient>
                 </Pressable>
               </View>
             </SafeAreaView>
           </Modal>
+        )}
+
+        {/* ── PAYPAL & CARD GUEST CHECKOUT MODAL ── */}
+        {checkoutProduct && (
+          <PayPalCheckoutModal
+            visible={!!checkoutProduct}
+            onClose={() => setCheckoutProduct(null)}
+            product={{
+              id: checkoutProduct.id,
+              name: checkoutProduct.name,
+              subtitle: checkoutProduct.subtitle,
+              price: checkoutProduct.price,
+              originalPrice: checkoutProduct.originalPrice,
+              image: checkoutProduct.images[0],
+            }}
+          />
         )}
       </SafeAreaView>
     </Modal>

@@ -1369,8 +1369,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           setActiveWorkoutCheckpoint(null);
           setActiveWorkoutInitialExercises(null);
           setResumeCheckpoint(null);
-          const today = new Date().toISOString().split('T')[0];
-          recordCompletedWorkout(today, Math.round(summary.durationSeconds / 60), summary.totalVolumeKg);
+          const now = new Date();
+          const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          recordCompletedWorkout(
+            today,
+            Math.round(summary.durationSeconds / 60),
+            summary.totalVolumeKg,
+            summary.completedSets
+          );
           refreshUserData(true);
           try {
             if (Platform.OS !== 'web') {

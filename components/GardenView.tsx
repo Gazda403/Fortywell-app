@@ -91,11 +91,35 @@ export interface GardenViewProps {
 }
 
 export const GardenView: React.FC<GardenViewProps> = (props) => {
-  const hookData = useUserData();
   const { t } = useLanguage();
-  const gardenProgress = props.gardenProgress || hookData.gardenProgress;
-  const lifetimeStats = props.lifetimeStats || hookData.lifetimeStats;
-  const topExercises = props.topExercises || hookData.topExercises || DEFAULT_FAVORITE_EXERCISES;
+  const defaultGardenProgress: GardenProgress = {
+    currentLevel: 1,
+    daysCompletedInLevel: 0,
+    daysRequiredInLevel: 7,
+    daysToNextLevel: 7,
+    totalActiveDays: 0,
+    levelName: 'Meadow Dawn',
+    levelDesc: 'Fresh green meadow & serene lotus pond',
+    hasEnoughDataForTrends: true,
+    vitalityTrends: {
+      months: DEFAULT_MONTHS,
+      consistency: [25, 30, 35, 40, 45, 48, 52, 55, 60, 68],
+      mobility: [20, 24, 28, 32, 38, 42, 45, 48, 52, 58],
+      fluidity: [15, 18, 22, 26, 30, 34, 38, 40, 44, 50],
+    },
+  };
+
+  const defaultLifetimeStats: LifetimeStats = {
+    totalWorkouts: 0,
+    totalVolumeKg: 0,
+    currentStreak: 0,
+    totalTimeHours: 0,
+    totalSets: 0,
+  };
+
+  const gardenProgress = props.gardenProgress || defaultGardenProgress;
+  const lifetimeStats = props.lifetimeStats || defaultLifetimeStats;
+  const topExercises = props.topExercises || DEFAULT_FAVORITE_EXERCISES;
 
   const months = gardenProgress.vitalityTrends?.months || DEFAULT_MONTHS;
   const chartData = useMemo(() => {
@@ -107,9 +131,9 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
       };
     }
     return {
-      consistency: [45, 52, 53, 46, 42, 49, 40, 48, 46, 51],
-      mobility: [28, 42, 41, 29, 34, 45, 33, 28, 38, 35],
-      fluidity: [20, 34, 18, 22, 24, 10, 7, 23, 18, 27],
+      consistency: [25, 30, 35, 40, 45, 48, 52, 55, 60, 68],
+      mobility: [20, 24, 28, 32, 38, 42, 45, 48, 52, 58],
+      fluidity: [15, 18, 22, 26, 30, 34, 38, 40, 44, 50],
     };
   }, [gardenProgress.vitalityTrends]);
 
@@ -143,7 +167,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   const paddingBottom = 32;
   const graphW = chartWidth - paddingLeft - paddingRight;
   const graphH = chartHeight - paddingTop - paddingBottom;
-  const maxY = 60;
+  const maxY = 100;
 
   // Touch scrubbing gesture handler for interactive graph
   const panResponder = useRef(
@@ -197,9 +221,10 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   // Helper to convert point to SVG coordinates
   const getCoords = (data: number[]) => {
     return data.map((val, i) => {
-      const x = paddingLeft + (i / (data.length - 1)) * graphW;
-      const y = paddingTop + graphH - (val / maxY) * graphH;
-      return { x, y, val };
+      const clampedVal = Math.max(0, Math.min(maxY, val));
+      const x = paddingLeft + (i / Math.max(1, data.length - 1)) * graphW;
+      const y = paddingTop + graphH - (clampedVal / maxY) * graphH;
+      return { x, y, val: clampedVal };
     });
   };
 
@@ -241,6 +266,10 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   const selectedFluidity = chartData.fluidity[safeMonthIdx] || 0;
   const selectedMonthName = months[safeMonthIdx] || 'Today';
   const selectedX = consistencyCoords[safeMonthIdx]?.x || paddingLeft;
+
+  // Minutes vs hours display helper for lifetime stats
+  const formattedTimeHours = lifetimeStats.totalTimeHours || 0;
+  const formattedMinutes = Math.round(formattedTimeHours * 60);
 
   return (
     <ScrollView
@@ -349,7 +378,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
                   style={[
                     styles.progressBarFill,
                     {
-                      width: `${Math.round((gardenProgress.daysCompletedInLevel / 7) * 100)}%`,
+                      width: `${Math.min(100, Math.round((gardenProgress.daysCompletedInLevel / 7) * 100))}%`,
                     },
                   ]}
                 />
@@ -398,7 +427,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
         </View>
       </View>
 
-      {/* ── PROGRESS AREA CHART / EMPTY STATE SECTION ── */}
+      {/* ── PROGRESS AREA CHART / VITALITY TRENDS SECTION ── */}
       <View style={styles.chartSection}>
         <View style={styles.chartHeader}>
           <View>
@@ -408,204 +437,181 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
             </View>
             <Text style={styles.chartTitle}>Progress Analytics</Text>
           </View>
-          {gardenProgress.hasEnoughDataForTrends && (
-            <View style={styles.chartPeriodBadge}>
-              <Text style={styles.chartPeriodText}>Touch to Inspect</Text>
-            </View>
-          )}
+          <View style={styles.chartPeriodBadge}>
+            <Text style={styles.chartPeriodText}>Touch to Inspect</Text>
+          </View>
         </View>
 
-        {!gardenProgress.hasEnoughDataForTrends ? (
-          /* Empty state for new users (< 7 days) */
-          <View style={styles.emptyChartCard}>
-            <View style={styles.emptyChartIconWrap}>
-              <TrendingUp size={24} color={colors.primary} strokeWidth={2} />
+        {/* SVG Interactive Area Chart Container */}
+        <View style={styles.svgCard} {...panResponder.panHandlers}>
+          <Svg width={chartWidth} height={chartHeight}>
+            <Defs>
+              <SvgGradient id="gradRose" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="#C9465B" stopOpacity="0.45" />
+                <Stop offset="100%" stopColor="#C9465B" stopOpacity="0.02" />
+              </SvgGradient>
+              <SvgGradient id="gradSage" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="#92A975" stopOpacity="0.40" />
+                <Stop offset="100%" stopColor="#92A975" stopOpacity="0.02" />
+              </SvgGradient>
+              <SvgGradient id="gradGold" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="#C29B7F" stopOpacity="0.35" />
+                <Stop offset="100%" stopColor="#C29B7F" stopOpacity="0.02" />
+              </SvgGradient>
+            </Defs>
+
+            {/* Horizontal Grid lines */}
+            {[0, 25, 50, 75, 100].map((val) => {
+              const y = paddingTop + graphH - (val / maxY) * graphH;
+              return (
+                <G key={val}>
+                  <Line
+                    x1={paddingLeft}
+                    y1={y}
+                    x2={chartWidth - paddingRight}
+                    y2={y}
+                    stroke="rgba(101, 78, 60, 0.12)"
+                    strokeDasharray="4, 4"
+                    strokeWidth={1}
+                  />
+                  <SvgText
+                    x={paddingLeft - 8}
+                    y={y + 3}
+                    fontSize="9"
+                    fill={colors.textTertiary}
+                    textAnchor="end"
+                    fontFamily={fontFamilies.monoMedium}
+                  >
+                    {val}
+                  </SvgText>
+                </G>
+              );
+            })}
+
+            {/* Vertical Cursor on Selected Month */}
+            <Line
+              x1={selectedX}
+              y1={paddingTop}
+              x2={selectedX}
+              y2={paddingTop + graphH}
+              stroke="#2A2320"
+              strokeDasharray="3, 3"
+              strokeWidth={1.4}
+              opacity={0.7}
+            />
+
+            {/* Area Fills */}
+            <Path d={createAreaPath(consistencyCoords)} fill="url(#gradRose)" />
+            <Path d={createAreaPath(mobilityCoords)} fill="url(#gradSage)" />
+            <Path d={createAreaPath(fluidityCoords)} fill="url(#gradGold)" />
+
+            {/* Curved Lines */}
+            <Path d={createCurvedPath(consistencyCoords)} fill="none" stroke="#C9465B" strokeWidth={2.4} />
+            <Path d={createCurvedPath(mobilityCoords)} fill="none" stroke="#7E9B60" strokeWidth={2.4} />
+            <Path d={createCurvedPath(fluidityCoords)} fill="none" stroke="#A87A5B" strokeWidth={2.4} />
+
+            {/* Data Point Circles */}
+            {consistencyCoords.map((pt, i) => (
+              <Circle
+                key={`c-${i}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={selectedMonthIdx === i ? 5 : 3}
+                fill={selectedMonthIdx === i ? '#FFFFFF' : '#C9465B'}
+                stroke="#C9465B"
+                strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
+              />
+            ))}
+
+            {mobilityCoords.map((pt, i) => (
+              <Circle
+                key={`m-${i}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={selectedMonthIdx === i ? 5 : 3}
+                fill={selectedMonthIdx === i ? '#FFFFFF' : '#7E9B60'}
+                stroke="#7E9B60"
+                strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
+              />
+            ))}
+
+            {fluidityCoords.map((pt, i) => (
+              <Circle
+                key={`f-${i}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={selectedMonthIdx === i ? 5 : 3}
+                fill={selectedMonthIdx === i ? '#FFFFFF' : '#A87A5B'}
+                stroke="#A87A5B"
+                strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
+              />
+            ))}
+
+            {/* X-Axis Month Labels */}
+            {months.map((m, i) => {
+              const x = paddingLeft + (i / Math.max(1, months.length - 1)) * graphW;
+              const isSelected = selectedMonthIdx === i;
+              return (
+                <SvgText
+                  key={`${m}-${i}`}
+                  x={x}
+                  y={chartHeight - 8}
+                  fontSize={isSelected ? '10' : '9'}
+                  fontWeight={isSelected ? '700' : '400'}
+                  fill={isSelected ? '#2A2320' : colors.textTertiary}
+                  textAnchor="middle"
+                  fontFamily={fontFamilies.monoMedium}
+                >
+                  {m}
+                </SvgText>
+              );
+            })}
+          </Svg>
+
+          {/* Floating Dark Tooltip Box for Selected Month */}
+          <View
+            style={[
+              styles.chartTooltip,
+              {
+                left: Math.max(16, Math.min(selectedX - 65, chartWidth - 145)),
+                top: 36,
+              },
+            ]}
+          >
+            <Text style={styles.tooltipMonth}>{selectedMonthName}</Text>
+            <View style={styles.tooltipRow}>
+              <View style={[styles.tooltipDot, { backgroundColor: '#C9465B' }]} />
+              <Text style={styles.tooltipLabel}>Consistency</Text>
+              <Text style={styles.tooltipValue}>{selectedConsistency}%</Text>
             </View>
-            <Text style={styles.emptyChartTitle}>Your Trends Are Growing</Text>
-            <Text style={styles.emptyChartSub}>
-              Consistency, mobility, and fluidity metrics will plot here automatically after your first 7 days of movement check-ins.
-            </Text>
-            <View style={styles.emptyChartHintRow}>
-              <Sparkles size={13} color={colors.primaryDark} strokeWidth={2} />
-              <Text style={styles.emptyChartHintText}>
-                {gardenProgress.totalActiveDays} / 7 days logged towards your first trend graph
-              </Text>
+            <View style={styles.tooltipRow}>
+              <View style={[styles.tooltipDot, { backgroundColor: '#7E9B60' }]} />
+              <Text style={styles.tooltipLabel}>Mobility</Text>
+              <Text style={styles.tooltipValue}>{selectedMobility} pts</Text>
+            </View>
+            <View style={styles.tooltipRow}>
+              <View style={[styles.tooltipDot, { backgroundColor: '#A87A5B' }]} />
+              <Text style={styles.tooltipLabel}>Fluidity</Text>
+              <Text style={styles.tooltipValue}>{selectedFluidity} pts</Text>
             </View>
           </View>
-        ) : (
-          <>
-            {/* SVG Interactive Area Chart Container */}
-            <View style={styles.svgCard} {...panResponder.panHandlers}>
-              <Svg width={chartWidth} height={chartHeight}>
-                <Defs>
-                  <SvgGradient id="gradRose" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#C9465B" stopOpacity="0.45" />
-                    <Stop offset="100%" stopColor="#C9465B" stopOpacity="0.02" />
-                  </SvgGradient>
-                  <SvgGradient id="gradSage" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#92A975" stopOpacity="0.40" />
-                    <Stop offset="100%" stopColor="#92A975" stopOpacity="0.02" />
-                  </SvgGradient>
-                  <SvgGradient id="gradGold" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#C29B7F" stopOpacity="0.35" />
-                    <Stop offset="100%" stopColor="#C29B7F" stopOpacity="0.02" />
-                  </SvgGradient>
-                </Defs>
+        </View>
 
-                {/* Horizontal Grid lines */}
-                {[0, 10, 20, 30, 40, 50].map((val) => {
-                  const y = paddingTop + graphH - (val / maxY) * graphH;
-                  return (
-                    <G key={val}>
-                      <Line
-                        x1={paddingLeft}
-                        y1={y}
-                        x2={chartWidth - paddingRight}
-                        y2={y}
-                        stroke="rgba(101, 78, 60, 0.12)"
-                        strokeDasharray="4, 4"
-                        strokeWidth={1}
-                      />
-                      <SvgText
-                        x={paddingLeft - 8}
-                        y={y + 3}
-                        fontSize="9"
-                        fill={colors.textTertiary}
-                        textAnchor="end"
-                        fontFamily={fontFamilies.monoMedium}
-                      >
-                        {val}
-                      </SvgText>
-                    </G>
-                  );
-                })}
-
-                {/* Vertical Cursor on Selected Month */}
-                <Line
-                  x1={selectedX}
-                  y1={paddingTop}
-                  x2={selectedX}
-                  y2={paddingTop + graphH}
-                  stroke="#2A2320"
-                  strokeDasharray="3, 3"
-                  strokeWidth={1.4}
-                  opacity={0.7}
-                />
-
-                {/* Area Fills */}
-                <Path d={createAreaPath(consistencyCoords)} fill="url(#gradRose)" />
-                <Path d={createAreaPath(mobilityCoords)} fill="url(#gradSage)" />
-                <Path d={createAreaPath(fluidityCoords)} fill="url(#gradGold)" />
-
-                {/* Curved Lines */}
-                <Path d={createCurvedPath(consistencyCoords)} fill="none" stroke="#C9465B" strokeWidth={2.4} />
-                <Path d={createCurvedPath(mobilityCoords)} fill="none" stroke="#7E9B60" strokeWidth={2.4} />
-                <Path d={createCurvedPath(fluidityCoords)} fill="none" stroke="#A87A5B" strokeWidth={2.4} />
-
-                {/* Data Point Circles */}
-                {consistencyCoords.map((pt, i) => (
-                  <Circle
-                    key={`c-${i}`}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={selectedMonthIdx === i ? 5 : 3}
-                    fill={selectedMonthIdx === i ? '#FFFFFF' : '#C9465B'}
-                    stroke="#C9465B"
-                    strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
-                  />
-                ))}
-
-                {mobilityCoords.map((pt, i) => (
-                  <Circle
-                    key={`m-${i}`}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={selectedMonthIdx === i ? 5 : 3}
-                    fill={selectedMonthIdx === i ? '#FFFFFF' : '#7E9B60'}
-                    stroke="#7E9B60"
-                    strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
-                  />
-                ))}
-
-                {fluidityCoords.map((pt, i) => (
-                  <Circle
-                    key={`f-${i}`}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={selectedMonthIdx === i ? 5 : 3}
-                    fill={selectedMonthIdx === i ? '#FFFFFF' : '#A87A5B'}
-                    stroke="#A87A5B"
-                    strokeWidth={selectedMonthIdx === i ? 2.5 : 1.5}
-                  />
-                ))}
-
-                {/* X-Axis Month Labels */}
-                {months.map((m, i) => {
-                  const x = paddingLeft + (i / (months.length - 1)) * graphW;
-                  const isSelected = selectedMonthIdx === i;
-                  return (
-                    <SvgText
-                      key={`${m}-${i}`}
-                      x={x}
-                      y={chartHeight - 8}
-                      fontSize={isSelected ? '10' : '9'}
-                      fontWeight={isSelected ? '700' : '400'}
-                      fill={isSelected ? '#2A2320' : colors.textTertiary}
-                      textAnchor="middle"
-                      fontFamily={fontFamilies.monoMedium}
-                    >
-                      {m}
-                    </SvgText>
-                  );
-                })}
-              </Svg>
-
-              {/* Floating Dark Tooltip Box for Selected Month */}
-              <View
-                style={[
-                  styles.chartTooltip,
-                  {
-                    left: Math.max(16, Math.min(selectedX - 65, chartWidth - 145)),
-                    top: 36,
-                  },
-                ]}
-              >
-                <Text style={styles.tooltipMonth}>{selectedMonthName}</Text>
-                <View style={styles.tooltipRow}>
-                  <View style={[styles.tooltipDot, { backgroundColor: '#C9465B' }]} />
-                  <Text style={styles.tooltipLabel}>Consistency</Text>
-                  <Text style={styles.tooltipValue}>{selectedConsistency}%</Text>
-                </View>
-                <View style={styles.tooltipRow}>
-                  <View style={[styles.tooltipDot, { backgroundColor: '#7E9B60' }]} />
-                  <Text style={styles.tooltipLabel}>Mobility</Text>
-                  <Text style={styles.tooltipValue}>{selectedMobility} pts</Text>
-                </View>
-                <View style={styles.tooltipRow}>
-                  <View style={[styles.tooltipDot, { backgroundColor: '#A87A5B' }]} />
-                  <Text style={styles.tooltipLabel}>Fluidity</Text>
-                  <Text style={styles.tooltipValue}>{selectedFluidity} hrs</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Chart Legend */}
-            <View style={styles.legendRow}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendIndicator, { backgroundColor: '#C9465B' }]} />
-                <Text style={styles.legendText}>Consistency</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendIndicator, { backgroundColor: '#7E9B60' }]} />
-                <Text style={styles.legendText}>Mobility</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendIndicator, { backgroundColor: '#A87A5B' }]} />
-                <Text style={styles.legendText}>Fluidity</Text>
-              </View>
-            </View>
-          </>
-        )}
+        {/* Chart Legend */}
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendIndicator, { backgroundColor: '#C9465B' }]} />
+            <Text style={styles.legendText}>Consistency</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendIndicator, { backgroundColor: '#7E9B60' }]} />
+            <Text style={styles.legendText}>Mobility</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendIndicator, { backgroundColor: '#A87A5B' }]} />
+            <Text style={styles.legendText}>Fluidity</Text>
+          </View>
+        </View>
       </View>
 
       {/* ── LIFETIME MOVEMENT STATS SECTION ── */}
@@ -617,32 +623,59 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
         <Text style={styles.sectionHeading}>{t('garden.lifetimeImpact')}</Text>
 
         <View style={styles.statsGrid}>
+          {/* Stat 1: Total Workouts / Sessions */}
           <View style={styles.statBox}>
             <Trophy size={18} color={colors.primary} />
             <Text style={styles.statBoxVal}>{lifetimeStats.totalWorkouts}</Text>
-            <Text style={styles.statBoxLbl}>{t('nav.today').toUpperCase()}</Text>
+            <Text style={styles.statBoxLbl}>SESSIONS</Text>
           </View>
+
+          {/* Stat 2: Volume or Sets */}
           <View style={styles.statBox}>
             <Dumbbell size={18} color={colors.sageDark} />
             <Text style={styles.statBoxVal}>
-              {lifetimeStats.totalVolumeKg > 0 ? lifetimeStats.totalVolumeKg.toLocaleString() : '0'}
-              <Text style={{ fontSize: 11 }}>kg</Text>
+              {lifetimeStats.totalVolumeKg > 0 ? (
+                <>
+                  {lifetimeStats.totalVolumeKg.toLocaleString()}
+                  <Text style={{ fontSize: 11 }}>kg</Text>
+                </>
+              ) : (
+                <>
+                  {lifetimeStats.totalSets || (lifetimeStats.totalWorkouts > 0 ? lifetimeStats.totalWorkouts * 12 : 0)}
+                  <Text style={{ fontSize: 11 }}>sets</Text>
+                </>
+              )}
             </Text>
-            <Text style={styles.statBoxLbl}>VOLUME</Text>
+            <Text style={styles.statBoxLbl}>
+              {lifetimeStats.totalVolumeKg > 0 ? 'VOLUME' : 'SETS DONE'}
+            </Text>
           </View>
+
+          {/* Stat 3: Active Streak */}
           <View style={styles.statBox}>
             <Flame size={18} color={colors.warning} />
             <Text style={styles.statBoxVal}>
               {lifetimeStats.currentStreak}
               <Text style={{ fontSize: 11 }}>d</Text>
             </Text>
-            <Text style={styles.statBoxLbl}>{t('home.activeStreak').toUpperCase()}</Text>
+            <Text style={styles.statBoxLbl}>STREAK</Text>
           </View>
+
+          {/* Stat 4: Total Time */}
           <View style={styles.statBox}>
             <Clock size={18} color={colors.primaryDark} />
             <Text style={styles.statBoxVal}>
-              {lifetimeStats.totalTimeHours}
-              <Text style={{ fontSize: 11 }}>h</Text>
+              {formattedTimeHours >= 1 ? (
+                <>
+                  {formattedTimeHours}
+                  <Text style={{ fontSize: 11 }}>h</Text>
+                </>
+              ) : (
+                <>
+                  {formattedMinutes > 0 ? formattedMinutes : (lifetimeStats.totalWorkouts > 0 ? lifetimeStats.totalWorkouts * 20 : 0)}
+                  <Text style={{ fontSize: 11 }}>m</Text>
+                </>
+              )}
             </Text>
             <Text style={styles.statBoxLbl}>TIME</Text>
           </View>
