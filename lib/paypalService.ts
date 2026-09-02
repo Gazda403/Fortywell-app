@@ -15,8 +15,13 @@ export interface PayPalOrderResult {
 
 // Next.js API base URL
 // fortywell.vercel.app is the Next.js API backend (where /api/paypal/* lives)
-const API_BASE_URL =
+// Guard against pointing to fortywell-app.vercel.app (the static Expo frontend)
+const rawBaseUrl =
   process.env.EXPO_PUBLIC_API_URL || 'https://fortywell.vercel.app';
+const API_BASE_URL = rawBaseUrl.replace(
+  'fortywell-app.vercel.app',
+  'fortywell.vercel.app'
+);
 
 /**
  * Safely parse JSON from a fetch Response.
@@ -28,16 +33,16 @@ async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
   if (!text || text.trim() === '') {
     throw new Error(
-      'The payment API returned an empty response. Check that EXPO_PUBLIC_API_URL points to the correct server.'
+      `API at ${API_BASE_URL} returned an empty response (HTTP ${res.status}).`
     );
   }
   try {
     return JSON.parse(text);
   } catch {
     // Likely received an HTML page (wrong URL / CORS / 404)
-    const preview = text.slice(0, 120).replace(/\n/g, ' ');
+    const preview = text.slice(0, 100).replace(/\n/g, ' ');
     throw new Error(
-      `Payment API returned non-JSON response (URL may be wrong). Preview: ${preview}`
+      `Payment API returned HTTP ${res.status} HTML instead of JSON. Ensure backend API is at https://fortywell.vercel.app (Preview: ${preview})`
     );
   }
 }

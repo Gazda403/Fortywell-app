@@ -122,16 +122,17 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
       }
     } catch (err: any) {
       console.warn('PayPal order creation notice:', err.message);
-      // If backend API isn't running or keys missing in dev, allow simulated checkout so user can test UI
-      if (
-        err.message?.includes('credentials not configured') ||
+      if (err.message?.includes('credentials not configured')) {
+        setErrorMessage(
+          'PayPal credentials not configured on backend (fortywell). Please add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to the fortywell project on Vercel.'
+        );
+      } else if (
         err.message?.includes('Failed to fetch') ||
         err.message?.includes('non-JSON response') ||
-        err.message?.includes('empty response') ||
-        err.message?.includes('EXPO_PUBLIC_API_URL')
+        err.message?.includes('empty response')
       ) {
         setErrorMessage(
-          'Payment service not reachable. Please set EXPO_PUBLIC_API_URL in .env to point to the FortyWell API, then rebuild.'
+          'Payment service not reachable. Ensure EXPO_PUBLIC_API_URL points to https://fortywell.vercel.app, then rebuild.'
         );
       } else {
         setErrorMessage(err.message || 'Could not initiate checkout. Please try again.');
