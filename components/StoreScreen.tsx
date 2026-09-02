@@ -41,14 +41,21 @@ import { PayPalCheckoutModal } from './PayPalCheckoutModal';
 const { width: SCREEN_W } = Dimensions.get('window');
 
 // Local product photography assets
-const PRODUCT_IMAGES = [
+const HERITAGE_OIL_IMAGES = [
   require('../assets/products/heritage_oil_main.jpeg'),
   require('../assets/products/heritage_oil_white_platform.jpeg'),
   require('../assets/products/heritage_oil_lifestyle.jpeg'),
 ];
 
+const RESISTANCE_BANDS_IMAGES = [
+  require('../assets/products/bands_3set_main.jpg'),
+  require('../assets/products/bands_3set_lifestyle.jpg'),
+  require('../assets/products/bands_3set_detail.jpg'),
+];
+
 export interface Product {
   id: string;
+  aliExpressProductId?: string;
   name: string;
   subtitle: string;
   tag: string;
@@ -59,8 +66,11 @@ export interface Product {
   storyTitle: string;
   storySubtitle: string;
   storyParagraphs: string[];
+  benefitsTitle?: string;
   benefits: Array<{ title: string; desc: string; icon: 'flame' | 'leaf' | 'heart' | 'droplet' | 'clock' }>;
+  ritualTitle?: string;
   ritualSteps: Array<{ step: string; title: string; desc: string }>;
+  ingredientsTitle?: string;
   ingredients: string[];
   images: any[];
   inStock: boolean;
@@ -83,6 +93,7 @@ const HERITAGE_OIL_PRODUCT: Product = {
     'Originally formulated for hardworking women and mothers needing relief from back stiffness, aching joints, and daily physical wear. Every bottle is infused slowly over weeks to ensure maximal bio-availability of the active herbs.',
     'When applied with intentional touch, it penetrates deeply to calm the nervous system, ease chronic muscle tension, and restore vitality to tired tissues.',
   ],
+  benefitsTitle: 'Traditional Benefits & Restorative Uses',
   benefits: [
     {
       title: 'Eases Muscle Tension & Back Stiffness',
@@ -110,6 +121,7 @@ const HERITAGE_OIL_PRODUCT: Product = {
       icon: 'clock',
     },
   ],
+  ritualTitle: 'The Restorative Ritual (How to Use)',
   ritualSteps: [
     {
       step: '01',
@@ -127,6 +139,7 @@ const HERITAGE_OIL_PRODUCT: Product = {
       desc: 'Massage with firm, circular motions into stiff neck, shoulders, lower back, hips, or knees after workouts or right before bed.',
     },
   ],
+  ingredientsTitle: 'Pure Botanical Ingredients',
   ingredients: [
     'Cold-Pressed Botanical Seed Oil',
     'Wildcrafted Hypericum Extract',
@@ -135,12 +148,90 @@ const HERITAGE_OIL_PRODUCT: Product = {
     'Vitamin E (Natural Tocopherol)',
     '100% Free of Parabens, Phthalates & Synthetics',
   ],
-  images: PRODUCT_IMAGES,
+  images: HERITAGE_OIL_IMAGES,
   inStock: true,
   isNew: true,
 };
 
-const PRODUCTS: Product[] = [HERITAGE_OIL_PRODUCT];
+const RESISTANCE_BANDS_PRODUCT: Product = {
+  id: 'vitality-loop-bands-3set',
+  aliExpressProductId: '1005012604669949',
+  name: 'Vitality Power Loop Band Trio',
+  subtitle: '3-Piece Progressive Resistance & Mobility Set',
+  tag: 'MOBILITY ESSENTIAL',
+  tagColor: '#B45309',
+  price: 19.99,
+  originalPrice: 39.99,
+  description: 'A studio-grade set of 3 multi-tension power loop bands engineered for joint-friendly strength training, assisted pull-ups, posture alignment, and restorative mobility.',
+  storyTitle: 'Gentle Elastic Power for Mature Joints',
+  storySubtitle: 'Variable tension designed for forty-plus longevity',
+  storyParagraphs: [
+    'Traditional heavy gym weights often place harsh compressive loads on mature joints, tendons, and cartilage. Our Vitality Power Loop Bands deliver smooth, accommodating elastic tension that aligns with your body\'s natural biomechanics.',
+    'Crafted from 100% layered natural latex for maximum anti-snap durability and smooth tactile grip. The 3-band tension spectrum gives you total freedom to tailor resistance for any movement — from light morning shoulder pull-aparts to deep evening glute activation and lumbar decompressive traction.',
+    'Designed to seamlessly accompany your daily FortyWell movement rituals, assisted pull-ups, and restorative stretches at home or on the go.',
+  ],
+  benefitsTitle: 'Functional Longevity & Mobility Benefits',
+  benefits: [
+    {
+      title: 'Joint-Friendly Elastic Resistance',
+      desc: 'Protects knees, hips, and shoulders with smooth progressive resistance and zero joint-jarring impact.',
+      icon: 'leaf',
+    },
+    {
+      title: 'Complete 3-Level Tension Spectrum',
+      desc: 'Includes Light (5–15 lbs, Yellow), Medium (15–35 lbs, Red), and Heavy (25–65 lbs, Black) bands.',
+      icon: 'flame',
+    },
+    {
+      title: 'Posture & Shoulder Alignment',
+      desc: 'Ideal for opening tight chest muscles, strengthening rear deltoids, and correcting forward neck slump.',
+      icon: 'heart',
+    },
+    {
+      title: 'Spinal Decompression & Pull-Up Assist',
+      desc: 'Provides smooth bodyweight offloading for pull-ups, deep squats, and restorative traction hangs.',
+      icon: 'droplet',
+    },
+    {
+      title: 'Ultra-Compact & Travel-Ready',
+      desc: 'Rolls up easily into your day bag or suitcase for mobility sessions anywhere.',
+      icon: 'clock',
+    },
+  ],
+  ritualTitle: 'The Daily Movement Ritual',
+  ritualSteps: [
+    {
+      step: '01',
+      title: 'Morning Thoracic Opener',
+      desc: 'Loop the Light (Yellow) band across both palms. Perform 10 slow overhead pull-aparts while taking deep diaphragmatic breaths.',
+    },
+    {
+      step: '02',
+      title: 'Pelvis & Glute Activation',
+      desc: 'Place the Medium (Red) band just above knees during glute bridge pulses or lateral steps to stabilize hips.',
+    },
+    {
+      step: '03',
+      title: 'Decompression & Stretch Cooldown',
+      desc: 'Anchor the Heavy (Black) band to a door or post for guided spinal decompression and deep hamstring releases.',
+    },
+  ],
+  ingredientsTitle: 'Premium Material Specifications',
+  ingredients: [
+    '100% High-Density Natural Latex',
+    '3 Color-Coded Tension Loops (Yellow, Red, Black)',
+    'Light: 5–15 lbs (2080 × 4.5 × 6.4mm)',
+    'Medium: 15–35 lbs (2080 × 4.5 × 13mm)',
+    'Heavy: 25–65 lbs (2080 × 4.5 × 22mm)',
+    'Anti-Snap Continuous Layering Technology',
+    'Non-Slip Skin-Safe Tactile Texture',
+  ],
+  images: RESISTANCE_BANDS_IMAGES,
+  inStock: true,
+  isNew: true,
+};
+
+const PRODUCTS: Product[] = [HERITAGE_OIL_PRODUCT, RESISTANCE_BANDS_PRODUCT];
 
 interface StoreScreenProps {
   visible: boolean;
@@ -603,7 +694,9 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                 <View style={styles.detailSectionBlock}>
                   <View style={styles.sectionHeadingRow}>
                     <Award size={18} color={colors.primaryDark} />
-                    <Text style={styles.detailSectionTitle}>Traditional Benefits & Restorative Uses</Text>
+                    <Text style={styles.detailSectionTitle}>
+                      {selectedProduct.benefitsTitle || 'Traditional Benefits & Restorative Uses'}
+                    </Text>
                   </View>
 
                   <View style={styles.benefitsGrid}>
@@ -625,7 +718,9 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                 <View style={styles.detailSectionBlock}>
                   <View style={styles.sectionHeadingRow}>
                     <Sparkles size={18} color={colors.primaryDark} />
-                    <Text style={styles.detailSectionTitle}>The Restorative Ritual (How to Use)</Text>
+                    <Text style={styles.detailSectionTitle}>
+                      {selectedProduct.ritualTitle || 'The Restorative Ritual (How to Use)'}
+                    </Text>
                   </View>
 
                   <View style={styles.ritualContainer}>
@@ -643,11 +738,13 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                   </View>
                 </View>
 
-                {/* ── INGREDIENTS PURITY ── */}
+                {/* ── INGREDIENTS / MATERIAL PURITY ── */}
                 <View style={styles.detailSectionBlock}>
                   <View style={styles.sectionHeadingRow}>
                     <Leaf size={18} color={colors.sageDark} />
-                    <Text style={styles.detailSectionTitle}>Pure Botanical Ingredients</Text>
+                    <Text style={styles.detailSectionTitle}>
+                      {selectedProduct.ingredientsTitle || 'Pure Botanical Ingredients'}
+                    </Text>
                   </View>
 
                   <View style={styles.ingredientsBox}>
