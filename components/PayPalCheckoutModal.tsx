@@ -340,7 +340,7 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
                 {/* Cost Breakdown */}
                 <View style={styles.breakdownBox}>
                   <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Subtotal (1x 100ml Bottle)</Text>
+                    <Text style={styles.breakdownLabel} numberOfLines={1}>Subtotal (1x {product.name})</Text>
                     <Text style={styles.breakdownVal}>${product.price.toFixed(2)}</Text>
                   </View>
                   <View style={styles.breakdownRow}>
