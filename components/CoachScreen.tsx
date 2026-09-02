@@ -46,6 +46,9 @@ import {
   UserCheck,
   Calendar,
   Crown,
+  Dumbbell,
+  Clock,
+  ArrowUpRight,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
@@ -56,6 +59,14 @@ import {
 } from '../data/educationalArticles';
 import { ArticleDetailModal } from './ArticleDetailModal';
 import { CoachLeadModal } from './CoachLeadModal';
+import { ProgramDetailModal } from './ProgramDetailModal';
+import { PayPalCheckoutModal } from './PayPalCheckoutModal';
+import {
+  FITNESS_PROGRAMS,
+  FitnessProgram,
+  PROGRAMS_BUNDLE_PRICE,
+  PROGRAMS_BUNDLE_ORIGINAL,
+} from '../data/fitnessPrograms';
 import {
   classifyUserFeelingMessage,
   ClassificationResult,
@@ -485,6 +496,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   const [hasEnrolledTextCoach, setHasEnrolledTextCoach] = useState<boolean>(false);
   const [textCoachToast, setTextCoachToast] = useState<boolean>(false);
   const [leadModalVisible, setLeadModalVisible] = useState<boolean>(false);
+
+  // Digital 30-day programs
+  const [selectedProgram, setSelectedProgram] = useState<FitnessProgram | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<any | null>(null);
 
   // Sync feeling history from real Supabase check-ins
   React.useEffect(() => {
@@ -1241,6 +1256,137 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
           </View>
         </View>
 
+        {/* ── 30-DAY DIGITAL TRAINING PROGRAMS & PRICING ── */}
+        <View style={s.section}>
+          <View style={s.sectionRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={s.sectionKicker}>30-DAY MASTER PROGRAMS</Text>
+              <View style={s.programsPill}>
+                <Sparkles size={9} color={colors.primaryDark} strokeWidth={2} />
+                <Text style={s.programsPillText}>FULL PROTOCOLS</Text>
+              </View>
+            </View>
+            <View style={s.priceFromBadge}>
+              <Text style={s.priceFromText}>$19.99 each</Text>
+            </View>
+          </View>
+
+          {/* Program cards list */}
+          <View style={s.programCardsList}>
+            {FITNESS_PROGRAMS.map((prog) => (
+              <Pressable
+                key={prog.id}
+                style={s.coachProgramCard}
+                onPress={() => {
+                  try {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  } catch (_) {}
+                  setSelectedProgram(prog);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`View ${prog.name}`}
+              >
+                <LinearGradient
+                  colors={prog.gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.coachProgramCardGrad}
+                >
+                  <View style={s.coachProgTopRow}>
+                    <View style={s.coachProgTagWrap}>
+                      <Text style={s.coachProgTagText}>{prog.tag}</Text>
+                    </View>
+                    <View style={s.coachProgBadge}>
+                      <Text style={s.coachProgBadgeText}>{prog.badge}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={s.coachProgTitle}>{prog.name}</Text>
+                  <Text style={s.coachProgSubtitle}>{prog.subtitle}</Text>
+
+                  <View style={s.coachProgChipsRow}>
+                    <View style={s.coachProgChip}>
+                      <Calendar size={11} color="#FFFFFF" />
+                      <Text style={s.coachProgChipText}>30 Days</Text>
+                    </View>
+                    <View style={s.coachProgChip}>
+                      <Clock size={11} color="#FFFFFF" />
+                      <Text style={s.coachProgChipText}>{prog.sessionDuration}</Text>
+                    </View>
+                    <View style={s.coachProgChip}>
+                      <Dumbbell size={11} color="#FFFFFF" />
+                      <Text style={s.coachProgChipText}>{prog.sessionsPerWeek}x / wk</Text>
+                    </View>
+                  </View>
+
+                  <View style={s.coachProgFooter}>
+                    <View style={s.coachProgPriceRow}>
+                      <Text style={s.coachProgPriceCurrent}>${prog.price.toFixed(2)}</Text>
+                      <Text style={s.coachProgPriceOld}>${prog.originalPrice.toFixed(2)}</Text>
+                    </View>
+                    <View style={s.coachProgBtn}>
+                      <Text style={s.coachProgBtnText}>Explore Plan & Diet</Text>
+                      <ChevronRight size={14} color="#FFFFFF" strokeWidth={2.4} />
+                    </View>
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            ))}
+
+            {/* Bundle Offer in Coach Screen */}
+            <View style={s.coachBundleCard}>
+              <LinearGradient
+                colors={['#1A1614', '#2D2622']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.coachBundleGrad}
+              >
+                <View style={s.coachBundleTopRow}>
+                  <View style={s.coachBundleTag}>
+                    <Sparkles size={11} color="#D4A574" />
+                    <Text style={s.coachBundleTagText}>TRILOGY PASS</Text>
+                  </View>
+                  <View style={s.coachBundleDiscount}>
+                    <Text style={s.coachBundleDiscountText}>SAVE 66%</Text>
+                  </View>
+                </View>
+
+                <Text style={s.coachBundleTitle}>All 3 Programs Bundle</Text>
+                <Text style={s.coachBundleDesc}>
+                  Get the Weight Loss Reset, Strength Routine, and Mobility Program with full nutrition guides and lifetime access.
+                </Text>
+
+                <View style={s.coachBundleFooter}>
+                  <View style={s.coachBundlePriceCol}>
+                    <View style={s.coachBundlePriceRow}>
+                      <Text style={s.coachBundlePriceVal}>${PROGRAMS_BUNDLE_PRICE.toFixed(2)}</Text>
+                      <Text style={s.coachBundlePriceOldVal}>${PROGRAMS_BUNDLE_ORIGINAL.toFixed(2)}</Text>
+                    </View>
+                    <Text style={s.coachBundlePriceMeta}>One-time payment</Text>
+                  </View>
+
+                  <Pressable
+                    style={s.coachBundleBtn}
+                    onPress={() => {
+                      setCheckoutProduct({
+                        id: 'programs-3in1-bundle',
+                        name: 'Complete 40+ Reset Trilogy (3 Programs)',
+                        subtitle: 'Weight Loss + Strength Routine + Stretching & Mobility (Lifetime)',
+                        price: PROGRAMS_BUNDLE_PRICE,
+                        originalPrice: PROGRAMS_BUNDLE_ORIGINAL,
+                        image: require('../assets/products/mat_main.jpg'),
+                      });
+                    }}
+                  >
+                    <Text style={s.coachBundleBtnText}>Get All 3</Text>
+                    <ArrowUpRight size={15} color="#FFFFFF" strokeWidth={2.4} />
+                  </Pressable>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        </View>
+
         {/* ── 1:1 PERSONALISATION / TEXTING COACH & CONSULTATION ── */}
         <View style={s.section}>
           <View style={s.sectionRow}>
@@ -1468,6 +1614,40 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
           setTimeout(() => setTextCoachToast(false), 6000);
         }}
       />
+
+      {/* 30-Day Digital Program Detail Modal */}
+      <ProgramDetailModal
+        visible={!!selectedProgram}
+        program={selectedProgram}
+        onClose={() => setSelectedProgram(null)}
+        onBuyProgram={(prog) => {
+          setSelectedProgram(null);
+          setCheckoutProduct({
+            id: prog.id,
+            name: prog.name,
+            subtitle: prog.subtitle,
+            price: prog.price,
+            originalPrice: prog.originalPrice,
+            image: require('../assets/products/mat_main.jpg'),
+          });
+        }}
+      />
+
+      {/* PayPal & Card Checkout Modal */}
+      {checkoutProduct && (
+        <PayPalCheckoutModal
+          visible={!!checkoutProduct}
+          onClose={() => setCheckoutProduct(null)}
+          product={{
+            id: checkoutProduct.id,
+            name: checkoutProduct.name,
+            subtitle: checkoutProduct.subtitle,
+            price: checkoutProduct.price,
+            originalPrice: checkoutProduct.originalPrice,
+            image: checkoutProduct.image,
+          }}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -2613,5 +2793,258 @@ const s = StyleSheet.create({
     fontFamily: fontFamilies.sansRegular,
     color: 'rgba(255,245,239,0.82)',
     lineHeight: 18,
+  },
+
+  // ── 30-DAY PROGRAMS SECTION (COACH) ──
+  programsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(208, 120, 135, 0.14)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  programsPillText: {
+    fontSize: 9,
+    fontFamily: fontFamilies.sansBold,
+    color: colors.primaryDark,
+    letterSpacing: 0.5,
+  },
+  priceFromBadge: {
+    backgroundColor: colors.surfaceCard,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  priceFromText: {
+    fontSize: 10,
+    fontFamily: fontFamilies.sansBold,
+    color: colors.textPrimary,
+  },
+  programCardsList: {
+    gap: 12,
+    marginTop: 4,
+  },
+  coachProgramCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 7,
+    elevation: 3,
+  },
+  coachProgramCardGrad: {
+    padding: 16,
+  },
+  coachProgTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  coachProgTagWrap: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  coachProgTagText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontFamily: fontFamilies.sansBold,
+    letterSpacing: 0.8,
+  },
+  coachProgBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+  },
+  coachProgBadgeText: {
+    color: colors.textPrimary,
+    fontSize: 9,
+    fontFamily: fontFamilies.sansBold,
+  },
+  coachProgTitle: {
+    fontSize: 18,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 3,
+  },
+  coachProgSubtitle: {
+    fontSize: 11.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.88)',
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  coachProgChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  coachProgChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  coachProgChipText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: fontFamilies.sansMedium,
+  },
+  coachProgFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  coachProgPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  coachProgPriceCurrent: {
+    fontSize: 18,
+    fontFamily: fontFamilies.sansBold,
+    color: '#FFFFFF',
+  },
+  coachProgPriceOld: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.6)',
+    textDecorationLine: 'line-through',
+  },
+  coachProgBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  coachProgBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: fontFamilies.sansBold,
+  },
+
+  // Coach Bundle
+  coachBundleCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  coachBundleGrad: {
+    padding: 16,
+  },
+  coachBundleTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  coachBundleTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(212,165,116,0.18)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212,165,116,0.35)',
+  },
+  coachBundleTagText: {
+    fontSize: 9,
+    fontFamily: fontFamilies.sansBold,
+    color: '#D4A574',
+    letterSpacing: 0.8,
+  },
+  coachBundleDiscount: {
+    backgroundColor: '#D07887',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+  },
+  coachBundleDiscountText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontFamily: fontFamilies.sansBold,
+  },
+  coachBundleTitle: {
+    fontSize: 18,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  coachBundleDesc: {
+    fontSize: 11.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.78)',
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  coachBundleFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+  },
+  coachBundlePriceCol: {},
+  coachBundlePriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  coachBundlePriceVal: {
+    fontSize: 19,
+    fontFamily: fontFamilies.sansBold,
+    color: '#FFFFFF',
+  },
+  coachBundlePriceOldVal: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.5)',
+    textDecorationLine: 'line-through',
+  },
+  coachBundlePriceMeta: {
+    fontSize: 9.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 1,
+  },
+  coachBundleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.primaryDark,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  coachBundleBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: fontFamilies.sansBold,
   },
 });

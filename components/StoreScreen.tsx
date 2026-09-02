@@ -33,10 +33,19 @@ import {
   Check,
   Flame,
   CreditCard,
+  Calendar,
+  Dumbbell,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { PayPalCheckoutModal } from './PayPalCheckoutModal';
+import { ProgramDetailModal } from './ProgramDetailModal';
+import {
+  FITNESS_PROGRAMS,
+  FitnessProgram,
+  PROGRAMS_BUNDLE_PRICE,
+  PROGRAMS_BUNDLE_ORIGINAL,
+} from '../data/fitnessPrograms';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -51,6 +60,12 @@ const RESISTANCE_BANDS_IMAGES = [
   require('../assets/products/bands_3set_main.jpg'),
   require('../assets/products/bands_3set_lifestyle.jpg'),
   require('../assets/products/bands_3set_detail.jpg'),
+];
+
+const POSTURE_MAT_IMAGES = [
+  require('../assets/products/mat_main.jpg'),
+  require('../assets/products/mat_lifestyle.jpg'),
+  require('../assets/products/mat_detail.jpg'),
 ];
 
 export interface ProductVariant {
@@ -292,7 +307,121 @@ const RESISTANCE_BANDS_PRODUCT: Product = {
   isNew: true,
 };
 
-const PRODUCTS: Product[] = [HERITAGE_OIL_PRODUCT, RESISTANCE_BANDS_PRODUCT];
+const POSTURE_MAT_PRODUCT: Product = {
+  id: 'posture-joint-mat',
+  aliExpressProductId: '1005006960343249',
+  name: 'Posture & Joint Support Mat',
+  subtitle: '6mm High-Density Dual-Texture Non-Slip Restorative Exercise & Yoga Mat',
+  tag: 'MOBILITY ESSENTIAL',
+  tagColor: colors.sageDark,
+  price: 24.99,
+  originalPrice: 49.99,
+  variants: [
+    {
+      id: 'mat-standard-6mm',
+      name: 'Standard 6mm Cushion (183 × 61 cm)',
+      tension: '6mm Balanced Joint Protection',
+      dimensions: '183cm × 61cm × 6mm',
+      colorName: 'Sage Olive',
+      colorHex: '#708655',
+      price: 24.99,
+      originalPrice: 49.99,
+      badge: 'MOST POPULAR',
+      isDefault: true,
+    },
+    {
+      id: 'mat-thick-8mm',
+      name: 'Extra Thick 8mm Sensitive Knee (183 × 61 cm)',
+      tension: '8mm Maximum Deep Cushion',
+      dimensions: '183cm × 61cm × 8mm',
+      colorName: 'Deep Forest',
+      colorHex: '#4A6A35',
+      price: 28.99,
+      originalPrice: 57.99,
+      badge: 'EXTRA KNEE RELIEF',
+    },
+    {
+      id: 'mat-wide-6mm',
+      name: 'Studio Wide 6mm (183 × 80 cm)',
+      tension: '6mm Unrestricted Ground Movement',
+      dimensions: '183cm × 80cm × 6mm',
+      colorName: 'Sage Olive',
+      colorHex: '#708655',
+      price: 29.99,
+      originalPrice: 59.99,
+      badge: 'EXTRA WIDTH',
+    },
+  ],
+  description:
+    'Engineered for adult joints that require deeper floor protection. Crafted from high-density closed-cell eco-TPE, providing instant shock absorption for knees, wrists, and vertebrae with a textured grip that eliminates slipping during floor flows.',
+  storyTitle: 'The Foundation of Pain-Free Movement',
+  storySubtitle: 'Why floor padding is the difference between consistent habits and skipped workouts',
+  storyParagraphs: [
+    'As we cross forty, hard floors become the silent killer of daily movement consistency. Kneeling lunges irritate patellar tendons, planks cause wrist compression, and floor stretches leave the spine feeling bruised rather than restored.',
+    'The FortyWell Posture & Joint Support Mat was designed specifically around this physiological reality. We calibrated a 6mm dual-density core that gives way under pressure points while maintaining firm, stable grounding so you never feel off-balance.',
+    'Equipped with subtle laser-guided alignment markers to keep your hips, shoulders, and knees tracking safely, and made from 100% hypoallergenic, non-toxic closed-cell materials that wipe clean in seconds.',
+  ],
+  benefitsTitle: 'Physiologist-Approved Features',
+  benefits: [
+    {
+      title: 'High-Density Knee & Hip Cushioning',
+      desc: '6mm dual-layer microfoam disperses bodyweight pressure, eliminating floor bruising on knees, elbows, and hips.',
+      icon: 'heart',
+    },
+    {
+      title: 'Dual-Texture Non-Slip Traction',
+      desc: 'Textured topographic grip surface anchors to hardwood and tiles without sliding or curling at the edges.',
+      icon: 'leaf',
+    },
+    {
+      title: 'Built-In Symmetry Alignment Guides',
+      desc: 'Subtle center line and 45-degree angle guides ensure even hip squareness and correct joint tracking.',
+      icon: 'flame',
+    },
+    {
+      title: 'Eco-Certified & Odor-Free',
+      desc: '100% recyclable, PVC-free, non-toxic TPE composite with zero chemical odor from the first unroll.',
+      icon: 'droplet',
+    },
+    {
+      title: 'Lightweight with Carry Strap',
+      desc: 'Weighs under 1 kg with quick-fasten nylon shoulder carry harness included for park or travel sessions.',
+      icon: 'clock',
+    },
+  ],
+  ritualTitle: 'The Floor Reset Ritual',
+  ritualSteps: [
+    {
+      step: '01',
+      title: 'Unroll & Decompress',
+      desc: 'Begin with 2 minutes lying supine with feet flat and knees bent to let your lumbar spine settle naturally onto the cushion.',
+    },
+    {
+      step: '02',
+      title: 'Ground Movement & Strength',
+      desc: 'Perform your kneeling mobility flows, glute bridges, and planks with total joint comfort and zero floor pain.',
+    },
+    {
+      step: '03',
+      title: 'Wipe & Roll',
+      desc: 'Give the closed-cell water-resistant surface a quick wipe with a damp cloth, roll tightly, and secure with the carry strap.',
+    },
+  ],
+  ingredientsTitle: 'Technical Specifications',
+  ingredients: [
+    'Eco-Friendly Closed-Cell TPE Composite',
+    'Laser-Etched Alignment Lines & Center Guideline',
+    'Anti-Tear Mesh Middle Stabilization Layer',
+    'Hypoallergenic, 100% PVC-Free & Latex-Free',
+    'Water & Sweat Resistant Moisture-Barrier Surface',
+    'Adjustable Carrying Strap Included',
+  ],
+  images: POSTURE_MAT_IMAGES,
+  inStock: true,
+  isNew: true,
+};
+
+const PRODUCTS: Product[] = [HERITAGE_OIL_PRODUCT, RESISTANCE_BANDS_PRODUCT, POSTURE_MAT_PRODUCT];
 
 interface StoreScreenProps {
   visible: boolean;
@@ -308,6 +437,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<FitnessProgram | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
   const [notified, setNotified] = useState(false);
 
@@ -526,6 +656,142 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
               </Pressable>
             </View>
           ))}
+
+          {/* ── 30-DAY DIGITAL TRAINING PROGRAMS ── */}
+          <View style={styles.programsSection}>
+            <View style={styles.programsSectionHeader}>
+              <View style={styles.programsSectionOverline}>
+                <Sparkles size={11} color={colors.primary} />
+                <Text style={styles.programsSectionOverlineText}>DIGITAL COACHING PROTOCOLS</Text>
+              </View>
+              <Text style={styles.programsSectionTitle}>30-Day Master Programs</Text>
+              <Text style={styles.programsSectionSubtitle}>
+                Pre-built guided workout routines and clinical diet strategies formulated specifically for 40+ physiology.
+              </Text>
+            </View>
+
+            {FITNESS_PROGRAMS.map((prog) => (
+              <Pressable
+                key={prog.id}
+                style={styles.programCard}
+                onPress={() => {
+                  try {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  } catch (_) {}
+                  setSelectedProgram(prog);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${prog.name}`}
+              >
+                <LinearGradient
+                  colors={prog.gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.programCardGrad}
+                >
+                  <View style={styles.programCardTop}>
+                    <View style={styles.programTagWrap}>
+                      <Text style={styles.programTagText}>{prog.tag}</Text>
+                    </View>
+                    <View style={styles.programBadge}>
+                      <Text style={styles.programBadgeText}>{prog.badge}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.programCardTitle}>{prog.name}</Text>
+                  <Text style={styles.programCardSubtitle}>{prog.subtitle}</Text>
+
+                  <View style={styles.programMetaRow}>
+                    <View style={styles.programMetaChip}>
+                      <Calendar size={12} color="#FFFFFF" />
+                      <Text style={styles.programMetaChipText}>30 Days</Text>
+                    </View>
+                    <View style={styles.programMetaChip}>
+                      <Clock size={12} color="#FFFFFF" />
+                      <Text style={styles.programMetaChipText}>{prog.sessionDuration}</Text>
+                    </View>
+                    <View style={styles.programMetaChip}>
+                      <Dumbbell size={12} color="#FFFFFF" />
+                      <Text style={styles.programMetaChipText}>{prog.sessionsPerWeek}x / wk</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.programCardFooter}>
+                    <View style={styles.programPriceWrap}>
+                      <Text style={styles.programPriceCurrent}>${prog.price.toFixed(2)}</Text>
+                      <Text style={styles.programPriceOld}>${prog.originalPrice.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.programActionBtn}>
+                      <Text style={styles.programActionBtnText}>View 30-Day Plan & Diet</Text>
+                      <ChevronRight size={14} color="#FFFFFF" strokeWidth={2.5} />
+                    </View>
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            ))}
+
+            {/* Bundle Offer Card */}
+            <View style={styles.bundleCard}>
+              <LinearGradient
+                colors={['#1A1614', '#2D2622']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.bundleCardGrad}
+              >
+                <View style={styles.bundleHeaderRow}>
+                  <View style={styles.bundleTagPill}>
+                    <Sparkles size={11} color="#D4A574" />
+                    <Text style={styles.bundleTagText}>ULTIMATE 3-IN-1 PASS</Text>
+                  </View>
+                  <View style={styles.bundleSavePill}>
+                    <Text style={styles.bundleSaveText}>SAVE 66%</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.bundleTitle}>The Complete 40+ Reset Trilogy</Text>
+                <Text style={styles.bundleDesc}>
+                  Unlock all three full 30-day programs (Weight Loss + Strength + Stretching) with lifetime access, exercise guides, and comprehensive nutrition playbooks.
+                </Text>
+
+                <View style={styles.bundleFooter}>
+                  <View style={styles.bundlePriceCol}>
+                    <View style={styles.bundlePriceRow}>
+                      <Text style={styles.bundlePriceCurrent}>${PROGRAMS_BUNDLE_PRICE.toFixed(2)}</Text>
+                      <Text style={styles.bundlePriceOld}>${PROGRAMS_BUNDLE_ORIGINAL.toFixed(2)}</Text>
+                    </View>
+                    <Text style={styles.bundlePriceMeta}>All 3 programs included</Text>
+                  </View>
+
+                  <Pressable
+                    style={styles.bundleBuyBtn}
+                    onPress={() => {
+                      setCheckoutProduct({
+                        id: 'programs-3in1-bundle',
+                        name: 'Complete 40+ Reset Trilogy (3 Programs)',
+                        subtitle: 'Weight Loss + Strength Routine + Stretching & Mobility (Lifetime)',
+                        price: PROGRAMS_BUNDLE_PRICE,
+                        originalPrice: PROGRAMS_BUNDLE_ORIGINAL,
+                        tag: 'BUNDLE',
+                        tagColor: colors.primaryDark,
+                        description: 'Complete 30-day digital coaching trilogy.',
+                        storyTitle: '',
+                        storySubtitle: '',
+                        storyParagraphs: [],
+                        benefits: [],
+                        ritualSteps: [],
+                        ingredients: [],
+                        images: POSTURE_MAT_IMAGES,
+                        inStock: true,
+                      });
+                    }}
+                  >
+                    <Text style={styles.bundleBuyBtnText}>Unlock Trilogy</Text>
+                    <ArrowUpRight size={15} color="#FFFFFF" strokeWidth={2.4} />
+                  </Pressable>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
 
           {/* ── COMING SOON SECTION ── */}
           <View style={styles.comingSoonSection}>
@@ -975,6 +1241,34 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
             </SafeAreaView>
           </Modal>
         )}
+
+        {/* ── PROGRAM DETAIL MODAL ── */}
+        <ProgramDetailModal
+          visible={!!selectedProgram}
+          program={selectedProgram}
+          onClose={() => setSelectedProgram(null)}
+          onBuyProgram={(prog) => {
+            setSelectedProgram(null);
+            setCheckoutProduct({
+              id: prog.id,
+              name: prog.name,
+              subtitle: prog.subtitle,
+              price: prog.price,
+              originalPrice: prog.originalPrice,
+              tag: prog.tag,
+              tagColor: prog.tagColor,
+              description: prog.description,
+              storyTitle: '',
+              storySubtitle: '',
+              storyParagraphs: [],
+              benefits: [],
+              ritualSteps: [],
+              ingredients: [],
+              images: POSTURE_MAT_IMAGES,
+              inStock: true,
+            });
+          }}
+        />
 
         {/* ── PAYPAL & CARD GUEST CHECKOUT MODAL ── */}
         {checkoutProduct && (
@@ -1983,5 +2277,260 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textDecorationLine: 'line-through',
     marginTop: 1,
+  },
+
+  // ── PROGRAMS SECTION ──
+  programsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  programsSectionHeader: {
+    marginBottom: 16,
+  },
+  programsSectionOverline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  programsSectionOverlineText: {
+    fontSize: 10,
+    fontFamily: fontFamilies.sansBold,
+    color: colors.primary,
+    letterSpacing: 1.5,
+  },
+  programsSectionTitle: {
+    fontSize: 24,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  programsSectionSubtitle: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansRegular,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  programCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  programCardGrad: {
+    padding: 18,
+  },
+  programCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  programTagWrap: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  programTagText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: fontFamilies.sansBold,
+    letterSpacing: 0.8,
+  },
+  programBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  programBadgeText: {
+    color: colors.textPrimary,
+    fontSize: 9.5,
+    fontFamily: fontFamilies.sansBold,
+  },
+  programCardTitle: {
+    fontSize: 20,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  programCardSubtitle: {
+    fontSize: 12.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  programMetaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  programMetaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  programMetaChipText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: fontFamilies.sansMedium,
+  },
+  programCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  programPriceWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  programPriceCurrent: {
+    fontSize: 20,
+    fontFamily: fontFamilies.sansBold,
+    color: '#FFFFFF',
+  },
+  programPriceOld: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.65)',
+    textDecorationLine: 'line-through',
+  },
+  programActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  programActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: fontFamilies.sansBold,
+  },
+
+  // Bundle
+  bundleCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  bundleCardGrad: {
+    padding: 20,
+  },
+  bundleHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  bundleTagPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(212,165,116,0.18)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(212,165,116,0.35)',
+  },
+  bundleTagText: {
+    fontSize: 9.5,
+    fontFamily: fontFamilies.sansBold,
+    color: '#D4A574',
+    letterSpacing: 1,
+  },
+  bundleSavePill: {
+    backgroundColor: '#D07887',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  bundleSaveText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontFamily: fontFamilies.sansBold,
+  },
+  bundleTitle: {
+    fontSize: 20,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  bundleDesc: {
+    fontSize: 12.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.78)',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  bundleFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+  },
+  bundlePriceCol: {},
+  bundlePriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  bundlePriceCurrent: {
+    fontSize: 22,
+    fontFamily: fontFamilies.sansBold,
+    color: '#FFFFFF',
+  },
+  bundlePriceOld: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.5)',
+    textDecorationLine: 'line-through',
+  },
+  bundlePriceMeta: {
+    fontSize: 10.5,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+  },
+  bundleBuyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primaryDark,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  bundleBuyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontFamily: fontFamilies.sansBold,
   },
 });
