@@ -38,8 +38,8 @@ interface CoachLeadModalProps {
   onSuccess: () => void;
 }
 
-// Live endpoint on fortywell-app Next.js backend
-const LEAD_API_URL = 'https://fortywell-app.vercel.app/api/coaching/lead';
+// Live endpoint on fortywell Next.js backend
+const LEAD_API_URL = 'https://fortywell.vercel.app/api/coaching/lead';
 
 // Dedicated 1:1 Text Coaching ($55/mo) Checkout URL
 const LEMON_SQUEEZY_CHECKOUT_URL =

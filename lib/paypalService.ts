@@ -13,15 +13,10 @@ export interface PayPalOrderResult {
   raw?: any;
 }
 
-// Next.js API base URL or local dev endpoint
-// IMPORTANT: Set EXPO_PUBLIC_API_URL in .env to point to the Next.js app
-// (e.g. https://fortywell-app.vercel.app). Without it on the web build, all
-// /api/* requests hit the static Expo site which returns HTML, not JSON.
+// Next.js API base URL
+// fortywell.vercel.app is the Next.js API backend (where /api/paypal/* lives)
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'web' && typeof window !== 'undefined'
-    ? window.location.origin
-    : 'https://fortywell-app.vercel.app');
+  process.env.EXPO_PUBLIC_API_URL || 'https://fortywell.vercel.app';
 
 /**
  * Safely parse JSON from a fetch Response.
