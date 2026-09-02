@@ -53,6 +53,19 @@ const RESISTANCE_BANDS_IMAGES = [
   require('../assets/products/bands_3set_detail.jpg'),
 ];
 
+export interface ProductVariant {
+  id: string;
+  name: string;
+  tension?: string;
+  dimensions?: string;
+  colorName?: string;
+  colorHex?: string;
+  price: number;
+  originalPrice?: number;
+  badge?: string;
+  isDefault?: boolean;
+}
+
 export interface Product {
   id: string;
   aliExpressProductId?: string;
@@ -62,6 +75,7 @@ export interface Product {
   tagColor: string;
   price: number;
   originalPrice?: number;
+  variants?: ProductVariant[];
   description: string;
   storyTitle: string;
   storySubtitle: string;
@@ -160,9 +174,56 @@ const RESISTANCE_BANDS_PRODUCT: Product = {
   subtitle: '3-Piece Progressive Resistance & Mobility Set',
   tag: 'MOBILITY ESSENTIAL',
   tagColor: '#B45309',
-  price: 19.99,
-  originalPrice: 39.99,
-  description: 'A studio-grade set of 3 multi-tension power loop bands engineered for joint-friendly strength training, assisted pull-ups, posture alignment, and restorative mobility.',
+  price: 34.00,
+  originalPrice: 68.00,
+  variants: [
+    {
+      id: 'vitality-loop-bands-3set',
+      name: 'Complete 3-Band Trio (All 3)',
+      tension: 'Light + Medium + Heavy (5–65 lbs)',
+      dimensions: '3-Piece Spectrum Set',
+      colorName: 'Yellow, Red & Black',
+      colorHex: '#B45309',
+      price: 34.00,
+      originalPrice: 68.00,
+      badge: 'BEST VALUE · 50% OFF',
+      isDefault: true,
+    },
+    {
+      id: 'vitality-loop-band-light',
+      name: 'Light Mobility Band (Yellow)',
+      tension: '5–15 lbs Resistance',
+      dimensions: '2080 × 4.5 × 6.4mm',
+      colorName: 'Warm Yellow',
+      colorHex: '#EAB308',
+      price: 14.99,
+      originalPrice: 24.99,
+      badge: 'REHAB & MOBILITY',
+    },
+    {
+      id: 'vitality-loop-band-medium',
+      name: 'Medium Strength Band (Red)',
+      tension: '15–35 lbs Resistance',
+      dimensions: '2080 × 4.5 × 13mm',
+      colorName: 'Crimson Red',
+      colorHex: '#DC2626',
+      price: 17.99,
+      originalPrice: 29.99,
+      badge: 'STRENGTH BUILDER',
+    },
+    {
+      id: 'vitality-loop-band-heavy',
+      name: 'Heavy Power Band (Black)',
+      tension: '25–65 lbs Resistance',
+      dimensions: '2080 × 4.5 × 22mm',
+      colorName: 'Obsidian Black',
+      colorHex: '#1F2937',
+      price: 19.99,
+      originalPrice: 34.99,
+      badge: 'ASSIST & POWER',
+    },
+  ],
+  description: 'A studio-grade set of multi-tension power loop bands engineered for joint-friendly strength training, assisted pull-ups, posture alignment, and restorative mobility.',
   storyTitle: 'Gentle Elastic Power for Mature Joints',
   storySubtitle: 'Variable tension designed for forty-plus longevity',
   storyParagraphs: [
@@ -245,6 +306,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
   isEmailVerified = false,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
   const [notified, setNotified] = useState(false);
@@ -257,10 +319,17 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
     } catch (_) {}
     setActiveImageIdx(0);
     setSelectedProduct(product);
+    if (product.variants && product.variants.length > 0) {
+      const defaultVar = product.variants.find((v) => v.isDefault) || product.variants[0];
+      setSelectedVariant(defaultVar);
+    } else {
+      setSelectedVariant(null);
+    }
   };
 
   const handleCloseProduct = () => {
     setSelectedProduct(null);
+    setSelectedVariant(null);
   };
 
   const handleNotifyToggle = () => {
@@ -635,12 +704,108 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
                     <View style={styles.saleBadge}>
                       <Text style={styles.saleBadgeText}>50% OFF</Text>
                     </View>
-                    {selectedProduct.originalPrice && (
-                      <Text style={styles.detailOriginalPrice}>${selectedProduct.originalPrice.toFixed(2)}</Text>
+                    {(selectedVariant ? selectedVariant.originalPrice : selectedProduct.originalPrice) && (
+                      <Text style={styles.detailOriginalPrice}>
+                        ${((selectedVariant ? selectedVariant.originalPrice : selectedProduct.originalPrice) || 0).toFixed(2)}
+                      </Text>
                     )}
-                    <Text style={styles.detailPriceBig}>${selectedProduct.price.toFixed(2)}</Text>
-                    <Text style={styles.detailPriceNote}>Includes shipping inquiry</Text>
+                    <Text style={styles.detailPriceBig}>
+                      ${(selectedVariant ? selectedVariant.price : selectedProduct.price).toFixed(2)}
+                    </Text>
+                    <Text style={styles.detailPriceNote}>Includes shipping</Text>
                   </View>
+
+                  {/* ── VARIANT SELECTION (IF APPLICABLE) ── */}
+                  {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                    <View style={styles.variantSection}>
+                      <View style={styles.variantSectionHeader}>
+                        <Text style={styles.variantSectionTitle}>Choose Option / Tension:</Text>
+                        {selectedVariant && (
+                          <Text style={styles.variantSelectedLabel}>{selectedVariant.name}</Text>
+                        )}
+                      </View>
+                      <View style={styles.variantList}>
+                        {selectedProduct.variants.map((v) => {
+                          const isSelected = selectedVariant?.id === v.id;
+                          return (
+                            <Pressable
+                              key={v.id}
+                              style={[
+                                styles.variantCard,
+                                isSelected && styles.variantCardSelected,
+                              ]}
+                              onPress={() => {
+                                try {
+                                  if (Platform.OS !== 'web') {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                  }
+                                } catch (_) {}
+                                setSelectedVariant(v);
+                              }}
+                            >
+                              <View style={styles.variantCardLeft}>
+                                <View
+                                  style={[
+                                    styles.variantRadioCircle,
+                                    isSelected && styles.variantRadioCircleSelected,
+                                  ]}
+                                >
+                                  {isSelected && <View style={styles.variantRadioInner} />}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <View style={styles.variantNameRow}>
+                                    <Text
+                                      style={[
+                                        styles.variantName,
+                                        isSelected && styles.variantNameSelected,
+                                      ]}
+                                    >
+                                      {v.name}
+                                    </Text>
+                                    {v.badge && (
+                                      <View
+                                        style={[
+                                          styles.variantBadgePill,
+                                          v.isDefault ? styles.variantBadgePillBest : null,
+                                        ]}
+                                      >
+                                        <Text
+                                          style={[
+                                            styles.variantBadgeText,
+                                            v.isDefault ? styles.variantBadgeTextBest : null,
+                                          ]}
+                                        >
+                                          {v.badge}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                  {v.tension && (
+                                    <Text style={styles.variantTension}>{v.tension}</Text>
+                                  )}
+                                </View>
+                              </View>
+                              <View style={styles.variantCardRight}>
+                                <Text
+                                  style={[
+                                    styles.variantPrice,
+                                    isSelected && styles.variantPriceSelected,
+                                  ]}
+                                >
+                                  ${v.price.toFixed(2)}
+                                </Text>
+                                {v.originalPrice && (
+                                  <Text style={styles.variantOrigPrice}>
+                                    ${v.originalPrice.toFixed(2)}
+                                  </Text>
+                                )}
+                              </View>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  )}
 
                   {isEmailVerified && (
                     <View style={styles.discountBannerDetail}>
@@ -764,18 +929,37 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
               {/* ── STICKY BOTTOM CHECKOUT ACTION BAR ── */}
               <View style={styles.bottomActionBar}>
                 <View style={styles.bottomPriceCol}>
-                  <Text style={styles.bottomPriceLabel}>SPECIAL PRICE</Text>
-                  {selectedProduct.originalPrice && (
-                    <Text style={styles.bottomOriginalPrice}>${selectedProduct.originalPrice.toFixed(2)}</Text>
+                  <Text style={styles.bottomPriceLabel}>
+                    {selectedVariant ? selectedVariant.name.toUpperCase() : 'SPECIAL PRICE'}
+                  </Text>
+                  {(selectedVariant ? selectedVariant.originalPrice : selectedProduct.originalPrice) && (
+                    <Text style={styles.bottomOriginalPrice}>
+                      ${((selectedVariant ? selectedVariant.originalPrice : selectedProduct.originalPrice) || 0).toFixed(2)}
+                    </Text>
                   )}
-                  <Text style={styles.bottomPriceValue}>${selectedProduct.price.toFixed(2)}</Text>
+                  <Text style={styles.bottomPriceValue}>
+                    ${(selectedVariant ? selectedVariant.price : selectedProduct.price).toFixed(2)}
+                  </Text>
                 </View>
 
                 <Pressable
                   style={styles.bottomInquireBtn}
-                  onPress={() => setCheckoutProduct(selectedProduct)}
+                  onPress={() => {
+                    if (selectedVariant) {
+                      setCheckoutProduct({
+                        ...selectedProduct,
+                        id: selectedVariant.id,
+                        name: `${selectedProduct.name} - ${selectedVariant.name}`,
+                        subtitle: selectedVariant.tension || selectedProduct.subtitle,
+                        price: selectedVariant.price,
+                        originalPrice: selectedVariant.originalPrice,
+                      });
+                    } else {
+                      setCheckoutProduct(selectedProduct);
+                    }
+                  }}
                   accessibilityRole="button"
-                  accessibilityLabel="Purchase Heritage Muscle Oil with Card or PayPal"
+                  accessibilityLabel="Purchase product with Card or PayPal"
                 >
                   <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
@@ -1677,5 +1861,127 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  variantSection: {
+    marginTop: 18,
+    marginBottom: 8,
+  },
+  variantSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  variantSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  variantSelectedLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  variantList: {
+    gap: 8,
+  },
+  variantCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E8E4DF',
+  },
+  variantCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: '#FDF9F5',
+  },
+  variantCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    marginRight: 8,
+  },
+  variantRadioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#C7C2BA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  variantRadioCircleSelected: {
+    borderColor: colors.primary,
+  },
+  variantRadioInner: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: colors.primary,
+  },
+  variantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  variantName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  variantNameSelected: {
+    fontWeight: '700',
+    color: colors.primaryDark,
+  },
+  variantTension: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  variantBadgePill: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  variantBadgePillBest: {
+    backgroundColor: '#FEF3C7',
+  },
+  variantBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#374151',
+    letterSpacing: 0.3,
+  },
+  variantBadgeTextBest: {
+    color: '#92400E',
+  },
+  variantCardRight: {
+    alignItems: 'flex-end',
+  },
+  variantPrice: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: fontFamilies.monoBold,
+    color: colors.textPrimary,
+  },
+  variantPriceSelected: {
+    color: colors.primaryDark,
+  },
+  variantOrigPrice: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.textTertiary,
+    textDecorationLine: 'line-through',
+    marginTop: 1,
   },
 });
