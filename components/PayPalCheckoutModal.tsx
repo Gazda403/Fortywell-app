@@ -123,8 +123,16 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
     } catch (err: any) {
       console.warn('PayPal order creation notice:', err.message);
       // If backend API isn't running or keys missing in dev, allow simulated checkout so user can test UI
-      if (err.message?.includes('credentials not configured') || err.message?.includes('Failed to fetch')) {
-        setErrorMessage('PayPal credentials not set in .env.local yet. Please configure PAYPAL_CLIENT_ID & PAYPAL_CLIENT_SECRET.');
+      if (
+        err.message?.includes('credentials not configured') ||
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('non-JSON response') ||
+        err.message?.includes('empty response') ||
+        err.message?.includes('EXPO_PUBLIC_API_URL')
+      ) {
+        setErrorMessage(
+          'Payment service not reachable. Please set EXPO_PUBLIC_API_URL in .env to point to the FortyWell API, then rebuild.'
+        );
       } else {
         setErrorMessage(err.message || 'Could not initiate checkout. Please try again.');
       }
