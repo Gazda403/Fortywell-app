@@ -303,7 +303,7 @@ export function searchExercises(
   query: string,
   categoryFilter?: string,
   muscleFilter?: string,
-  limit = 100
+  limit?: number
 ): ExerciseInfo[] {
   const q = query.toLowerCase().trim();
   let results = ALL_EXERCISES;
@@ -329,5 +329,5 @@ export function searchExercises(
     );
   }
 
-  return results.slice(0, limit);
+  return typeof limit === 'number' ? results.slice(0, limit) : results;
 }

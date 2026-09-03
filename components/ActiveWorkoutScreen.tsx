@@ -1109,7 +1109,9 @@ function AddExerciseModal({
   const categories = ['All', 'Strength', 'Stretching', 'Plyometrics', 'Cardio', 'Powerlifting'];
   const muscles = ['All', 'Abdominals', 'Glutes', 'Hamstrings', 'Quadriceps', 'Chest', 'Lats', 'Shoulders', 'Biceps', 'Triceps', 'Calves'];
 
-  const results = searchExercises(q, selectedCategory, selectedMuscle, 120);
+  const results = useMemo(() => {
+    return searchExercises(q, selectedCategory, selectedMuscle);
+  }, [q, selectedCategory, selectedMuscle]);
 
   return (
     <RNModal visible transparent animationType="slide">
@@ -1175,15 +1177,17 @@ function AddExerciseModal({
             ))}
           </ScrollView>
 
-          {/* 800+ Exercises List */}
+          {/* 870+ Exercises List */}
           <FlatList
             data={results}
             keyExtractor={(item) => item.id}
             style={{ maxHeight: 380 }}
             contentContainerStyle={{ paddingVertical: 4 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
+            initialNumToRender={20}
+            maxToRenderPerBatch={25}
             windowSize={10}
+            removeClippedSubviews={Platform.OS !== 'web'}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <View style={am.itemRow}>
                 <Pressable style={am.itemTxtCol} onPress={() => onAdd(item.name)}>
