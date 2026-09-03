@@ -761,149 +761,109 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     setIsTyping(true);
     Animated.timing(typingOpac, { toValue: 1, duration: 200, useNativeDriver: true }).start();
 
-    // Step 1: Detect intent — used for DB side-effects regardless of who replies
+    // Step 1: Detect intent — used for DB side-effects in background
     const intentResult = detectIntent(cleanText, answers);
 
-    // Step 2: If it's a goal preference, always save it to Supabase
+    // Step 2: If it's a goal preference, save it to Supabase asynchronously without blocking
     if (intentResult.intent === 'goal_preference' && intentResult.trainingPreference) {
       setWeeklySignalsCount((prev) => prev + 1);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
-          saveTrainingPreference(user.id, intentResult.trainingPreference);
-        }
-      } catch (_) {}
+      const uid = userProfile.id;
+      if (uid) {
+        saveTrainingPreference(uid, intentResult.trainingPreference).catch(() => {});
+      }
     }
 
-    // Step 3: Decide who generates the reply
-    const useAI = shouldUseGroqAI(cleanText, intentResult.intent);
-
+    // Step 3: Always send directly to Groq AI — no canned cheat sheet
     let replyText = '';
     let classification: ClassificationResult | undefined;
 
-    if (useAI) {
-      // ── Groq AI path ────────────────────────────────────────────────────
-      const todayFeeling = todayEntry
-        ? `Mood ${todayEntry.mood}/5, Energy ${todayEntry.energy}/5`
-        : undefined;
+    const todayFeeling = todayEntry
+      ? `Mood ${todayEntry.mood}/5, Energy ${todayEntry.energy}/5`
+      : undefined;
 
-      const conversationHistory = messages.map(m => ({ role: m.role, content: m.text }));
+    const conversationHistory = messages.map(m => ({ role: m.role, content: m.text }));
 
-      // Build saved preferences summary to give Groq full context
-      let savedPrefs: string | undefined;
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser?.id) {
+    // Non-blocking quick read of cached/saved training preferences (max 800ms)
+    let savedPrefs: string | undefined;
+    try {
+      const fetchPrefs = async () => {
+        const uid = userProfile.id;
+        if (uid) {
           const { data: prof } = await supabase
             .from('profiles')
             .select('coach_training_preferences')
-            .eq('id', authUser.id)
+            .eq('id', uid)
             .maybeSingle();
           if (prof?.coach_training_preferences?.length) {
-            savedPrefs = (prof.coach_training_preferences as any[]).slice(0, 3)
+            return (prof.coach_training_preferences as any[])
+              .slice(0, 3)
               .map((p: any) => [p.muscleGroup, p.goalType, p.intensityDesire].filter(Boolean).join(' / '))
               .filter(Boolean)
               .join('; ');
           }
         }
-      } catch (_) {}
-
-      const groqResult = await sendToGroq(cleanText, conversationHistory, answers, {
-        currentFeeling: todayFeeling,
-        savedPreferences: savedPrefs,
-      });
-
-      const userFirstName = answers?.first_name?.split(' ')[0];
-
-      if (groqResult.success && groqResult.reply) {
-        replyText = groqResult.reply;
-      } else {
-        // Groq failed — log error and use high-value specific intent reply or graceful fallback
-        console.warn('[Coach] Groq failed, using fallback. Error:', groqResult.error);
-        if (intentResult.intent === 'goal_preference' || intentResult.intent === 'workout_request' || intentResult.intent === 'question') {
-          replyText = intentResult.coachReply;
-        } else {
-          replyText = getFallbackReply(userFirstName);
-        }
-      }
-
-      // ── AI-determined weekly analysis saving (replaces keyword classifier) ──
-      // groqResult.weeklySignal is set by the AI itself based on message content.
-      // This correctly catches energy, sleep, stress, soreness etc even when
-      // the intent engine didn't keyword-match them as 'feeling_checkin'.
-      if (groqResult.weeklySignal?.shouldSave) {
-        setWeeklySignalsCount((prev) => prev + 1);
-        // Build a minimal ClassificationResult so the UI can show the tag
-        classification = {
-          category: 'General Coaching',
-          categoryIcon: 'sparkles',
-          confidence: 0.9,
-          sentiment: 'neutral',
-          extractedSignals: [groqResult.weeklySignal.insight],
-          workoutAdaptation: '',
-          weeklyAnalysisTag: `💾 ${groqResult.weeklySignal.tag}`,
-          shouldSaveForWeeklyAnalysis: true,
-          coachReply: replyText,
-        };
-      } else if (intentResult.intent === 'feeling_checkin') {
-        // Fallback: if Groq had no signal but intent was feeling_checkin, still classify
-        classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
-        if (classification.shouldSaveForWeeklyAnalysis) {
-          setWeeklySignalsCount((prev) => prev + 1);
-        }
-      }
-
-      // Groq already took real time — deliver reply immediately
-      const coachMsg: CoachMessage = {
-        id: `c-${Date.now()}`,
-        role: 'coach',
-        text: replyText,
-        timestamp: new Date(),
-        classification,
-        isDeepThink,
+        return undefined;
       };
+      savedPrefs = await Promise.race([
+        fetchPrefs(),
+        new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 800)),
+      ]);
+    } catch (_) {}
 
-      setIsTyping(false);
-      Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-      setMessages((prev) => [...prev, coachMsg]);
+    const groqResult = await sendToGroq(cleanText, conversationHistory, answers, {
+      currentFeeling: todayFeeling,
+      savedPreferences: savedPrefs,
+    });
 
-      try {
-        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch (_) {}
+    const userFirstName = answers?.first_name?.split(' ')[0];
 
+    if (groqResult.success && groqResult.reply) {
+      replyText = groqResult.reply;
     } else {
-      // ── Pre-built path (simple greetings / ≤3 word messages) ───────────
-      replyText = intentResult.coachReply;
-
-      if (intentResult.intent === 'feeling_checkin' || !replyText) {
-        classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
-        replyText = classification.coachReply;
-        if (classification.shouldSaveForWeeklyAnalysis) {
-          setWeeklySignalsCount((prev) => prev + 1);
-        }
-      }
-
-      const latency = isDeepThink ? 1600 : 1100;
-
-      setTimeout(() => {
-        const coachMsg: CoachMessage = {
-          id: `c-${Date.now()}`,
-          role: 'coach',
-          text: replyText,
-          timestamp: new Date(),
-          classification,
-          isDeepThink,
-        };
-
-        setIsTyping(false);
-        Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-        setMessages((prev) => [...prev, coachMsg]);
-
-        try {
-          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (_) {}
-      }, latency);
+      // Groq failed — deliver honest error feedback so user/dev knows real AI status
+      console.error('[Coach] Groq AI call failed:', groqResult.error);
+      replyText = groqResult.error
+        ? `I am having a connection issue with my AI coach model right now (${groqResult.error}). Please check your internet or try again in a moment!`
+        : getFallbackReply(userFirstName);
     }
+
+    // ── AI-determined weekly analysis saving ──
+    if (groqResult.weeklySignal?.shouldSave) {
+      setWeeklySignalsCount((prev) => prev + 1);
+      classification = {
+        category: 'General Coaching',
+        categoryIcon: 'sparkles',
+        confidence: 0.9,
+        sentiment: 'neutral',
+        extractedSignals: [groqResult.weeklySignal.insight],
+        workoutAdaptation: '',
+        weeklyAnalysisTag: `💾 ${groqResult.weeklySignal.tag}`,
+        shouldSaveForWeeklyAnalysis: true,
+        coachReply: replyText,
+      };
+    } else if (intentResult.intent === 'feeling_checkin') {
+      classification = classifyUserFeelingMessage(cleanText, isDeepThink, answers);
+      if (classification.shouldSaveForWeeklyAnalysis) {
+        setWeeklySignalsCount((prev) => prev + 1);
+      }
+    }
+
+    const coachMsg: CoachMessage = {
+      id: `c-${Date.now()}`,
+      role: 'coach',
+      text: replyText,
+      timestamp: new Date(),
+      classification,
+      isDeepThink,
+    };
+
+    setIsTyping(false);
+    Animated.timing(typingOpac, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+    setMessages((prev) => [...prev, coachMsg]);
+
+    try {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (_) {}
   }, [isDeepThink, answers, typingOpac, messages, todayEntry, isPaused, openPaywall]);
 
   const toggleVoiceRecording = () => {
