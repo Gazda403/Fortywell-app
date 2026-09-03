@@ -4,14 +4,14 @@ const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
 
 /**
  * Production-verified chat models available on Groq:
- * 1. openai/gpt-oss-120b — flagship intelligence, deeply empathetic & articulate
- * 2. openai/gpt-oss-20b — lightning fast, reliable lightweight fallback
- * 3. qwen/qwen3.8-27b — conversational robustness fallback
+ * 1. llama-3.3-70b-versatile — flagship intelligence, best reasoning & empathy
+ * 2. llama3-70b-8192 — reliable high-quality fallback
+ * 3. llama3-8b-8192 — ultra-fast lightweight fallback
  */
 const GROQ_ACTIVE_MODELS = [
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'qwen/qwen3.8-27b',
+  'llama-3.3-70b-versatile',
+  'llama3-70b-8192',
+  'llama3-8b-8192',
 ];
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -201,7 +201,7 @@ export async function sendToGroq(
         .trim();
     }
 
-    // Try models in order of capability: 120B -> 20B -> 27B
+    // Try models in order of capability: 70B-versatile -> 70B-8192 -> 8B-8192
     let rawReply = '';
     let lastError: any = null;
 
