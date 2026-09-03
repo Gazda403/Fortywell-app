@@ -789,16 +789,38 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
 
       const conversationHistory = messages.map(m => ({ role: m.role, content: m.text }));
 
+      // Build saved preferences summary to give Groq full context
+      let savedPrefs: string | undefined;
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.id) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('coach_training_preferences')
+            .eq('id', authUser.id)
+            .maybeSingle();
+          if (prof?.coach_training_preferences?.length) {
+            savedPrefs = (prof.coach_training_preferences as any[]).slice(0, 3)
+              .map((p: any) => [p.muscleGroup, p.goalType, p.intensityDesire].filter(Boolean).join(' / '))
+              .filter(Boolean)
+              .join('; ');
+          }
+        }
+      } catch (_) {}
+
       const groqResult = await sendToGroq(cleanText, conversationHistory, answers, {
         currentFeeling: todayFeeling,
+        savedPreferences: savedPrefs,
       });
+
+      const userFirstName = answers?.first_name?.split(' ')[0];
 
       if (groqResult.success && groqResult.reply) {
         replyText = groqResult.reply;
       } else {
         // Groq failed — use canned reply as true last resort
         console.warn('[Coach] Groq failed, using fallback. Error:', groqResult.error);
-        replyText = intentResult.coachReply || getFallbackReply();
+        replyText = intentResult.coachReply || getFallbackReply(userFirstName);
       }
 
       // ── AI-determined weekly analysis saving (replaces keyword classifier) ──

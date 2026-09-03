@@ -1,17 +1,19 @@
 import { OnboardingAnswers } from '../types/onboarding';
 
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
+
 /**
- * Primary model: qwen/qwen3-32b — high quality chat model available on Groq.
- * Previous value 'qwen/qwen3.8-27b' did not exist (404).
+ * Production-verified chat models available on Groq:
+ * 1. openai/gpt-oss-120b — flagship intelligence, deeply empathetic & articulate
+ * 2. openai/gpt-oss-20b — lightning fast, reliable lightweight fallback
+ * 3. qwen/qwen3.8-27b — conversational robustness fallback
  */
-const GROQ_MODEL = 'qwen/qwen3-32b';
-/**
- * Fallback model: llama-3.1-8b-instant — fast, small, always available Groq chat model.
- * Previous value 'groq/compound-mini' is an AGENTIC system, not a chat model — it cannot
- * be used in /v1/chat/completions and always returns 400/404.
- */
-const GROQ_FALLBACK_MODEL = 'llama-3.1-8b-instant';
+const GROQ_ACTIVE_MODELS = [
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'qwen/qwen3.8-27b',
+];
+
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export interface WeeklySignal {
@@ -21,6 +23,8 @@ export interface WeeklySignal {
   tag: string;
   /** Short extracted insight (1 sentence) */
   insight: string;
+  /** Specific workout adjustment if requested */
+  workoutAdjustment?: string;
 }
 
 export interface GroqResponse {
@@ -38,56 +42,55 @@ export interface GroqResponse {
  */
 function buildSystemContext(
   answers?: OnboardingAnswers | null,
-  recentData?: { lastWorkout?: string; currentFeeling?: string }
+  recentData?: {
+    lastWorkout?: string;
+    currentFeeling?: string;
+    savedPreferences?: string;
+    recentSignals?: string;
+  }
 ): string {
+  const name = answers?.first_name || 'Member';
+
   const userContext = answers ? `
-User Profile Context:
-- Name: ${answers.first_name || 'User'}
+User Profile:
+- Name: ${name}
 - Energy baseline: ${answers.energy_baseline || 'Not specified'}
 - Joint sensitivities: ${answers.joint_sensitivities?.join(', ') || 'None noted'}
-- Weekly training frequency goal: ${answers.weekly_frequency || '3-4 days'}
-- Time commitment: ${answers.time_commitment === '15_min' ? '15 minutes' : answers.time_commitment === '45_min' ? '45 minutes' : '25-30 minutes'}
+- Weekly training goal: ${answers.weekly_frequency || '3-4 days'}
+- Session length: ${answers.time_commitment === '15_min' ? '15 minutes' : answers.time_commitment === '45_min' ? '45 minutes' : '25-30 minutes'}
 - Training location: ${answers.training_location === 'gym' ? 'Gym' : 'Home'}
 - Target focus: ${answers.target_focus?.join(', ') || 'General longevity & joint care'}
 ${recentData?.lastWorkout ? `- Last workout performed: ${recentData.lastWorkout}` : ''}
-${recentData?.currentFeeling ? `- User's current reported feeling: ${recentData.currentFeeling}` : ''}
-` : '';
+${recentData?.currentFeeling ? `- Today's reported feeling: ${recentData.currentFeeling}` : ''}
+${recentData?.savedPreferences ? `- Saved training preferences: ${recentData.savedPreferences}` : ''}
+${recentData?.recentSignals ? `- Recent health signals (last 7 days): ${recentData.recentSignals}` : ''}
+` : `\nNo profile data yet — respond warmly and encourage the user to share how they are feeling.`;
 
-  return `You are FortyWell's AI Coach — a compassionate, science-informed fitness coach specifically designed for women 40+.
+  return `You are FortyWell's AI Coach — a compassionate, science-informed fitness coach built exclusively for women 40+.
 
 CORE IDENTITY:
-- You're a supportive coach trained in hormone physiology, joint longevity, and nervous system pacing
-- You specialize in perimenopause, menopause, and post-menopausal fitness
-- You prioritize injury prevention, sustainable habits, and listening to the body's signals
-- You adapt workouts based on energy, sleep, stress, and cycle phase
+- Trained in hormone physiology, joint longevity, pelvic health, and nervous system pacing
+- Specialises in perimenopause, menopause, and post-menopausal fitness
+- Always prioritises injury prevention and listening to the body
+- Adjusts workout recommendations dynamically based on energy, sleep quality, stress, soreness, and cycle phase
 
-PRIORITIES IN YOUR RESPONSES:
-1. Safety first — never recommend exercises that could harm joints or muscles
-2. Honor energy levels — if someone is tired, suggest gentle movement or rest
-3. Be supportive and non-judgmental — celebrate small wins
-4. Consider hormone fluctuations and how they affect energy, mood, and recovery
-5. Keep responses concise but personal — 2-4 sentences typically, more for complex questions
-
-RESPONSE STYLE:
-- Warm, conversational tone — like a supportive friend who happens to be a fitness expert
-- Use the user's name when you know it
-- Include practical, actionable advice
-- Reference their profile when relevant
-- Never make up medical information — defer to professionals for health concerns
+RESPONSE RULES:
+1. Be real — give specific, substantive answers. Do NOT reply with vague platitudes like "I'm here to help" alone.
+2. If the user describes a physical feeling (tired, sore, stiff, low energy, back pain), IMMEDIATELY suggest a concrete workout adjustment or recovery activity.
+3. If the user mentions a goal (glutes, core, strength, weight loss), confirm you have saved it and describe exactly how their next sessions will change.
+4. Use the user's name when you know it. Keep tone warm, human, and encouraging.
+5. For casual messages, still engage meaningfully — ask a follow-up question about their body, energy, or goals. Never give a one-liner and stop.
+6. Formatting: Use bullet points or short paragraphs. Keep replies under 200 words unless the user asks for a detailed plan.
 
 ${userContext}
 
-Remember: You're coaching women over 40. Adapt your recommendations for:
-- Joint sensitivity and protection
-- Hormonal fluctuations affecting energy and recovery
-- Time-efficient workouts (many women 40+ are busy)
-- Sustainable, long-term habit building over quick fixes
+---
+IMPORTANT — You MUST always end your reply with this exact JSON on a new line. No exceptions:
+[[SIGNAL:{"shouldSave":true/false,"tag":"Category • Label","insight":"One sentence describing what this message reveals about the user\'s fitness state or goals"}]]
 
-AFTER your coaching reply, on a NEW LINE, append EXACTLY this JSON block (no markdown fences, no extra text):
-[[SIGNAL:{"shouldSave":true/false,"tag":"Category • Label","insight":"One sentence summary of the health/fitness signal in this message"}]]
-
-Set shouldSave=true if the message contains any of: energy level, sleep quality, soreness, mood, stress, workout readiness, pain, fatigue, motivation, hormonal symptoms, or any body signal relevant to weekly fitness analysis.
-Set shouldSave=false for greetings, general questions about exercises, or unrelated topics.`;
+shouldSave=true when the message contains: energy levels, sleep quality, mood, stress, soreness, pain, fatigue, readiness to train, hormonal symptoms, or any recovery/health signal.
+shouldSave=false only for pure greetings or unrelated small talk.
+---`;
 }
 
 /**
@@ -134,7 +137,12 @@ export async function sendToGroq(
   userMessage: string,
   conversationHistory: Array<{ role: 'user' | 'assistant' | 'coach'; content: string }>,
   answers?: OnboardingAnswers | null,
-  recentData?: { lastWorkout?: string; currentFeeling?: string }
+  recentData?: {
+    lastWorkout?: string;
+    currentFeeling?: string;
+    savedPreferences?: string;
+    recentSignals?: string;
+  }
 ): Promise<GroqResponse> {
   if (!GROQ_API_KEY) {
     console.error('Groq API key is missing — check EXPO_PUBLIC_GROQ_API_KEY in .env');
@@ -168,20 +176,17 @@ export async function sendToGroq(
           model,
           messages,
           temperature: 0.7,
-          max_tokens: 600,
+          max_tokens: 1024,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errMsg = errorData?.error?.message || JSON.stringify(errorData);
-        // Specific guidance for common error codes
         if (response.status === 401) {
           throw new Error(`[Auth 401] Invalid or missing API key. Check EXPO_PUBLIC_GROQ_API_KEY in .env`);
         } else if (response.status === 404) {
-          throw new Error(`[Model 404] Model "${model}" not found on Groq. Check the model ID is correct.`);
-        } else if (response.status === 400) {
-          throw new Error(`[Bad Request 400] ${errMsg}`);
+          throw new Error(`[Model 404] Model "${model}" not found on Groq.`);
         } else if (response.status === 429) {
           throw new Error(`[Rate Limit 429] Too many requests. ${errMsg}`);
         }
@@ -192,27 +197,27 @@ export async function sendToGroq(
       if (!data.choices?.[0]) throw new Error('No choices in response');
 
       return (data.choices[0].message?.content || '')
-        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '')
         .trim();
     }
 
-    // Try primary model first; fall back to lighter model on failure
+    // Try models in order of capability: 120B -> 20B -> 27B
     let rawReply = '';
-    try {
-      rawReply = await attemptModel(GROQ_MODEL);
-    } catch (primaryErr) {
-      console.warn(`[Groq] Primary model (${GROQ_MODEL}) failed:`, primaryErr, '— retrying with fallback model');
+    let lastError: any = null;
+
+    for (const model of GROQ_ACTIVE_MODELS) {
       try {
-        rawReply = await attemptModel(GROQ_FALLBACK_MODEL);
-      } catch (fallbackErr) {
-        console.error('[Groq] Fallback model also failed:', fallbackErr);
-        throw fallbackErr;
+        rawReply = await attemptModel(model);
+        if (rawReply) break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`[Groq] Model ${model} failed:`, err, '— trying next model...');
       }
     }
 
     if (!rawReply) {
-      console.warn('[Groq] Empty reply after stripping think blocks.');
-      return { reply: '', success: false, error: 'Empty reply' };
+      if (lastError) throw lastError;
+      return { reply: '', success: false, error: 'Empty reply from all models' };
     }
 
     const { reply, weeklySignal } = parseWeeklySignal(rawReply);
@@ -229,8 +234,9 @@ export async function sendToGroq(
 }
 
 /**
- * Fallback response when Groq fails
+ * Fallback response when Groq is completely unreachable (offline/airplane mode)
  */
-export function getFallbackReply(): string {
-  return `I'm having a bit of trouble connecting right now. Could you try again in a moment? I'm here to help you move better and feel stronger.`;
+export function getFallbackReply(userFirstName?: string): string {
+  const greeting = userFirstName ? ` ${userFirstName}` : '';
+  return `I'm having a bit of trouble connecting to the network right now${greeting}. Your previous check-ins and preferences are saved safely. Tell me how your body is feeling, and once our connection is back, I'll tune your sessions!`;
 }
