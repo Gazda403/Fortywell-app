@@ -219,6 +219,10 @@ function selectWeeklyWorkouts(
 // ─── Cache key ────────────────────────────────────────────────────────────────
 const LOCAL_PLAN_CACHE_KEY = '@fortywell_weekly_plan_v1';
 
+function planCacheKey(userId?: string | null) {
+  return userId ? `${LOCAL_PLAN_CACHE_KEY}_${userId}` : LOCAL_PLAN_CACHE_KEY;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useWeeklyPlan(
@@ -244,10 +248,17 @@ export function useWeeklyPlan(
 
       const currentWeekKey = getISOWeekKey();
 
-      // ── 1. Check local cache first ─────────────────────────────────────────
+      // ── 0. Resolve user ID ─────────────────────────────────────────────────
+      let userId: string | null = null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id || null;
+      } catch (_) {}
+
+      // ── 1. Check local cache first (user-scoped) ───────────────────────────
       if (!force) {
         try {
-          const cached = await AsyncStorage.getItem(LOCAL_PLAN_CACHE_KEY);
+          const cached = await AsyncStorage.getItem(planCacheKey(userId));
           if (cached) {
             const parsed: WeeklyPlan = JSON.parse(cached);
             if (parsed.weekKey === currentWeekKey) {
@@ -268,12 +279,6 @@ export function useWeeklyPlan(
       }
 
       // ── 2. Try Supabase for existing plan ─────────────────────────────────
-      let userId: string | null = null;
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        userId = user?.id || null;
-      } catch (_) {}
-
       if (userId) {
         try {
           const { data: existingPlan } = await supabase
@@ -310,7 +315,7 @@ export function useWeeklyPlan(
               }
               // Update local cache
               try {
-                await AsyncStorage.setItem(LOCAL_PLAN_CACHE_KEY, JSON.stringify(rehydrated));
+                await AsyncStorage.setItem(planCacheKey(userId), JSON.stringify(rehydrated));
               } catch (_) {}
               return;
             }
@@ -337,6 +342,7 @@ export function useWeeklyPlan(
           const { data: allLogs } = await supabase
             .from('workout_logs')
             .select('id')
+            .eq('user_id', userId)
             .eq('status', 'completed')
             .limit(5);
 
@@ -350,6 +356,7 @@ export function useWeeklyPlan(
           const { data: logs } = await supabase
             .from('workout_logs')
             .select('*')
+            .eq('user_id', userId)
             .eq('status', 'completed')
             .gte('date', toDateStr(lastWeekStart))
             .lte('date', toDateStr(lastWeekEnd));
@@ -365,6 +372,7 @@ export function useWeeklyPlan(
           const { data: checkins } = await supabase
             .from('feeling_checkins')
             .select('mood, energy')
+            .eq('user_id', userId)
             .gte('date', toDateStr(lastWeekStart));
 
           if (checkins && checkins.length > 0) {

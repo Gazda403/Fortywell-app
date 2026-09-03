@@ -18,11 +18,16 @@ const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 
 async function persistCompletedDate(dateStr: string) {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES);
+    const { data: { user } } = await supabase.auth.getUser();
+    const key = user?.id ? `@fortywell_completed_dates_v1_${user.id}` : STORAGE_KEY_COMPLETED_DATES;
+    const raw = await AsyncStorage.getItem(key);
     const existing: string[] = raw ? JSON.parse(raw) : [];
     if (!existing.includes(dateStr)) {
       existing.push(dateStr);
-      await AsyncStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(existing));
+      await AsyncStorage.setItem(key, JSON.stringify(existing));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, JSON.stringify(existing));
+      }
     }
   } catch (_) {}
 }
@@ -234,7 +239,9 @@ export function useRhythmData(answers?: any) {
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. Weekly Plan
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // 1. Weekly Plan (active global or user plan)
         const { data: planData } = await supabase
           .from('weekly_plans')
           .select('*')
@@ -253,10 +260,13 @@ export function useRhythmData(answers?: any) {
           });
         }
 
+        if (!user?.id) return;
+
         // 2. Timing Preferences
         const { data: prefData } = await supabase
           .from('reset_timing_preferences')
-          .select('*');
+          .select('*')
+          .eq('user_id', user.id);
 
         if (prefData && prefData.length > 0) {
           setTimingPreferences((prev) =>
@@ -278,6 +288,7 @@ export function useRhythmData(answers?: any) {
         const { data: cycleRow } = await supabase
           .from('cycle_tracking')
           .select('*')
+          .eq('user_id', user.id)
           .limit(1)
           .maybeSingle();
 
@@ -297,7 +308,8 @@ export function useRhythmData(answers?: any) {
         // 4. Workout Logs
         const { data: logs } = await supabase
           .from('workout_logs')
-          .select('*');
+          .select('*')
+          .eq('user_id', user.id);
 
         if (logs && logs.length > 0) {
           setCompletedSlotsByDate((prev) => {
@@ -318,7 +330,8 @@ export function useRhythmData(answers?: any) {
         // 5. Night Session Activity Logs
         const { data: nightLogs } = await supabase
           .from('night_session_activity_log')
-          .select('*');
+          .select('*')
+          .eq('user_id', user.id);
 
         if (nightLogs && nightLogs.length > 0) {
           const nMap: Record<string, NightSessionActivityLog> = {};
@@ -645,17 +658,21 @@ export function useRhythmData(answers?: any) {
       );
 
       try {
-        await supabase
-          .from('reset_timing_preferences')
-          .upsert(
-            {
-              slot,
-              reminder_time: reminderTime,
-              reminder_enabled: reminderEnabled,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id,slot' }
-          );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase
+            .from('reset_timing_preferences')
+            .upsert(
+              {
+                user_id: user.id,
+                slot,
+                reminder_time: reminderTime,
+                reminder_enabled: reminderEnabled,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,slot' }
+            );
+        }
       } catch (_) {}
     },
     []
@@ -676,18 +693,22 @@ export function useRhythmData(answers?: any) {
       });
 
       try {
-        await supabase
-          .from('cycle_tracking')
-          .upsert(
-            {
-              opted_in: optedIn,
-              cycle_start_date: startDate,
-              cycle_length_days: 28,
-              current_phase: phaseInfo.phase,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id' }
-          );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase
+            .from('cycle_tracking')
+            .upsert(
+              {
+                user_id: user.id,
+                opted_in: optedIn,
+                cycle_start_date: startDate,
+                cycle_length_days: 28,
+                current_phase: phaseInfo.phase,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            );
+        }
       } catch (_) {}
     },
     []
@@ -708,18 +729,22 @@ export function useRhythmData(answers?: any) {
       });
 
       try {
-        await supabase
-          .from('cycle_tracking')
-          .upsert(
-            {
-              opted_in: true,
-              cycle_start_date: startDate,
-              cycle_length_days: cycleLengthDays,
-              current_phase: phaseInfo.phase,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id' }
-          );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase
+            .from('cycle_tracking')
+            .upsert(
+              {
+                user_id: user.id,
+                opted_in: true,
+                cycle_start_date: startDate,
+                cycle_length_days: cycleLengthDays,
+                current_phase: phaseInfo.phase,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' }
+            );
+        }
       } catch (_) {}
     },
     []

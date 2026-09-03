@@ -583,10 +583,13 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
   React.useEffect(() => {
     let isMounted = true;
     const tKey = todayKey();
-    const storageKey = `@fortywell_habits_${tKey}`;
 
     async function loadHabits() {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const uid = user?.id || userProfile.id;
+        const storageKey = uid ? `@fortywell_habits_${tKey}_${uid}` : `@fortywell_habits_${tKey}`;
+
         // 1. Check local storage
         const raw = await AsyncStorage.getItem(storageKey);
         if (raw && isMounted) {
@@ -597,12 +600,11 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         }
 
         // 2. Sync from Supabase daily_habits table
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
+        if (uid) {
           const { data: cloudHabits } = await supabase
             .from('daily_habits')
             .select('habit_id, completed')
-            .eq('user_id', user.id)
+            .eq('user_id', uid)
             .eq('date', tKey);
 
           if (cloudHabits && cloudHabits.length > 0 && isMounted) {
@@ -621,14 +623,19 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
 
     loadHabits();
     return () => { isMounted = false; };
-  }, []);
+  }, [userProfile.id]);
 
   // Load persistent chat messages (all stored, but display only recent ones)
   React.useEffect(() => {
     let isMounted = true;
     async function loadSavedChat() {
       try {
-        const raw = await AsyncStorage.getItem('@fortywell_coach_chat_history');
+        const { data: { user } } = await supabase.auth.getUser();
+        const uid = user?.id || userProfile.id;
+        const chatKey = uid ? `@fortywell_coach_chat_history_${uid}` : '@fortywell_coach_chat_history';
+        const fullKey = uid ? `@fortywell_coach_chat_history_full_${uid}` : '@fortywell_coach_chat_history_full';
+
+        const raw = await AsyncStorage.getItem(chatKey);
         if (raw && isMounted) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -642,7 +649,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
             setMessages(recentMessages.length > 0 ? recentMessages : [allMessages[0] || { id: 'welcome', role: 'coach' as const, text: '', timestamp: new Date() }]);
             // Store full history in a separate key for potential future use (e.g., analytics)
             if (allMessages.length > 0) {
-              AsyncStorage.setItem('@fortywell_coach_chat_history_full', JSON.stringify(allMessages.slice(-50))).catch(() => {});
+              AsyncStorage.setItem(fullKey, JSON.stringify(allMessages.slice(-50))).catch(() => {});
             }
           }
         }
@@ -650,13 +657,17 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
     }
     loadSavedChat();
     return () => { isMounted = false; };
-  }, []);
+  }, [userProfile.id]);
 
   // Save chat messages whenever new message is sent/received
   React.useEffect(() => {
     if (messages.length > 1) {
+      const uid = userProfile.id;
+      const chatKey = uid ? `@fortywell_coach_chat_history_${uid}` : '@fortywell_coach_chat_history';
+      const fullKey = uid ? `@fortywell_coach_chat_history_full_${uid}` : '@fortywell_coach_chat_history_full';
+
       // Save full history (up to 50 messages) to preserve older conversations
-      AsyncStorage.getItem('@fortywell_coach_chat_history_full').then((raw) => {
+      AsyncStorage.getItem(fullKey).then((raw) => {
         let fullHistory: CoachMessage[] = [];
         if (raw) {
           try {
@@ -667,12 +678,12 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
         const existingIds = new Set(fullHistory.map((m) => m.id));
         const newMsgs = messages.filter((m) => !existingIds.has(m.id));
         const merged = [...fullHistory, ...newMsgs].slice(-50);
-        AsyncStorage.setItem('@fortywell_coach_chat_history_full', JSON.stringify(merged)).catch(() => {});
+        AsyncStorage.setItem(fullKey, JSON.stringify(merged)).catch(() => {});
       });
       // Display only recent messages (up to 30)
-      AsyncStorage.setItem('@fortywell_coach_chat_history', JSON.stringify(messages.slice(-30))).catch(() => {});
+      AsyncStorage.setItem(chatKey, JSON.stringify(messages.slice(-30))).catch(() => {});
     }
-  }, [messages]);
+  }, [messages, userProfile.id]);
 
   const scrollRef = useRef<ScrollView>(null);
   const typingOpac = useRef(new Animated.Value(0)).current;
@@ -686,21 +697,23 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
 
   const toggleHabit = useCallback((id: string) => {
     const tKey = todayKey();
-    const storageKey = `@fortywell_habits_${tKey}`;
 
     setHabits((prev) => {
       const next = prev.map((h) => (h.id === id ? { ...h, checked: !h.checked } : h));
+      const uid = userProfile.id;
+      const storageKey = uid ? `@fortywell_habits_${tKey}_${uid}` : `@fortywell_habits_${tKey}`;
       AsyncStorage.setItem(storageKey, JSON.stringify(next)).catch(() => {});
 
       const target = next.find((h) => h.id === id);
       if (target) {
         supabase.auth.getUser().then(({ data: { user } }) => {
-          if (user?.id) {
+          const authId = user?.id || uid;
+          if (authId) {
             supabase
               .from('daily_habits')
               .upsert(
                 {
-                  user_id: user.id,
+                  user_id: authId,
                   date: tKey,
                   habit_id: id,
                   completed: target.checked,
@@ -716,7 +729,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
       return next;
     });
     try { if (Platform.OS !== 'web') Haptics.selectionAsync(); } catch (_) {}
-  }, []);
+  }, [userProfile.id]);
 
   const handleSaveFeeling = useCallback(async (entry: Omit<FeelingEntry, 'date'>) => {
     const key = todayKey();

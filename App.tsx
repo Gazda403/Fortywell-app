@@ -187,6 +187,7 @@ export default function App() {
     // Listen to Supabase auth events (sign in, sign out, token refresh)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
+        sessionHandledRef.current = false;
         if (isMounted) {
           setCompletedProfile(null);
           setUserFirstName('');
@@ -294,6 +295,7 @@ export default function App() {
   }, []);
 
   const handleSignOut = useCallback(async () => {
+    sessionHandledRef.current = false;
     try {
       await supabase.auth.signOut();
     } catch (err) {
