@@ -73,7 +73,7 @@ const GARDEN_LEVELS = [
   { level: 6, name: 'Celestial Sanctuary', daysReq: '36+ Days', desc: 'Full cosmic bloom of eternal joint vitality' },
 ];
 
-const DEFAULT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+const DEFAULT_WEEKS = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
 const DEFAULT_FAVORITE_EXERCISES = [
   { name: 'Cat-Cow Segmental Mobility', sets: 24, muscle: 'Spine & Lumbar', tag: 'Mobility' },
@@ -102,10 +102,12 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
     levelDesc: 'Fresh green meadow & serene lotus pond',
     hasEnoughDataForTrends: true,
     vitalityTrends: {
-      months: DEFAULT_MONTHS,
-      consistency: [25, 30, 35, 40, 45, 48, 52, 55, 60, 68],
-      mobility: [20, 24, 28, 32, 38, 42, 45, 48, 52, 58],
-      fluidity: [15, 18, 22, 26, 30, 34, 38, 40, 44, 50],
+      months: DEFAULT_WEEKS,
+      consistency: [35, 50, 65, 80],
+      mobility: [42, 54, 66, 78],
+      fluidity: [35, 46, 58, 70],
+      monthName: 'This Month',
+      currentWeekIndex: 0,
     },
   };
 
@@ -121,7 +123,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   const lifetimeStats = props.lifetimeStats || defaultLifetimeStats;
   const topExercises = props.topExercises || DEFAULT_FAVORITE_EXERCISES;
 
-  const months = gardenProgress.vitalityTrends?.months || DEFAULT_MONTHS;
+  const months = gardenProgress.vitalityTrends?.months || DEFAULT_WEEKS;
   const chartData = useMemo(() => {
     if (gardenProgress.vitalityTrends) {
       return {
@@ -131,15 +133,17 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
       };
     }
     return {
-      consistency: [25, 30, 35, 40, 45, 48, 52, 55, 60, 68],
-      mobility: [20, 24, 28, 32, 38, 42, 45, 48, 52, 58],
-      fluidity: [15, 18, 22, 26, 30, 34, 38, 40, 44, 50],
+      consistency: [35, 50, 65, 80],
+      mobility: [42, 54, 66, 78],
+      fluidity: [35, 46, 58, 70],
     };
   }, [gardenProgress.vitalityTrends]);
 
   const [previewLevel, setPreviewLevel] = useState<number>(gardenProgress.currentLevel || 1);
   const [isHowItGrowsOpen, setIsHowItGrowsOpen] = useState<boolean>(false);
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(months.length - 1);
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number>(
+    gardenProgress.vitalityTrends?.currentWeekIndex ?? Math.max(0, months.length - 1)
+  );
   const [favorites, setFavorites] = useState<string[]>(topExercises.map((f) => f.name));
 
   // Sync preview level with real calculated garden level
@@ -149,20 +153,24 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
     }
   }, [gardenProgress.currentLevel]);
 
-  // Sync selected month index with months length
+  // Sync selected week index with current week or months length
   React.useEffect(() => {
     if (months.length > 0) {
-      setSelectedMonthIdx(months.length - 1);
+      const targetIdx =
+        gardenProgress.vitalityTrends?.currentWeekIndex !== undefined
+          ? Math.min(gardenProgress.vitalityTrends.currentWeekIndex, months.length - 1)
+          : months.length - 1;
+      setSelectedMonthIdx(targetIdx);
     }
-  }, [months]);
+  }, [months, gardenProgress.vitalityTrends?.currentWeekIndex]);
 
   const activeLevelMeta = GARDEN_LEVELS.find((l) => l.level === previewLevel) || GARDEN_LEVELS[0];
 
   // SVG Chart Dimensions
   const chartWidth = Math.min(SCREEN_W - 40, 400);
   const chartHeight = 220;
-  const paddingLeft = 32;
-  const paddingRight = 16;
+  const paddingLeft = 36;
+  const paddingRight = 24;
   const paddingTop = 24;
   const paddingBottom = 32;
   const graphW = chartWidth - paddingLeft - paddingRight;
@@ -264,8 +272,32 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   const selectedConsistency = chartData.consistency[safeMonthIdx] || 0;
   const selectedMobility = chartData.mobility[safeMonthIdx] || 0;
   const selectedFluidity = chartData.fluidity[safeMonthIdx] || 0;
-  const selectedMonthName = months[safeMonthIdx] || 'Today';
+  const getWeekLabel = (idx: number) => {
+    const key = `garden.week${idx + 1}`;
+    const val = t(key);
+    return val !== key ? val : (months[idx] || `Week ${idx + 1}`);
+  };
+
+  const getLevelName = (lvl: number, fallback: string) => {
+    const key = `garden.level${lvl}Name`;
+    const val = t(key);
+    return val !== key ? val : fallback;
+  };
+
+  const getLevelDesc = (lvl: number, fallback: string) => {
+    const key = `garden.level${lvl}Desc`;
+    const val = t(key);
+    return val !== key ? val : fallback;
+  };
+
+  const selectedWeekName = getWeekLabel(safeMonthIdx);
   const selectedX = consistencyCoords[safeMonthIdx]?.x || paddingLeft;
+
+  const monthDisplayName = gardenProgress.vitalityTrends?.monthName || t('garden.thisMonth');
+  const currentWeekIdx = gardenProgress.vitalityTrends?.currentWeekIndex ?? 0;
+  const isSelectedUpcoming = safeMonthIdx > currentWeekIdx;
+  const isSelectedCurrent = safeMonthIdx === currentWeekIdx;
+  const tooltipTitle = `${monthDisplayName} • ${selectedWeekName}`;
 
   // Minutes vs hours display helper for lifetime stats
   const formattedTimeHours = lifetimeStats.totalTimeHours || 0;
@@ -296,7 +328,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
             <View style={styles.sparkleIconBubble}>
               <Sprout size={16} color={colors.primary} />
             </View>
-            <Text style={styles.explanationTitle}>How Your Garden Grows</Text>
+            <Text style={styles.explanationTitle}>{t('garden.howItGrowsTitle')}</Text>
           </View>
           <View style={styles.chevronBubble}>
             {isHowItGrowsOpen ? (
@@ -310,17 +342,22 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
         {isHowItGrowsOpen && (
           <View style={styles.explanationBody}>
             <Text style={styles.explanationText}>
-              • <Text style={styles.boldText}>Every 7 days</Text> of completed movement upgrades your garden to a more vibrant bloom level.{'\n'}
-              • <Text style={styles.boldText}>If you miss a week</Text>, the garden returns to Level 1 — fertile soil ready for a fresh start with zero penalty.
+              • <Text style={styles.boldText}>{t('garden.howItGrowsRule1')}</Text>{'\n'}
+              • <Text style={styles.boldText}>{t('garden.howItGrowsRule2')}</Text>
             </Text>
 
             <View style={styles.explanationFooter}>
               <View style={styles.streakPill}>
                 <CheckCircle2 size={12} color={colors.sageDark} />
-                <Text style={styles.streakPillText}>Current: {lifetimeStats.currentStreak}-Day Streak</Text>
+                <Text style={styles.streakPillText}>
+                  {t('garden.currentStreakPill', { streak: lifetimeStats.currentStreak })}
+                </Text>
               </View>
               <Text style={styles.nextUpgradeText}>
-                Level {Math.min(6, gardenProgress.currentLevel + 1)} in {gardenProgress.daysToNextLevel} Days
+                {t('garden.levelInDays', {
+                  level: Math.min(6, gardenProgress.currentLevel + 1),
+                  days: gardenProgress.daysToNextLevel,
+                })}
               </Text>
             </View>
           </View>
@@ -343,15 +380,15 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
             <View style={styles.gardenBadgeOverlay}>
               <View style={styles.levelBadge}>
                 <Flower2 size={13} color="#FFFFFF" />
-                <Text style={styles.levelBadgeText}>LEVEL {previewLevel}</Text>
+                <Text style={styles.levelBadgeText}>{t('garden.levelNumber', { level: previewLevel })}</Text>
               </View>
               {previewLevel === gardenProgress.currentLevel ? (
                 <View style={styles.activePill}>
-                  <Text style={styles.activePillText}>CURRENT SANCTUARY</Text>
+                  <Text style={styles.activePillText}>{t('garden.currentSanctuary')}</Text>
                 </View>
               ) : (
                 <View style={[styles.activePill, { backgroundColor: 'rgba(58, 53, 50, 0.75)' }]}>
-                  <Text style={styles.activePillText}>PREVIEW</Text>
+                  <Text style={styles.activePillText}>{t('garden.previewBadge')}</Text>
                 </View>
               )}
             </View>
@@ -360,17 +397,17 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
           {/* Garden Level Info */}
           <View style={styles.gardenDetails}>
             <View style={styles.gardenTitleRow}>
-              <Text style={styles.gardenName}>{activeLevelMeta.name}</Text>
+              <Text style={styles.gardenName}>{getLevelName(activeLevelMeta.level, activeLevelMeta.name)}</Text>
               <Text style={styles.gardenDaysReq}>{activeLevelMeta.daysReq}</Text>
             </View>
-            <Text style={styles.gardenDesc}>{activeLevelMeta.desc}</Text>
+            <Text style={styles.gardenDesc}>{getLevelDesc(activeLevelMeta.level, activeLevelMeta.desc)}</Text>
 
             {/* Progress to next level bar */}
             <View style={styles.progressBarWrap}>
               <View style={styles.progressLabelRow}>
-                <Text style={styles.progressLabel}>Bloom Growth</Text>
+                <Text style={styles.progressLabel}>{t('garden.bloomGrowth')}</Text>
                 <Text style={styles.progressValue}>
-                  {gardenProgress.daysCompletedInLevel} / 7 Days Completed
+                  {t('garden.daysCompletedInLevel', { completed: gardenProgress.daysCompletedInLevel })}
                 </Text>
               </View>
               <View style={styles.progressBarBg}>
@@ -387,7 +424,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
 
             {/* Interactive Level Preview Tabs */}
             <View style={styles.levelSelectorRow}>
-              <Text style={styles.levelSelectorLabel}>Preview Bloom Stages:</Text>
+              <Text style={styles.levelSelectorLabel}>{t('garden.previewStages')}</Text>
               <View style={styles.levelPillsWrap}>
                 {GARDEN_LEVELS.map((lvl) => {
                   const isSelected = previewLevel === lvl.level;
@@ -433,12 +470,12 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
           <View>
             <View style={styles.kickerRow}>
               <TrendingUp size={13} color={colors.primary} />
-              <Text style={styles.kickerText}>VITALITY TRENDS</Text>
+              <Text style={styles.kickerText}>MONTHLY VITALITY</Text>
             </View>
-            <Text style={styles.chartTitle}>Progress Analytics</Text>
+            <Text style={styles.chartTitle}>{monthDisplayName} Progress</Text>
           </View>
           <View style={styles.chartPeriodBadge}>
-            <Text style={styles.chartPeriodText}>Touch to Inspect</Text>
+            <Text style={styles.chartPeriodText}>Weekly Flow</Text>
           </View>
         </View>
 
@@ -488,7 +525,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
               );
             })}
 
-            {/* Vertical Cursor on Selected Month */}
+            {/* Vertical Cursor on Selected Week */}
             <Line
               x1={selectedX}
               y1={paddingTop}
@@ -547,51 +584,64 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
               />
             ))}
 
-            {/* X-Axis Month Labels */}
+            {/* X-Axis Week Labels */}
             {months.map((m, i) => {
               const x = paddingLeft + (i / Math.max(1, months.length - 1)) * graphW;
               const isSelected = selectedMonthIdx === i;
+              const isCurrent = i === currentWeekIdx;
               return (
                 <SvgText
                   key={`${m}-${i}`}
                   x={x}
                   y={chartHeight - 8}
                   fontSize={isSelected ? '10' : '9'}
-                  fontWeight={isSelected ? '700' : '400'}
-                  fill={isSelected ? '#2A2320' : colors.textTertiary}
+                  fontWeight={isSelected || isCurrent ? '700' : '500'}
+                  fill={isSelected ? '#2A2320' : isCurrent ? colors.primaryDark : colors.textTertiary}
                   textAnchor="middle"
                   fontFamily={fontFamilies.monoMedium}
                 >
-                  {m}
+                  {getWeekLabel(i)}
                 </SvgText>
               );
             })}
           </Svg>
 
-          {/* Floating Dark Tooltip Box for Selected Month */}
+          {/* Floating Dark Tooltip Box for Selected Week */}
           <View
             style={[
               styles.chartTooltip,
               {
-                left: Math.max(16, Math.min(selectedX - 65, chartWidth - 145)),
-                top: 36,
+                left: Math.max(12, Math.min(selectedX - 78, chartWidth - 170)),
+                top: 28,
               },
             ]}
           >
-            <Text style={styles.tooltipMonth}>{selectedMonthName}</Text>
+            <View style={styles.tooltipHeaderRow}>
+              <Text style={styles.tooltipMonth} numberOfLines={1}>{tooltipTitle}</Text>
+              {isSelectedUpcoming && (
+                <View style={styles.upcomingBadge}>
+                  <Text style={styles.upcomingBadgeText}>{t('garden.upcoming')}</Text>
+                </View>
+              )}
+              {isSelectedCurrent && (
+                <View style={styles.currentBadge}>
+                  <Text style={styles.currentBadgeText}>{t('garden.currentWeek')}</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.tooltipRow}>
               <View style={[styles.tooltipDot, { backgroundColor: '#C9465B' }]} />
-              <Text style={styles.tooltipLabel}>Consistency</Text>
+              <Text style={styles.tooltipLabel}>{t('garden.consistency')}</Text>
               <Text style={styles.tooltipValue}>{selectedConsistency}%</Text>
             </View>
             <View style={styles.tooltipRow}>
               <View style={[styles.tooltipDot, { backgroundColor: '#7E9B60' }]} />
-              <Text style={styles.tooltipLabel}>Mobility</Text>
+              <Text style={styles.tooltipLabel}>{t('garden.mobility')}</Text>
               <Text style={styles.tooltipValue}>{selectedMobility} pts</Text>
             </View>
             <View style={styles.tooltipRow}>
               <View style={[styles.tooltipDot, { backgroundColor: '#A87A5B' }]} />
-              <Text style={styles.tooltipLabel}>Fluidity</Text>
+              <Text style={styles.tooltipLabel}>{t('garden.fluidity')}</Text>
               <Text style={styles.tooltipValue}>{selectedFluidity} pts</Text>
             </View>
           </View>
@@ -601,15 +651,15 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendIndicator, { backgroundColor: '#C9465B' }]} />
-            <Text style={styles.legendText}>Consistency</Text>
+            <Text style={styles.legendText}>{t('garden.consistency')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendIndicator, { backgroundColor: '#7E9B60' }]} />
-            <Text style={styles.legendText}>Mobility</Text>
+            <Text style={styles.legendText}>{t('garden.mobility')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendIndicator, { backgroundColor: '#A87A5B' }]} />
-            <Text style={styles.legendText}>Fluidity</Text>
+            <Text style={styles.legendText}>{t('garden.fluidity')}</Text>
           </View>
         </View>
       </View>
@@ -627,7 +677,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
           <View style={styles.statBox}>
             <Trophy size={18} color={colors.primary} />
             <Text style={styles.statBoxVal}>{lifetimeStats.totalWorkouts}</Text>
-            <Text style={styles.statBoxLbl}>SESSIONS</Text>
+            <Text style={styles.statBoxLbl}>{t('garden.sessions')}</Text>
           </View>
 
           {/* Stat 2: Volume or Sets */}
@@ -647,7 +697,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
               )}
             </Text>
             <Text style={styles.statBoxLbl}>
-              {lifetimeStats.totalVolumeKg > 0 ? 'VOLUME' : 'SETS DONE'}
+              {lifetimeStats.totalVolumeKg > 0 ? t('garden.volume') : t('garden.setsDone')}
             </Text>
           </View>
 
@@ -658,7 +708,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
               {lifetimeStats.currentStreak}
               <Text style={{ fontSize: 11 }}>d</Text>
             </Text>
-            <Text style={styles.statBoxLbl}>STREAK</Text>
+            <Text style={styles.statBoxLbl}>{t('garden.streak')}</Text>
           </View>
 
           {/* Stat 4: Total Time */}
@@ -677,7 +727,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
                 </>
               )}
             </Text>
-            <Text style={styles.statBoxLbl}>TIME</Text>
+            <Text style={styles.statBoxLbl}>{t('garden.time')}</Text>
           </View>
         </View>
       </View>
@@ -688,9 +738,9 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
           <View style={styles.favHeaderRow}>
             <View style={styles.kickerRow}>
               <Heart size={13} color={colors.primaryDark} fill={colors.primaryDark} />
-              <Text style={styles.kickerText}>MOST FREQUENT</Text>
+              <Text style={styles.kickerText}>{t('garden.mostFrequent')}</Text>
             </View>
-            <Text style={styles.sectionHeading}>Favorite Exercises</Text>
+            <Text style={styles.sectionHeading}>{t('garden.favoriteExercises')}</Text>
           </View>
 
           <View style={styles.favList}>
@@ -709,10 +759,12 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
                   <View style={styles.favInfo}>
                     <View style={styles.favTagRow}>
                       <Text style={styles.favTag}>{item.tag.toUpperCase()}</Text>
-                      <Text style={styles.favSets}>{item.sets} sets logged</Text>
+                      <Text style={styles.favSets}>{t('garden.setsLogged', { count: item.sets })}</Text>
                     </View>
                     <Text style={styles.favName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.favMuscle} numberOfLines={1}>{item.muscle} • {info.equipment || 'No equipment'}</Text>
+                    <Text style={styles.favMuscle} numberOfLines={1}>
+                      {item.muscle} • {info.equipment || t('garden.noEquipment')}
+                    </Text>
                   </View>
                   <Pressable
                     onPress={() => toggleFavorite(item.name)}
@@ -1099,8 +1151,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: 'rgba(42, 35, 32, 0.94)',
     borderRadius: 14,
-    padding: 12,
-    width: 140,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minWidth: 160,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     ...Platform.select({
@@ -1114,18 +1167,51 @@ const styles = StyleSheet.create({
       default: {},
     }),
   },
-  tooltipMonth: {
-    fontSize: 12,
-    fontFamily: fontFamilies.monoBold,
-    color: '#FFFFFF',
+  tooltipHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.2)',
     paddingBottom: 4,
   },
+  tooltipMonth: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoBold,
+    color: '#FFFFFF',
+    flexShrink: 1,
+  },
+  upcomingBadge: {
+    backgroundColor: 'rgba(201, 70, 91, 0.35)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  upcomingBadgeText: {
+    fontSize: 8,
+    fontFamily: fontFamilies.monoBold,
+    color: '#FFB8C2',
+    letterSpacing: 0.3,
+  },
+  currentBadge: {
+    backgroundColor: 'rgba(126, 155, 96, 0.35)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  currentBadgeText: {
+    fontSize: 8,
+    fontFamily: fontFamilies.monoBold,
+    color: '#D4F0B8',
+    letterSpacing: 0.3,
+  },
   tooltipRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginVertical: 2,
   },
   tooltipDot: {
@@ -1144,6 +1230,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fontFamilies.monoBold,
     color: '#FFFFFF',
+    marginLeft: 8,
   },
   legendRow: {
     flexDirection: 'row',

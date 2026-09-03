@@ -45,6 +45,7 @@ export const colors = {
   // ── BORDERS ───────────────────────────────────────────────────────────────
   border: 'rgba(101, 78, 60, 0.14)',
   borderMedium: 'rgba(101, 78, 60, 0.22)',
+  borderLight: 'rgba(101, 78, 60, 0.10)',
   borderSelected: '#C96374',
   borderSubtle: 'rgba(101, 78, 60, 0.07)',
 

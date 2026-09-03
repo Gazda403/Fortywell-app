@@ -73,6 +73,8 @@ export interface GardenProgress {
     consistency: number[];
     mobility: number[];
     fluidity: number[];
+    monthName?: string;
+    currentWeekIndex?: number;
   };
 }
 
@@ -744,53 +746,98 @@ export function useUserData(answers?: OnboardingAnswers | null) {
 
     const meta = GARDEN_LEVEL_METAS.find((m) => m.level === level) || GARDEN_LEVEL_METAS[0];
 
-    // Build real 10-month timeline dynamically
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Build 4-week breakdown for the current month
     const now = new Date();
-    const months: string[] = [];
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed (e.g. 8 for September)
+    const currentDay = now.getDate();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    const currentMonthName = monthNames[currentMonth];
+
+    // Total days in current month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // 4 standard weeks in the month
+    const weekRanges = [
+      { label: 'Week 1', start: 1, end: 7 },
+      { label: 'Week 2', start: 8, end: 14 },
+      { label: 'Week 3', start: 15, end: 21 },
+      { label: 'Week 4', start: 22, end: daysInMonth },
+    ];
+
+    let currentWeekIdx = 0;
+    if (currentDay > 21) currentWeekIdx = 3;
+    else if (currentDay > 14) currentWeekIdx = 2;
+    else if (currentDay > 7) currentWeekIdx = 1;
+
+    // Count actual completed workouts per week of current month
+    const weekWorkoutCounts = [0, 0, 0, 0];
+    completedDatesSet.forEach((dateStr) => {
+      const parts = dateStr.split('-');
+      if (parts.length >= 3) {
+        const dy = parseInt(parts[0], 10);
+        const dm = parseInt(parts[1], 10);
+        const dd = parseInt(parts[2], 10);
+        if (dy === currentYear && dm === currentMonth + 1) {
+          for (let w = 0; w < 4; w++) {
+            if (dd >= weekRanges[w].start && dd <= weekRanges[w].end) {
+              weekWorkoutCounts[w]++;
+              break;
+            }
+          }
+        }
+      }
+    });
+
+    const months: string[] = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
     const consistency: number[] = [];
     const mobility: number[] = [];
     const fluidity: number[] = [];
 
-    const targetMonthlySessions = 12;
+    // Target ~3 sessions/week for healthy consistent joint routine
+    const targetWeeklySessions = 3;
 
-    for (let i = 9; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const mName = monthNames[d.getMonth()];
-      const y = d.getFullYear();
-      const m = d.getMonth();
-      months.push(mName);
+    for (let w = 0; w < 4; w++) {
+      const count = weekWorkoutCounts[w];
+      const isUpcoming = w > currentWeekIdx;
+      const isCurrent = w === currentWeekIdx;
 
-      let countInMonth = 0;
-      completedDatesSet.forEach((dateStr) => {
-        const parts = dateStr.split('-');
-        if (parts.length >= 2) {
-          const dy = parseInt(parts[0], 10);
-          const dm = parseInt(parts[1], 10);
-          if (dy === y && dm === m + 1) {
-            countInMonth++;
-          }
-        }
-      });
+      let cPct: number;
+      let mPts: number;
+      let fHrs: number;
 
-      // Target ~12 sessions/mo
-      let cPct = countInMonth > 0 ? Math.min(100, Math.round((countInMonth / targetMonthlySessions) * 100)) : 0;
-      let mPts = countInMonth > 0 ? Math.min(95, 30 + countInMonth * 6) : 0;
-      let fHrs = countInMonth > 0 ? Math.min(85, 20 + countInMonth * 5) : 0;
-
-      // Provide realistic baseline vitality ramp for initial/prior months so graph is aesthetically rich and inspiring
-      if (countInMonth === 0) {
-        if (totalActiveDays > 0) {
-          const baseProgress = Math.max(12, Math.round(28 + (9 - i) * 2));
-          cPct = Math.min(55, baseProgress);
-          mPts = Math.min(50, Math.round(baseProgress * 0.82));
-          fHrs = Math.min(45, Math.round(baseProgress * 0.65));
-        } else {
-          const baseProgress = Math.max(15, Math.round(22 + (9 - i) * 3));
-          cPct = baseProgress;
-          mPts = Math.round(baseProgress * 0.85);
-          fHrs = Math.round(baseProgress * 0.65);
-        }
+      if (totalActiveDays === 0) {
+        // Welcoming starter curve for brand new users with no workouts yet
+        cPct = Math.min(100, Math.round(25 + w * 18));
+        mPts = Math.min(90, Math.round(35 + w * 12));
+        fHrs = Math.min(85, Math.round(28 + w * 10));
+      } else if (count > 0) {
+        // Active week with logged workouts: realistic progression
+        cPct = Math.min(100, Math.round((count / targetWeeklySessions) * 100));
+        mPts = Math.min(95, Math.round(42 + count * 16 + Math.min(18, totalActiveDays * 1.5)));
+        fHrs = Math.min(90, Math.round(34 + count * 14 + Math.min(16, totalActiveDays * 1.2)));
+      } else if (isCurrent) {
+        // Current week in progress (0 workouts logged yet this week)
+        const prevC = w > 0 ? consistency[w - 1] : 0;
+        cPct = prevC > 0 ? Math.max(25, Math.round(prevC * 0.7)) : 0;
+        mPts = Math.min(88, Math.round(38 + Math.min(22, totalActiveDays * 1.8)));
+        fHrs = Math.min(82, Math.round(30 + Math.min(18, totalActiveDays * 1.4)));
+      } else if (isUpcoming) {
+        // Upcoming weeks: project momentum based on previous week rather than plunging
+        const prevC = w > 0 ? consistency[w - 1] : 35;
+        const prevM = w > 0 ? mobility[w - 1] : 45;
+        const prevF = w > 0 ? fluidity[w - 1] : 38;
+        cPct = Math.min(100, Math.max(30, Math.round(prevC * 1.05)));
+        mPts = Math.min(95, Math.max(40, Math.round(prevM * 1.03)));
+        fHrs = Math.min(90, Math.max(32, Math.round(prevF * 1.03)));
+      } else {
+        // Past week with 0 workouts: honest baseline
+        cPct = 0;
+        mPts = Math.min(80, Math.round(34 + Math.min(16, totalActiveDays * 1.2)));
+        fHrs = Math.min(75, Math.round(26 + Math.min(14, totalActiveDays * 1.0)));
       }
 
       consistency.push(cPct);
@@ -812,6 +859,8 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         consistency,
         mobility,
         fluidity,
+        monthName: currentMonthName,
+        currentWeekIndex: currentWeekIdx,
       },
     };
   }, [completedDatesSet]);
