@@ -8,6 +8,11 @@ const STORAGE_KEY_WALKTHROUGH = '@fortywell_has_seen_walkthrough_v1';
 const STORAGE_KEY_COMPLETED_DATES = '@fortywell_completed_dates_v1';
 const STORAGE_KEY_LIFETIME_STATS = '@fortywell_cached_lifetime_stats_v1';
 
+// Per-user storage keys — prevents two accounts on the same device from sharing data
+function userKey(base: string, userId?: string | null) {
+  return userId ? `${base}_${userId}` : base;
+}
+
 export interface UserProfile {
   id?: string;
   fullName: string;
@@ -100,6 +105,17 @@ let cachedTopExercises: TopExerciseItem[] | null = null;
 let lastUserDataFetchTime = 0;
 let pendingFetchPromise: Promise<void> | null = null;
 const CACHE_TTL_MS = 60000; // 60 seconds
+// Sentinel: if the authenticated user changes, all module caches must be flushed
+let lastCachedUserId: string | null = null;
+
+function flushUserCaches() {
+  cachedUserProfile = null;
+  cachedLifetimeStats = null;
+  cachedCompletedDatesSet = null;
+  cachedFeelingCheckins = null;
+  cachedTopExercises = null;
+  lastUserDataFetchTime = 0;
+}
 
 // Hydrate memory cache synchronously from localStorage on web environments
 if (typeof window !== 'undefined' && window.localStorage) {
@@ -161,9 +177,16 @@ export function useUserData(answers?: OnboardingAnswers | null) {
     let isMounted = true;
     (async () => {
       try {
+        // Resolve user ID so we read the correct user-scoped keys
+        let uid: string | null = null;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          uid = user?.id ?? null;
+        } catch (_) {}
+
         const [localStatsJson, localDatesJson, localFeelingsJson, localTopJson] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEY_LIFETIME_STATS),
-          AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES),
+          AsyncStorage.getItem(userKey(STORAGE_KEY_LIFETIME_STATS, uid)),
+          AsyncStorage.getItem(userKey(STORAGE_KEY_COMPLETED_DATES, uid)),
           AsyncStorage.getItem('@fortywell_feeling_checkins_v1'),
           AsyncStorage.getItem('@fortywell_top_exercises_v1'),
         ]);
@@ -238,6 +261,11 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         // 1. Get current auth user
         const { data: { user } } = await supabase.auth.getUser();
 
+        // Flush caches if a different user has logged in
+        if (user?.id && user.id !== lastCachedUserId) {
+          flushUserCaches();
+        }
+
         let profileData: any = null;
         if (user?.id) {
           const { data: pData } = await supabase
@@ -299,6 +327,7 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         };
 
         cachedUserProfile = newProfile;
+        lastCachedUserId = user?.id ?? null;
         setUserProfile(newProfile);
 
       // 2. Fetch completed workout logs (from Supabase + Local AsyncStorage cache)
@@ -308,9 +337,9 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       let totalWorkoutsCount = 0;
       let totalCompletedSets = 0;
 
-      // Load local cached completed dates first
+      // Load local cached completed dates first (user-scoped key)
       try {
-        const localDatesJson = await AsyncStorage.getItem(STORAGE_KEY_COMPLETED_DATES);
+        const localDatesJson = await AsyncStorage.getItem(userKey(STORAGE_KEY_COMPLETED_DATES, user?.id));
         if (localDatesJson) {
           const parsed = JSON.parse(localDatesJson);
           if (Array.isArray(parsed)) {
@@ -400,14 +429,12 @@ export function useUserData(answers?: OnboardingAnswers | null) {
         } catch (_) {}
       }
 
-      // Cache merged dates to local storage
+      // Cache merged dates to local storage (user-scoped key)
       try {
-        await AsyncStorage.setItem(
-          STORAGE_KEY_COMPLETED_DATES,
-          JSON.stringify(Array.from(completedDates))
-        );
+        const datesKey = userKey(STORAGE_KEY_COMPLETED_DATES, user?.id);
+        await AsyncStorage.setItem(datesKey, JSON.stringify(Array.from(completedDates)));
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(Array.from(completedDates)));
+          window.localStorage.setItem(datesKey, JSON.stringify(Array.from(completedDates)));
         }
       } catch (_) {}
 
@@ -447,11 +474,12 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       cachedLifetimeStats = newStats;
       setLifetimeStats(newStats);
 
-      // Persist stats locally so they load instantly on next open
+      // Persist stats locally so they load instantly on next open (user-scoped key)
       try {
-        await AsyncStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(newStats));
+        const statsKey = userKey(STORAGE_KEY_LIFETIME_STATS, user?.id);
+        await AsyncStorage.setItem(statsKey, JSON.stringify(newStats));
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(newStats));
+          window.localStorage.setItem(statsKey, JSON.stringify(newStats));
         }
       } catch (_) {}
 
@@ -574,16 +602,20 @@ export function useUserData(answers?: OnboardingAnswers | null) {
       });
 
       try {
-        await supabase.from('feeling_checkins').upsert(
-          {
-            date: today,
-            mood,
-            energy,
-            notes,
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,date' }
-        );
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.from('feeling_checkins').upsert(
+            {
+              user_id: user.id,
+              date: today,
+              mood,
+              energy,
+              notes,
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,date' }
+          );
+        }
       } catch (_) {}
     },
     []
@@ -868,13 +900,17 @@ export function useUserData(answers?: OnboardingAnswers | null) {
   const recordCompletedWorkout = useCallback(
     async (dateStr?: string, minutes: number = 20, volumeKg: number = 0, setsDone: number = 0) => {
       const today = dateStr || getISODateStr(new Date());
+      const uid = cachedUserProfile?.id ?? lastCachedUserId ?? undefined;
+      const datesKey = userKey(STORAGE_KEY_COMPLETED_DATES, uid);
+      const statsKey = userKey(STORAGE_KEY_LIFETIME_STATS, uid);
+
       setCompletedDatesSet((prev) => {
         const next = new Set(prev);
         next.add(today);
         const arr = Array.from(next);
-        AsyncStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(arr)).catch(() => {});
+        AsyncStorage.setItem(datesKey, JSON.stringify(arr)).catch(() => {});
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(STORAGE_KEY_COMPLETED_DATES, JSON.stringify(arr));
+          window.localStorage.setItem(datesKey, JSON.stringify(arr));
         }
         return next;
       });
@@ -888,9 +924,9 @@ export function useUserData(answers?: OnboardingAnswers | null) {
           totalSets: (prev.totalSets || 0) + (setsDone || 12),
         };
         cachedLifetimeStats = nextStats;
-        AsyncStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(nextStats)).catch(() => {});
+        AsyncStorage.setItem(statsKey, JSON.stringify(nextStats)).catch(() => {});
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(STORAGE_KEY_LIFETIME_STATS, JSON.stringify(nextStats));
+          window.localStorage.setItem(statsKey, JSON.stringify(nextStats));
         }
         return nextStats;
       });

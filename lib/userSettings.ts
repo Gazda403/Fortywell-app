@@ -5,6 +5,10 @@ import { setSoundEffectsEnabled, setHapticsEnabled } from './audioManager';
 
 export const STORAGE_KEY_SETTINGS = '@fortywell_settings_v1';
 
+function settingsKey(userId?: string | null) {
+  return userId ? `${STORAGE_KEY_SETTINGS}_${userId}` : STORAGE_KEY_SETTINGS;
+}
+
 export interface AppSettings {
   notifMorning: boolean;
   notifWorkout: boolean;
@@ -36,13 +40,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 let inMemorySettings: AppSettings = { ...DEFAULT_SETTINGS };
+let _settingsUserId: string | null = null;
 
 /**
  * Load settings synchronously/cached from memory or storage
  */
-export async function getStoredSettings(): Promise<AppSettings> {
+export async function getStoredSettings(userId?: string | null): Promise<AppSettings> {
+  const key = settingsKey(userId);
+  _settingsUserId = userId || null;
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY_SETTINGS);
+    const raw = await AsyncStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       inMemorySettings = { ...DEFAULT_SETTINGS, ...parsed };
@@ -58,7 +65,7 @@ export async function getStoredSettings(): Promise<AppSettings> {
 /**
  * Save settings to AsyncStorage and cloud Supabase profile
  */
-export async function saveStoredSettings(newSettings: Partial<AppSettings>): Promise<AppSettings> {
+export async function saveStoredSettings(newSettings: Partial<AppSettings>, userId?: string | null): Promise<AppSettings> {
   const merged: AppSettings = {
     ...inMemorySettings,
     ...newSettings,
@@ -73,11 +80,13 @@ export async function saveStoredSettings(newSettings: Partial<AppSettings>): Pro
     setHapticsEnabled(newSettings.hapticFeedback);
   }
 
-  // 1. Persist locally
+  const key = settingsKey(userId ?? _settingsUserId);
+
+  // 1. Persist locally (user-scoped key)
   try {
-    await AsyncStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+    await AsyncStorage.setItem(key, JSON.stringify(merged));
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+      window.localStorage.setItem(key, JSON.stringify(merged));
     }
   } catch (_) {}
 
@@ -108,28 +117,34 @@ export function useAppSettings() {
   useEffect(() => {
     let isMounted = true;
     async function load() {
-      // 1. Load from local cache
-      const local = await getStoredSettings();
+      // 1. Resolve user ID (used for scoped storage keys)
+      let userId: string | null = null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id ?? null;
+      } catch (_) {}
+
+      // 2. Load from user-scoped local cache
+      const local = await getStoredSettings(userId);
       if (isMounted) {
         setSettings(local);
         setLoaded(true);
       }
 
-      // 2. Load from Supabase to catch cross-device updates
+      // 3. Load from Supabase to catch cross-device updates
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
+        if (userId) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('settings')
-            .eq('id', user.id)
+            .eq('id', userId)
             .maybeSingle();
 
           if (profile?.settings && typeof profile.settings === 'object' && isMounted) {
             const merged = { ...local, ...profile.settings };
             setSettings(merged);
             inMemorySettings = merged;
-            await AsyncStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+            await AsyncStorage.setItem(settingsKey(userId), JSON.stringify(merged));
           }
         }
       } catch (_) {}

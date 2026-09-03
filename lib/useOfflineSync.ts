@@ -124,6 +124,7 @@ export async function syncPendingLogs(): Promise<{ synced: number; failed: numbe
     for (const log of pending) {
       try {
         const { error } = await supabase.from('workout_logs').insert({
+          user_id: user.id,
           workout_slug: log.workoutSlug,
           workout_title: log.workoutTitle,
           date: log.date,

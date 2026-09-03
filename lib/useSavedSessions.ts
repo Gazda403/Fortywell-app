@@ -39,7 +39,11 @@ export interface SavedSession {
   energy?: number;
 }
 
-const STORAGE_KEY = '@fortywell_saved_sessions_v1';
+const STORAGE_KEY_PREFIX = '@fortywell_saved_sessions_v1';
+
+function storageKey(userId: string | undefined) {
+  return userId ? `${STORAGE_KEY_PREFIX}_${userId}` : STORAGE_KEY_PREFIX;
+}
 
 interface SavedSessionsHook {
   savedSessions: SavedSession[];
@@ -52,6 +56,7 @@ interface SavedSessionsHook {
 // ─── Module-level cache ───────────────────────────────────────────────────────
 
 let _cachedSessions: SavedSession[] = [];
+let _lastUserId: string | null = null;
 let _listeners: Array<(sessions: SavedSession[]) => void> = [];
 
 function notifyListeners(sessions: SavedSession[]) {
@@ -77,19 +82,34 @@ export function useSavedSessions(): SavedSessionsHook {
   // Load from AsyncStorage + Supabase on mount
   useEffect(() => {
     (async () => {
-      // 1. Load from local storage immediately
+      // 1. Identify current user first
+      let userId: string | undefined;
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id;
+      } catch (_) {}
+
+      const key = storageKey(userId);
+
+      // 2. If user switched, flush stale module cache
+      if (userId && userId !== _lastUserId) {
+        _cachedSessions = [];
+        _lastUserId = userId;
+        notifyListeners([]);
+      }
+
+      // 3. Load from user-scoped local storage immediately
+      try {
+        const raw = await AsyncStorage.getItem(key);
         if (raw) {
           const sessions: SavedSession[] = JSON.parse(raw);
           notifyListeners(sessions);
         }
       } catch (_) {}
 
-      // 2. Sync with Supabase (silent, background)
+      // 4. Sync with Supabase (silent, background)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.id) {
+        if (!userId) {
           setIsLoading(false);
           return;
         }
@@ -97,7 +117,7 @@ export function useSavedSessions(): SavedSessionsHook {
         const { data: rows } = await supabase
           .from('saved_sessions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .order('completed_at', { ascending: false });
 
         if (rows && rows.length > 0) {
@@ -115,20 +135,18 @@ export function useSavedSessions(): SavedSessionsHook {
             energy: r.energy,
           }));
 
-          // Merge: prefer remote, but keep local-only sessions
-          const localIds = new Set(_cachedSessions.map(s => s.id));
+          // Merge: prefer remote, add any local-only (pending upload) sessions
+          const remoteIds = new Set(remoteSessions.map(s => s.id));
           const merged = [...remoteSessions];
           _cachedSessions.forEach(s => {
-            if (!localIds.has(s.id)) {
-              merged.push(s);
-            }
+            if (!remoteIds.has(s.id)) merged.push(s);
           });
 
           // Sort by date descending
           merged.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
           notifyListeners(merged);
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          await AsyncStorage.setItem(key, JSON.stringify(merged));
         }
       } catch (_) {
         // No internet — already have local data
@@ -151,7 +169,7 @@ export function useSavedSessions(): SavedSessionsHook {
 
     // Persist locally
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(storageKey(_lastUserId ?? undefined), JSON.stringify(updated));
     } catch (_) {
       return false;
     }
@@ -189,7 +207,7 @@ export function useSavedSessions(): SavedSessionsHook {
 
     // Persist locally
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(storageKey(_lastUserId ?? undefined), JSON.stringify(updated));
     } catch (_) {}
 
     // Sync to Supabase
