@@ -818,9 +818,13 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
       if (groqResult.success && groqResult.reply) {
         replyText = groqResult.reply;
       } else {
-        // Groq failed — use canned reply as true last resort
+        // Groq failed — log error and use high-value specific intent reply or graceful fallback
         console.warn('[Coach] Groq failed, using fallback. Error:', groqResult.error);
-        replyText = intentResult.coachReply || getFallbackReply(userFirstName);
+        if (intentResult.intent === 'goal_preference' || intentResult.intent === 'workout_request' || intentResult.intent === 'question') {
+          replyText = intentResult.coachReply;
+        } else {
+          replyText = getFallbackReply(userFirstName);
+        }
       }
 
       // ── AI-determined weekly analysis saving (replaces keyword classifier) ──

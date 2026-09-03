@@ -3,15 +3,15 @@ import { OnboardingAnswers } from '../types/onboarding';
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
 
 /**
- * Production-verified chat models available on Groq:
- * 1. llama-3.3-70b-versatile — flagship intelligence, best reasoning & empathy
- * 2. llama3-70b-8192 — reliable high-quality fallback
- * 3. llama3-8b-8192 — ultra-fast lightweight fallback
+ * Production-verified chat models available and tested on this Groq account:
+ * 1. qwen/qwen3.8-27b — lightning fast (~700ms), compassionate, follows instructions perfectly
+ * 2. openai/gpt-oss-20b — high speed (~550ms), reliable structured output
+ * 3. openai/gpt-oss-120b — deep knowledge base for nuanced coaching questions
  */
 const GROQ_ACTIVE_MODELS = [
-  'llama-3.3-70b-versatile',
-  'llama3-70b-8192',
-  'llama3-8b-8192',
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
 ];
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -166,39 +166,52 @@ export async function sendToGroq(
      * Inner helper — attempt a single model and return raw text or throw.
      */
     async function attemptModel(model: string): Promise<string> {
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 1024,
-        }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errMsg = errorData?.error?.message || JSON.stringify(errorData);
-        if (response.status === 401) {
-          throw new Error(`[Auth 401] Invalid or missing API key. Check EXPO_PUBLIC_GROQ_API_KEY in .env`);
-        } else if (response.status === 404) {
-          throw new Error(`[Model 404] Model "${model}" not found on Groq.`);
-        } else if (response.status === 429) {
-          throw new Error(`[Rate Limit 429] Too many requests. ${errMsg}`);
+      try {
+        const response = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.7,
+            max_tokens: 1024,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errMsg = errorData?.error?.message || JSON.stringify(errorData);
+          if (response.status === 401) {
+            throw new Error(`[Auth 401] Invalid or missing API key.`);
+          } else if (response.status === 404) {
+            throw new Error(`[Model 404] Model "${model}" not found on Groq.`);
+          } else if (response.status === 429) {
+            throw new Error(`[Rate Limit 429] Too many requests. ${errMsg}`);
+          }
+          throw new Error(`[API ${response.status}] ${errMsg}`);
         }
-        throw new Error(`[API ${response.status}] ${errMsg}`);
+
+        const data = await response.json();
+        if (!data.choices?.[0]) throw new Error('No choices in response');
+
+        const rawContent = data.choices[0].message?.content || '';
+        let clean = rawContent;
+        if (clean.includes('</think>')) {
+          clean = clean.split('</think>').pop() || '';
+        } else if (clean.startsWith('<think>')) {
+          clean = clean.replace(/<think>[\s\S]*?$/i, '');
+        }
+        return clean.trim();
+      } finally {
+        clearTimeout(timeoutId);
       }
-
-      const data = await response.json();
-      if (!data.choices?.[0]) throw new Error('No choices in response');
-
-      return (data.choices[0].message?.content || '')
-        .replace(/<think>[\s\S]*?(?:<\/think>|$)/gi, '')
-        .trim();
     }
 
     // Try models in order of capability: 70B-versatile -> 70B-8192 -> 8B-8192

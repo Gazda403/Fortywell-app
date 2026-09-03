@@ -1,4 +1,4 @@
-﻿import { supabase } from "./supabase";
+import { supabase } from "./supabase";
 import { OnboardingAnswers } from "../types/onboarding";
 
 export type IntentType =
@@ -32,7 +32,8 @@ const MUSCLE_KEYWORDS: Record<string, string> = {
   hamstrings: "legs", squat: "legs", deadlift: "legs", lunge: "legs",
   core: "core", abs: "core", ab: "core", plank: "core", "pelvic floor": "core",
   "upper body": "upper body", shoulder: "upper body", shoulders: "upper body",
-  arm: "upper body", arms: "upper body", chest: "upper body",
+  arm: "upper body", arms: "upper body",
+  chest: "chest", pecs: "chest", pec: "chest", "push-ups": "chest", "push up": "chest",
   "full body": "full body", "whole body": "full body",
 };
 
@@ -54,6 +55,8 @@ const GOAL_TRIGGERS = [
   "focus on", "work on", "train my", "train the", "build my",
   "target my", "target the", "can we do more", "more of",
   "prioritize", "next week", "going forward", "from now on",
+  "how to improve", "how can i improve", "how do i improve",
+  "improve", "how to grow", "grow", "build", "tone", "strengthen",
 ];
 
 const WORKOUT_REQUEST_TRIGGERS = [
@@ -81,7 +84,8 @@ export function detectIntent(input: string, answers?: OnboardingAnswers | null):
   const detectedMuscle = Object.keys(MUSCLE_KEYWORDS).find((k) => text.includes(k));
   const detectedGoal = Object.keys(GOAL_KEYWORDS).find((k) => text.includes(k));
 
-  if (hasGoalTrigger && (detectedMuscle || detectedGoal)) {
+  // Match goal if has a goal trigger OR if user mentions a muscle keyword directly
+  if ((hasGoalTrigger && (detectedMuscle || detectedGoal)) || detectedMuscle) {
     const muscleGroup = detectedMuscle ? MUSCLE_KEYWORDS[detectedMuscle] : undefined;
     const goalType = detectedGoal ? GOAL_KEYWORDS[detectedGoal] : undefined;
     const intensityKey = Object.keys(INTENSITY_KEYWORDS).find((k) => text.includes(k));
@@ -119,6 +123,10 @@ export function detectIntent(input: string, answers?: OnboardingAnswers | null):
 function buildGoalReply(pref: TrainingPreference, answers?: OnboardingAnswers | null): string {
   const name = answers?.first_name ? `, ${answers.first_name.split(" ")[0]}` : "";
   const { muscleGroup, goalType, intensityDesire } = pref;
+
+  if (muscleGroup === "chest") {
+    return `Great goal${name}! Developing chest and pectoral strength is essential for open posture, protecting your shoulder joints, and functional everyday pushing power.\n\nI've saved this to your training profile. Your upcoming sessions will emphasize:\n• Incline & Floor Dumbbell Presses — joint-friendly pressing without shoulder impingement\n• Push-Up Progressions (tempo or knee-supported) — scapular and core stability\n• Face Pulls & Chest Openers — keeping your chest tall and shoulders balanced${intensityDesire ? `\n\nIntensity preference saved: ${intensityDesire}.` : ""}\n\nYour next workout recommendations will reflect this focus!`;
+  }
 
   if (muscleGroup === "glutes") {
     return `Love it${name}! Glute development is one of the most functional goals you can have — strong glutes protect your hips, knees, and lower back.\n\nI've saved this to your training profile. Starting next week your sessions will prioritize:\n• Bulgarian Split Squats — unilateral strength & balance\n• Hip Thrusts — peak glute contraction\n• Romanian Deadlifts — posterior chain lengthening\n• Glute Bridges — pelvic floor integration${intensityDesire ? `\n\nIntensity preference saved: ${intensityDesire}.` : ""}\n\nYour Rhythm schedule will reflect this going forward. Ready to build?`;
@@ -175,6 +183,9 @@ function buildGeneralReply(text: string, answers?: OnboardingAnswers | null): st
   const name = answers?.first_name ? answers.first_name.split(" ")[0] : "";
   const greeting = name ? `Hey ${name}!` : "Hey!";
   if (text.includes("thank")) return `Of course — that's what I'm here for. Keep showing up, even on the days it feels small. Consistency is the real superpower. 💪`;
+  if (text.includes("how are you") || text.includes("how r u") || text.includes("how're you")) {
+    return `${greeting} I'm doing great and ready to help you move today! How are your energy levels and joints feeling right now?`;
+  }
   if (text.includes("good morning") || text.includes("morning")) return `${greeting} Good morning! How's your body feeling today? Log your energy and mood above to personalize your session. Even 10 minutes of intentional movement can shift your entire day.`;
   if (text.includes("hello") || text.includes("hi ") || text.includes("hey")) return `${greeting} I'm here and ready to help you build a stronger, more resilient body — one session at a time.\n\nTell me how you're feeling, what you want to train, or just ask me anything about recovery, workouts, or your goals.`;
   return `${greeting} I'm listening. Tell me how you're feeling, what you want to work on, or ask me anything — I'm here to help you move better and feel stronger every day.`;
