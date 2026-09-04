@@ -167,7 +167,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
               <View style={styles.jointSafetyCard}>
                 <ShieldCheck size={16} color={colors.sageDark} />
                 <Text style={styles.jointSafetyText}>
-                  {t('workoutDetail.jointSafeFor', { areas: workout.joint_sensitivities_safe.join(', ').toUpperCase() })}
+                  {t('workoutDetail.jointSafeFor', { areas: (workout.joint_sensitivities_safe || []).filter(Boolean).join(', ').toUpperCase() })}
                 </Text>
               </View>
             )}

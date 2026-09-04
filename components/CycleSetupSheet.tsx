@@ -51,10 +51,22 @@ function calculatePhasePreview(startDateStr: string, cycleLength: number): {
   day: number;
   headline: string;
 } {
-  const start = new Date(startDateStr);
+  const safeLength = Math.max(20, Math.min(45, Number(cycleLength) || 28));
+  const [y, m, d] = startDateStr.split('-').map(Number);
+  
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) {
+    return { phase: 'Follicular Phase', day: 6, headline: 'Energy building — good window for strength work.' };
+  }
+
+  const startDate = new Date(y, m - 1, d);
   const now = new Date();
-  const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const day = (diff % cycleLength) + 1;
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffMs = todayDate.getTime() - startDate.getTime();
+  let diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (isNaN(diffDays) || diffDays < 0) diffDays = 0;
+
+  const day = (diffDays % safeLength) + 1;
 
   if (day <= 5) return { phase: 'Menstrual Phase', day, headline: 'Gentle restoration — prioritize joint mobility and ease.' };
   if (day <= 13) return { phase: 'Follicular Phase', day, headline: 'Energy building — good window for strength work.' };

@@ -144,6 +144,9 @@ function getCurrentWeekDates(): {
   return week;
 }
 
+const STORAGE_KEY_CYCLE = '@fortywell_cycle_tracking_v1';
+const STORAGE_KEY_PREFS = '@fortywell_timing_preferences_v1';
+
 function calculatePhaseDetails(
   cycleStartDateStr?: string,
   cycleLengthDays = 28
@@ -153,6 +156,8 @@ function calculatePhaseDetails(
   headline: string;
   body: string;
 } {
+  const safeLength = Math.max(20, Math.min(45, Number(cycleLengthDays) || 28));
+
   if (!cycleStartDateStr) {
     return {
       phase: 'Follicular Phase',
@@ -162,11 +167,30 @@ function calculatePhaseDetails(
     };
   }
 
-  const start = new Date(cycleStartDateStr);
+  // Parse YYYY-MM-DD components directly to avoid timezone shifts
+  const [y, m, d] = cycleStartDateStr.split('-').map(Number);
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) {
+    return {
+      phase: 'Follicular Phase',
+      dayNumber: 6,
+      headline: 'Energy building — good window for strength work this week.',
+      body: 'Rising estrogen supports muscle protein synthesis and recovery. Optimal for intentional, progressive movement.',
+    };
+  }
+
+  const startDate = new Date(y, m - 1, d);
   const now = new Date();
-  const diffTime = Math.abs(now.getTime() - start.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const currentCycleDay = (diffDays % cycleLengthDays) + 1;
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Difference in whole calendar days
+  const diffMs = todayDate.getTime() - startDate.getTime();
+  let diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (isNaN(diffDays) || diffDays < 0) {
+    diffDays = 0;
+  }
+
+  const currentCycleDay = (diffDays % safeLength) + 1;
 
   if (currentCycleDay <= 5) {
     return {
@@ -235,7 +259,41 @@ export function useRhythmData(answers?: any) {
     return map;
   });
 
-  // Fetch Supabase data
+  // 1. Initial instant load from local storage cache
+  useEffect(() => {
+    async function loadLocalCache() {
+      try {
+        const cachedCycle = await AsyncStorage.getItem(STORAGE_KEY_CYCLE);
+        if (cachedCycle) {
+          const parsed = JSON.parse(cachedCycle);
+          if (parsed && parsed.optedIn) {
+            const phaseInfo = calculatePhaseDetails(parsed.cycleStartDate, parsed.cycleLengthDays);
+            setCycleData({
+              optedIn: true,
+              cycleStartDate: parsed.cycleStartDate,
+              cycleLengthDays: parsed.cycleLengthDays || 28,
+              currentPhase: phaseInfo.phase,
+              cycleDay: phaseInfo.dayNumber,
+              guidanceHeadline: phaseInfo.headline,
+              guidanceBody: phaseInfo.body,
+            });
+          }
+        }
+
+        const cachedPrefs = await AsyncStorage.getItem(STORAGE_KEY_PREFS);
+        if (cachedPrefs) {
+          const parsedPrefs = JSON.parse(cachedPrefs);
+          if (Array.isArray(parsedPrefs) && parsedPrefs.length > 0) {
+            setTimingPreferences(parsedPrefs);
+          }
+        }
+      } catch (_) {}
+    }
+
+    loadLocalCache();
+  }, []);
+
+  // 2. Fetch and sync Supabase data
   useEffect(() => {
     async function loadData() {
       try {
@@ -269,8 +327,8 @@ export function useRhythmData(answers?: any) {
           .eq('user_id', user.id);
 
         if (prefData && prefData.length > 0) {
-          setTimingPreferences((prev) =>
-            prev.map((item) => {
+          setTimingPreferences((prev) => {
+            const updated = prev.map((item) => {
               const matched = prefData.find((p: any) => p.slot === item.slot);
               if (matched) {
                 return {
@@ -280,8 +338,10 @@ export function useRhythmData(answers?: any) {
                 };
               }
               return item;
-            })
-          );
+            });
+            AsyncStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify(updated)).catch(() => {});
+            return updated;
+          });
         }
 
         // 3. Cycle Tracking
@@ -294,7 +354,7 @@ export function useRhythmData(answers?: any) {
 
         if (cycleRow) {
           const phaseInfo = calculatePhaseDetails(cycleRow.cycle_start_date, cycleRow.cycle_length_days);
-          setCycleData({
+          const nextCycleData: CycleTrackingData = {
             optedIn: cycleRow.opted_in,
             cycleStartDate: cycleRow.cycle_start_date,
             cycleLengthDays: cycleRow.cycle_length_days,
@@ -302,7 +362,9 @@ export function useRhythmData(answers?: any) {
             cycleDay: phaseInfo.dayNumber,
             guidanceHeadline: phaseInfo.headline,
             guidanceBody: phaseInfo.body,
-          });
+          };
+          setCycleData(nextCycleData);
+          AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
         }
 
         // 4. Workout Logs
@@ -682,7 +744,7 @@ export function useRhythmData(answers?: any) {
   const toggleCycleOptIn = useCallback(
     async (optedIn: boolean, startDate = '2026-08-18') => {
       const phaseInfo = calculatePhaseDetails(startDate, 28);
-      setCycleData({
+      const nextCycleData: CycleTrackingData = {
         optedIn,
         cycleStartDate: startDate,
         cycleLengthDays: 28,
@@ -690,7 +752,9 @@ export function useRhythmData(answers?: any) {
         cycleDay: phaseInfo.dayNumber,
         guidanceHeadline: phaseInfo.headline,
         guidanceBody: phaseInfo.body,
-      });
+      };
+      setCycleData(nextCycleData);
+      AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -718,7 +782,7 @@ export function useRhythmData(answers?: any) {
   const updateCycleStart = useCallback(
     async (startDate: string, cycleLengthDays: number) => {
       const phaseInfo = calculatePhaseDetails(startDate, cycleLengthDays);
-      setCycleData({
+      const nextCycleData: CycleTrackingData = {
         optedIn: true,
         cycleStartDate: startDate,
         cycleLengthDays,
@@ -726,7 +790,9 @@ export function useRhythmData(answers?: any) {
         cycleDay: phaseInfo.dayNumber,
         guidanceHeadline: phaseInfo.headline,
         guidanceBody: phaseInfo.body,
-      });
+      };
+      setCycleData(nextCycleData);
+      AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
