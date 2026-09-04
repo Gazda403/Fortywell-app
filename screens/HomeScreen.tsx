@@ -63,6 +63,7 @@ import { ActiveWorkoutScreen, WorkoutSummary, LoggedExercise } from '../componen
 import { getExerciseInfo } from '../lib/exerciseDatabase';
 import { workoutSessionManager } from '../lib/workoutSessionManager';
 import { MorningRoutineCard } from '../components/MorningRoutineCard';
+import { EveningWindDownCard } from '../components/EveningWindDownCard';
 import { ExerciseDetailModal } from '../components/ExerciseDetailModal';
 import { CoachScreen } from '../components/CoachScreen';
 import { RhythmScreen } from '../components/RhythmScreen';
@@ -1075,6 +1076,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* ── MORNING ANCHOR ROUTINE CARD ── */}
         <MorningRoutineCard onOpenExerciseDetail={handleOpenExerciseDetail} />
+
+        {/* ── DISTINCTIVE EVENING CORTISOL WIND-DOWN CARD ── */}
+        <EveningWindDownCard />
 
         {/* Retake quiz subtle link at bottom */}
         {onRetakeQuiz && (

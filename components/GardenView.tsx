@@ -42,7 +42,11 @@ import {
   Clock,
   Dumbbell,
   Activity,
+  Share2,
+  ChevronRight,
 } from 'lucide-react-native';
+import { SanctuaryShareModal } from './SanctuaryShareModal';
+import { MonthlyVitalityReportModal } from './MonthlyVitalityReportModal';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { getExerciseInfo } from '../lib/exerciseDatabase';
@@ -159,6 +163,8 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
     gardenProgress.vitalityTrends?.currentWeekIndex ?? Math.max(0, months.length - 1)
   );
   const [favorites, setFavorites] = useState<string[]>(topExercises.map((f) => f.name));
+  const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
+  const [reportModalVisible, setReportModalVisible] = useState<boolean>(false);
 
   // Sync preview level with real calculated garden level
   React.useEffect(() => {
@@ -483,6 +489,24 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
                 })}
               </View>
             </View>
+
+            {/* Share Sanctuary Postcard Button */}
+            <Pressable
+              style={styles.shareSanctuaryBtn}
+              onPress={() => {
+                setShareModalVisible(true);
+                try {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                } catch (_) {}
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Share Sanctuary Milestone"
+            >
+              <Share2 size={13} color="#C9465B" />
+              <Text style={styles.shareSanctuaryBtnText}>Share Sanctuary Milestone</Text>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -753,6 +777,42 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
             <Text style={styles.statBoxLbl}>{t('garden.time')}</Text>
           </View>
         </View>
+
+        {/* ── 30-DAY VITALITY & SYMPTOM REPORT BANNER ── */}
+        <Pressable
+          style={styles.vitalityReportBanner}
+          onPress={() => {
+            setReportModalVisible(true);
+            try {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              }
+            } catch (_) {}
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Open 30-Day Vitality Report"
+        >
+          <LinearGradient
+            colors={['#352B2F', '#241B1E']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.vitalityReportGradient}
+          >
+            <View style={styles.vitalityReportLeft}>
+              <View style={styles.vitalityBadge}>
+                <Sparkles size={11} color="#E8C39E" />
+                <Text style={styles.vitalityBadgeText}>MONTHLY CLINICAL AUDIT</Text>
+              </View>
+              <Text style={styles.vitalityReportTitle}>30-Day Vitality & Symptom Report</Text>
+              <Text style={styles.vitalityReportSubtitle}>
+                Review joint stiffness, deep sleep, and cortisol recovery deltas.
+              </Text>
+            </View>
+            <View style={styles.vitalityReportRightBtn}>
+              <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.4} />
+            </View>
+          </LinearGradient>
+        </Pressable>
       </View>
 
       {/* ── FAVORITE EXERCISES SECTION (SHOWN AFTER 3+ LOGS) ── */}
@@ -806,6 +866,26 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
           </View>
         </View>
       )}
+
+      {/* ── SHARE SANCTUARY MILESTONE MODAL ── */}
+      <SanctuaryShareModal
+        visible={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        level={previewLevel}
+        levelName={getLevelName(activeLevelMeta.level, activeLevelMeta.name)}
+        levelDesc={getLevelDesc(activeLevelMeta.level, activeLevelMeta.desc)}
+        currentStreak={lifetimeStats.currentStreak}
+        totalWorkouts={lifetimeStats.totalWorkouts}
+        gardenImageSource={GARDEN_IMAGES[previewLevel] || GARDEN_IMAGES[1]}
+      />
+
+      {/* ── 30-DAY VITALITY & SYMPTOM REPORT MODAL ── */}
+      <MonthlyVitalityReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        totalWorkouts={lifetimeStats.totalWorkouts}
+        currentStreak={lifetimeStats.currentStreak}
+      />
 
       {/* Bottom padding for floating navigation bar */}
       <View style={{ height: 110 }} />
@@ -1124,6 +1204,24 @@ const styles = StyleSheet.create({
   levelPillTextSelected: {
     color: '#FFFFFF',
   },
+  shareSanctuaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(201, 99, 116, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 99, 116, 0.22)',
+  },
+  shareSanctuaryBtnText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansBold,
+    color: '#C9465B',
+    letterSpacing: 0.2,
+  },
 
   // ── PROGRESS AREA CHART ──
   chartSection: {
@@ -1327,6 +1425,73 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.monoBold,
     color: colors.textTertiary,
     letterSpacing: 0.8,
+  },
+  vitalityReportBanner: {
+    marginTop: 16,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 195, 158, 0.25)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+      },
+      android: { elevation: 3 },
+      default: {
+        boxShadow: '0 4px 12px rgba(40, 30, 35, 0.2)',
+      },
+    }),
+  },
+  vitalityReportGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  vitalityReportLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  vitalityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(232, 195, 158, 0.16)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  vitalityBadgeText: {
+    fontSize: 9,
+    fontFamily: fontFamilies.monoBold,
+    color: '#E8C39E',
+    letterSpacing: 0.8,
+  },
+  vitalityReportTitle: {
+    fontSize: 16,
+    fontFamily: fontFamilies.soria,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 3,
+  },
+  vitalityReportSubtitle: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sansRegular,
+    color: 'rgba(255, 255, 255, 0.78)',
+    lineHeight: 15,
+  },
+  vitalityReportRightBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ── FAVORITE EXERCISES ──
