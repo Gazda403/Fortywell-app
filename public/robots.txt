@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block non-user-facing paths
+Disallow: /static/js/
+Disallow: /static/css/
+
+Sitemap: https://fortywell-mobile.vercel.app/sitemap.xml
+Host: https://fortywell-mobile.vercel.app

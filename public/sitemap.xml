@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://fortywell-mobile.vercel.app</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://fortywell-mobile.vercel.app/0709.png</image:loc>
+      <image:title>FortyWell — Cortisol-Conscious Fitness App for Women Over 40</image:title>
+      <image:caption>Science-backed hormone cycle tracking, somatic workouts, and AI coaching for women navigating perimenopause and menopause.</image:caption>
+    </image:image>
+  </url>
+</urlset>
