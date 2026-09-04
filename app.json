@@ -10,11 +10,11 @@
     },
     "web": {
       "bundler": "metro",
-      "name": "FortyWell",
+      "name": "FortyWell — Cortisol-Conscious Fitness & Hormone Wellness",
       "shortName": "FortyWell",
-      "description": "Holistic hormone balance, daily rituals, and vitality workouts.",
-      "themeColor": "#0A0D0A",
-      "backgroundColor": "#0A0D0A",
+      "description": "A science-backed, cortisol-conscious movement app for women over 40. Relieve lower-body fluid retention, heavy legs, and metabolic stress with joint-safe somatic strength and hormone rhythm adaptation.",
+      "themeColor": "#3A3532",
+      "backgroundColor": "#EDE3D5",
       "display": "standalone",
       "orientation": "portrait",
       "favicon": "./public/favicon.ico"
