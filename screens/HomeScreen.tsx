@@ -2001,11 +2001,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 24,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
     ...Platform.select({
       ios: {
         shadowColor: '#9F4252',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
+        shadowOpacity: 0.22,
         shadowRadius: 24,
       },
       android: { elevation: 8 },

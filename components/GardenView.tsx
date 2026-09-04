@@ -1279,6 +1279,16 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(101, 78, 60, 0.08)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#2A2320',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+      },
+      android: { elevation: 2 },
+      default: {},
+    }),
   },
   statBoxVal: {
     fontSize: 17,
