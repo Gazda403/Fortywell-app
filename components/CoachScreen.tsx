@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { HeaderActionButtons } from './HeaderActionButtons';
 import {
   Sparkles,
   ChevronRight,
@@ -117,6 +118,9 @@ interface FeelingEntry {
 
 interface CoachScreenProps {
   answers?: OnboardingAnswers | null;
+  onOpenStore?: () => void;
+  onOpenProfile?: () => void;
+  userMonogram?: string;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -485,7 +489,12 @@ const FeelingCheckIn: React.FC<{
 
 // ── MAIN SCREEN ───────────────────────────────────────────────────────────────
 
-export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
+export const CoachScreen: React.FC<CoachScreenProps> = ({
+  answers,
+  onOpenStore,
+  onOpenProfile,
+  userMonogram,
+}) => {
   const { userProfile, feelingCheckins, logFeeling } = useUserData(answers);
   const { isPaused, openPaywall } = useSubscription();
   const { t } = useLanguage();
@@ -896,16 +905,24 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({ answers }) => {
       >
         {/* ── HEADER ── */}
         <View style={s.header}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
             <Text style={s.headerKicker}>{t('coach.headerKicker')}</Text>
             <Text style={s.headerTitle}>{t('coach.title')}</Text>
           </View>
-          <View style={s.avatarWrap}>
-            <LinearGradient colors={['#D07887', '#9F4252']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.avatar}>
-              <Sparkles size={18} color="#FFF5EF" strokeWidth={1.8} />
-            </LinearGradient>
-            <View style={s.onlineDot} />
-          </View>
+          {onOpenStore && onOpenProfile ? (
+            <HeaderActionButtons
+              onOpenStore={onOpenStore}
+              onOpenProfile={onOpenProfile}
+              userMonogram={userMonogram || userProfile.monogram}
+            />
+          ) : (
+            <View style={s.avatarWrap}>
+              <LinearGradient colors={['#D07887', '#9F4252']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.avatar}>
+                <Sparkles size={18} color="#FFF5EF" strokeWidth={1.8} />
+              </LinearGradient>
+              <View style={s.onlineDot} />
+            </View>
+          )}
         </View>
 
         {/* ── FEELING CHECK-IN ── */}

@@ -25,6 +25,7 @@ import Svg, {
 } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { HeaderActionButtons } from './HeaderActionButtons';
 import {
   Sprout,
   Flower2,
@@ -88,9 +89,22 @@ export interface GardenViewProps {
   lifetimeStats?: LifetimeStats;
   topExercises?: TopExerciseItem[];
   onRefresh?: () => void;
+  onOpenStore?: () => void;
+  onOpenProfile?: () => void;
+  userMonogram?: string;
 }
 
 export const GardenView: React.FC<GardenViewProps> = (props) => {
+  const {
+    onStartWorkout,
+    gardenProgress: propGardenProgress,
+    lifetimeStats: propLifetimeStats,
+    topExercises: propTopExercises,
+    onRefresh,
+    onOpenStore,
+    onOpenProfile,
+    userMonogram,
+  } = props;
   const { t } = useLanguage();
   const defaultGardenProgress: GardenProgress = {
     currentLevel: 1,
@@ -311,14 +325,23 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
     >
       {/* ── HEADER TITLE ── */}
       <View style={styles.header}>
-        <View style={styles.kickerRow}>
-          <Sparkles size={13} color={colors.primary} />
-          <Text style={styles.kickerText}>{t('garden.headerKicker')}</Text>
+        <View style={{ flex: 1, paddingRight: 8 }}>
+          <View style={styles.kickerRow}>
+            <Sparkles size={13} color={colors.primary} />
+            <Text style={styles.kickerText}>{t('garden.headerKicker')}</Text>
+          </View>
+          <Text style={styles.headerTitle}>{t('garden.title')}</Text>
+          <Text style={styles.headerSubtitle}>
+            {t('garden.subtitle')}
+          </Text>
         </View>
-        <Text style={styles.headerTitle}>{t('garden.title')}</Text>
-        <Text style={styles.headerSubtitle}>
-          {t('garden.subtitle')}
-        </Text>
+        {onOpenStore && onOpenProfile && (
+          <HeaderActionButtons
+            onOpenStore={onOpenStore}
+            onOpenProfile={onOpenProfile}
+            userMonogram={userMonogram}
+          />
+        )}
       </View>
 
       {/* ── COLLAPSIBLE DROPDOWN: HOW YOUR GARDEN GROWS ── */}
@@ -800,8 +823,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     marginBottom: 16,
+    gap: 12,
   },
   kickerRow: {
     flexDirection: 'row',

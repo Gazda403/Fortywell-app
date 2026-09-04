@@ -55,12 +55,16 @@ import { ErrorBanner } from './ErrorBanner';
 import { ErrorToast, ErrorToastVariant } from './ErrorToast';
 import { CycleSetupSheet } from './CycleSetupSheet';
 import { useLanguage } from '../context/LanguageContext';
+import { HeaderActionButtons } from './HeaderActionButtons';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 interface RhythmScreenProps {
   answers?: OnboardingAnswers | null;
   onStartWorkout?: () => void;
+  onOpenStore?: () => void;
+  onOpenProfile?: () => void;
+  userMonogram?: string;
 }
 
 const AVAILABLE_TIMES = [
@@ -69,7 +73,13 @@ const AVAILABLE_TIMES = [
   '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM', '09:00 PM'
 ];
 
-export const RhythmScreen: React.FC<RhythmScreenProps> = ({ answers, onStartWorkout }) => {
+export const RhythmScreen: React.FC<RhythmScreenProps> = ({
+  answers,
+  onStartWorkout,
+  onOpenStore,
+  onOpenProfile,
+  userMonogram,
+}) => {
   const {
     weekDays,
     weeklyTheme,
@@ -255,15 +265,24 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({ answers, onStartWork
       >
         {/* ── TOP EDITORIAL HEADER ── */}
         <View style={styles.header}>
-        <View style={styles.kickerRow}>
-          <View style={styles.activeDot} />
-          <Text style={styles.headerKicker}>{t('rhythm.headerKicker')}</Text>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <View style={styles.kickerRow}>
+              <View style={styles.activeDot} />
+              <Text style={styles.headerKicker}>{t('rhythm.headerKicker')}</Text>
+            </View>
+            <Text style={styles.headline}>{t('rhythm.title')}</Text>
+            <Text style={styles.subtitle}>
+              {t('rhythm.dragToReorder')}
+            </Text>
+          </View>
+          {onOpenStore && onOpenProfile && (
+            <HeaderActionButtons
+              onOpenStore={onOpenStore}
+              onOpenProfile={onOpenProfile}
+              userMonogram={userMonogram}
+            />
+          )}
         </View>
-        <Text style={styles.headline}>{t('rhythm.title')}</Text>
-        <Text style={styles.subtitle}>
-          {t('rhythm.dragToReorder')}
-        </Text>
-      </View>
 
       {/* ── SECTION 1: 7-DAY RESET PROGRESS (CALENDAR VIEW) ── */}
       <View style={styles.section}>
@@ -1338,7 +1357,11 @@ const styles = StyleSheet.create({
 
   // ── HEADER ──
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 20,
+    gap: 12,
   },
   kickerRow: {
     flexDirection: 'row',

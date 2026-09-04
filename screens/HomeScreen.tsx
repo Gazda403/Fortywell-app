@@ -70,6 +70,7 @@ import { WeeklyRecapModal, WeeklyRecapData } from '../components/WeeklyRecapModa
 import { SpotlightTour, TargetRectsMap } from '../components/SpotlightTour';
 import { useUserData } from '../hooks/useUserData';
 import { StoreScreen } from '../components/StoreScreen';
+import { HeaderActionButtons } from '../components/HeaderActionButtons';
 import { WeeklyPlanSection } from '../components/WeeklyPlanSection';
 import { useWeeklyPlan } from '../lib/useWeeklyPlan';
 import { SettingsModal } from '../components/SettingsModal';
@@ -656,10 +657,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           lifetimeStats={lifetimeStats}
           topExercises={topExercises}
           onRefresh={() => refreshUserData(true)}
+          onOpenStore={() => setStoreVisible(true)}
+          onOpenProfile={() => setProfileModalVisible(true)}
+          userMonogram={userProfile.monogram}
         />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'coach' ? 'flex' : 'none' }]}>
-        <CoachScreen answers={answers} />
+        <CoachScreen
+          answers={answers}
+          onOpenStore={() => setStoreVisible(true)}
+          onOpenProfile={() => setProfileModalVisible(true)}
+          userMonogram={userProfile.monogram}
+        />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'progress' ? 'flex' : 'none' }]}>
         <RhythmScreen
@@ -672,6 +681,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               }
             } catch (_) {}
           }}
+          onOpenStore={() => setStoreVisible(true)}
+          onOpenProfile={() => setProfileModalVisible(true)}
+          userMonogram={userProfile.monogram}
         />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'today' ? 'flex' : 'none' }]}>
@@ -688,40 +700,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <View style={styles.stickyNavRight}>
-            {/* Store button in sticky nav */}
-            <Pressable
-              style={styles.stickyStoreBtn}
-              onPress={() => {
-                setStoreVisible(true);
-                try {
-                  if (Platform.OS !== 'web') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                } catch (_) {}
-              }}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="FortyWell Store"
-            >
-              <LinearGradient
-                colors={['#F39EB0', '#C9465B']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.stickyStoreGradient}
-              >
-                <ShoppingBag size={16} color="#FFFFFF" strokeWidth={2.2} />
-              </LinearGradient>
-            </Pressable>
-
-            {/* Avatar in sticky nav */}
-            <Pressable
-              style={styles.stickyAvatarBtn}
-              onPress={() => setProfileModalVisible(true)}
-              hitSlop={8}
-              accessibilityLabel="Profile settings"
-            >
-              <Text style={styles.stickyAvatarText}>{userProfile.monogram}</Text>
-            </Pressable>
+            <HeaderActionButtons
+              compact={true}
+              onOpenStore={() => setStoreVisible(true)}
+              onOpenProfile={() => setProfileModalVisible(true)}
+              userMonogram={userProfile.monogram}
+            />
           </View>
         </Animated.View>
 
@@ -748,47 +732,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <View style={styles.headerRightButtons}>
-            {/* Store Button: small pink gradient with white store icon */}
             <Animated.View style={headerStoreBtnAnimStyle}>
-              <Pressable
-                style={styles.storeHeaderButton}
-                onPress={() => {
-                  setStoreVisible(true);
-                  try {
-                    if (Platform.OS !== 'web') {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  } catch (_) {}
-                }}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="FortyWell Store"
-              >
-                <LinearGradient
-                  colors={['#F39EB0', '#C9465B']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.storeHeaderGradient}
-                >
-                  <ShoppingBag size={18} color="#FFFFFF" strokeWidth={2.2} />
-                </LinearGradient>
-              </Pressable>
+              <HeaderActionButtons
+                onOpenStore={() => setStoreVisible(true)}
+                onOpenProfile={() => setProfileModalVisible(true)}
+                userMonogram={userProfile.monogram}
+              />
             </Animated.View>
-
-            {/* Luxury Monogram / Avatar badge */}
-            <Pressable
-              style={styles.avatarButton}
-              onPress={() => setProfileModalVisible(true)}
-              hitSlop={8}
-              accessibilityLabel="Profile settings or account options"
-            >
-              <View style={styles.avatarInner}>
-                <Text style={styles.avatarMonogram}>{userProfile.monogram}</Text>
-              </View>
-              <View style={styles.sparkleBadge}>
-                <Sparkles size={10} color={colors.textInverse} />
-              </View>
-            </Pressable>
           </View>
         </View>
 
