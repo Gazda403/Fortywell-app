@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fortywell-pwa-v2';
+const CACHE_NAME = 'fortywell-pwa-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -44,15 +44,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first with cache fallback for navigation
-  if (request.mode === 'navigate') {
+  // Strictly NETWORK-FIRST for HTML / page navigations to always load latest code
+  if (request.mode === 'navigate' || request.destination === 'document' || url.pathname === '/' || url.pathname === '/index.html') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html') || caches.match('/'))
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('/index.html') || caches.match('/'))
     );
     return;
   }
 
-  // Cache first for static assets
+  // Cache first for hashed static assets (_expo/static, images, fonts)
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
