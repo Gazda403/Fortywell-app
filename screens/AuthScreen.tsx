@@ -323,6 +323,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
 
       try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 
+      // Track Meta Pixel CompleteRegistration
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'FortyWell Member Account',
+          status: 'success',
+        });
+      }
+
       // Proceed into onboarding quiz
       onAccountCreated(trimmedName);
     } catch (err: any) {
@@ -395,6 +403,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
       if (error) throw error;
 
       try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+
+      // Track Meta Pixel CompleteRegistration
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'FortyWell Member Account',
+          status: 'success',
+        });
+      }
+
       onAccountCreated(firstName.trim() || 'Welcome');
     } catch (err: any) {
       setAuthError(err?.message || 'Invalid or expired code. Please double-check or request a new one.');

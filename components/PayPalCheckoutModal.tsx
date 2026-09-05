@@ -112,6 +112,16 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
         aliExpressProductId: product.aliExpressProductId,
       });
 
+      // Track Meta Pixel InitiateCheckout
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'InitiateCheckout', {
+          content_name: product.name,
+          content_ids: [product.id],
+          value: product.price,
+          currency: 'USD',
+        });
+      }
+
       if (order.approveUrl) {
         // Open direct PayPal Guest Checkout URL (Card payment without account required)
         if (Platform.OS === 'web') {
@@ -159,6 +169,17 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
     });
 
     setCompletedOrder({ id: orderId, date: now });
+
+    // Track Meta Pixel Purchase
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'Purchase', {
+        content_name: product.name,
+        content_ids: [product.id],
+        value: product.price,
+        currency: 'USD',
+      });
+    }
+
     if (onPaymentComplete) {
       onPaymentComplete(orderId);
     }
