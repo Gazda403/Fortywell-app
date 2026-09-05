@@ -537,7 +537,17 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
   const [showCancelSheet, setShowCancelSheet] = useState(false);
   const [showFinishSheet, setShowFinishSheet] = useState(false);
   const [celebration, setCelebration] = useState<WorkoutSummaryData | null>(null);
+  // Track whether notifications are active so we can show a visual indicator
+  const [notifActive, setNotifActive] = useState(false);
   const { t } = useLanguage();
+
+  // Check notification permission whenever screen becomes visible
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if ('Notification' in window) {
+      setNotifActive(Notification.permission === 'granted');
+    }
+  }, [visible]);
 
   const slideY = useSharedValue(SCREEN_H);
 
@@ -1003,6 +1013,18 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
               />
             </View>
 
+            {/* Lock screen notification status banner */}
+            {Platform.OS === 'web' && notifActive && (
+              <View style={s.notifBanner}>
+                <Text style={s.notifBannerTxt}>🔒 Lock screen tracking active</Text>
+              </View>
+            )}
+            {Platform.OS === 'web' && !notifActive && (
+              <View style={[s.notifBanner, s.notifBannerOff]}>
+                <Text style={[s.notifBannerTxt, { color: colors.textSecondary }]}>💡 Allow notifications for lock screen tracking</Text>
+              </View>
+            )}
+
             {/* Scrollable Exercise Cards */}
             <ScrollView style={s.scroll} contentContainerStyle={s.scrollPad}>
               {exercises.map((ex) => (
@@ -1324,4 +1346,21 @@ const s = StyleSheet.create({
     marginTop: 6,
   },
   addExTxt: { fontSize: 12, fontFamily: fontFamilies.monoBold, letterSpacing: 1, color: colors.primaryDark },
+  notifBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(91,150,104,0.12)',
+  },
+  notifBannerOff: {
+    backgroundColor: 'rgba(101,78,60,0.05)',
+  },
+  notifBannerTxt: {
+    fontSize: 11,
+    fontFamily: fontFamilies.monoMedium,
+    color: colors.sageDark,
+    letterSpacing: 0.2,
+  },
 });

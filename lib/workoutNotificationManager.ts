@@ -78,7 +78,7 @@ class WorkoutNotificationManager {
 
     const body = bodyParts.join(' • ');
 
-    const options = {
+    const options: NotificationOptions = {
       body,
       icon: '/apple-touch-icon.png',
       badge: '/apple-touch-icon.png',
@@ -89,32 +89,36 @@ class WorkoutNotificationManager {
       data: { url: '/' },
     };
 
-    // 1. Try sending via Service Worker (preferred for Mobile Chrome / Android / iOS PWA)
+    // ── Primary: Call registration.showNotification() directly ───────────────
+    // This is the correct way for PWA notifications. It's more reliable than
+    // postMessage because it doesn't need the SW message listener to be ready.
+    // Works on: Android Chrome, iOS Safari (only when added to Home Screen as PWA).
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        if (registration && registration.active) {
-          registration.active.postMessage({
-            type: 'SHOW_WORKOUT_NOTIFICATION',
-            title,
-            options,
-          });
-          return;
+        if (registration && typeof (registration as any).showNotification === 'function') {
+          await (registration as any).showNotification(title, options);
+          console.log('[FortyWell] Lock screen notification sent via SW registration');
+          return; // success
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn('[FortyWell] registration.showNotification() failed:', err);
+      }
     }
 
-    // 2. Fallback to direct Window Notification
+    // ── Fallback: Window Notification API ─────────────────────────────────────
+    // Works on Desktop Chrome/Firefox. Does NOT work on iOS Safari (browser tab).
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
         if (this.activeNotification) {
-          try {
-            this.activeNotification.close();
-          } catch (_) {}
+          try { this.activeNotification.close(); } catch (_) {}
         }
         this.activeNotification = new Notification(title, options);
+        console.log('[FortyWell] Lock screen notification sent via window.Notification');
       }
-    } catch (_) {}
+    } catch (err) {
+      console.warn('[FortyWell] window.Notification fallback failed:', err);
+    }
   }
 
   /**

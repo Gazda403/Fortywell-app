@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fortywell-pwa-v3';
+const CACHE_NAME = 'fortywell-pwa-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -6,7 +6,8 @@ const STATIC_ASSETS = [
   '/favicon.ico',
   '/web-app-manifest-192x192.png',
   '/web-app-manifest-512x512.png',
-  '/apple-touch-icon.png'
+  '/apple-touch-icon.png',
+  '/silent.wav',
 ];
 
 self.addEventListener('install', (event) => {

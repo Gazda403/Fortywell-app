@@ -61,6 +61,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link rel="dns-prefetch" href="https://qvgdppcpbecafeznjoxc.supabase.co" />
 
+    <!-- ── Service Worker Registration ────────────────────────────────────── -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+            console.log('[FortyWell] Service worker active, scope:', reg.scope);
+          }).catch(function(err) {
+            console.warn('[FortyWell] Service worker registration warning:', err);
+          });
+        });
+      }
+    </script>
+
     <!-- ── Meta Pixel Code ────────────────────────────────────────────────── -->
     <script>
       !function(f,b,e,v,n,t,s)
