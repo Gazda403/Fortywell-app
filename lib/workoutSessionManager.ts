@@ -14,10 +14,34 @@
  */
 
 import { Platform } from 'react-native';
+import { workoutNotificationManager } from './workoutNotificationManager';
 
-// 1-second silent WAV base64 data URI to keep the audio pipeline open in background
-const SILENT_AUDIO_URI =
-  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+function getSilentAudioSource(): string {
+  try {
+    if (typeof window !== 'undefined' && typeof Blob !== 'undefined') {
+      const sampleRate = 8000;
+      const numSamples = sampleRate * 2; // 2 seconds of valid audio
+      const buffer = new ArrayBuffer(44 + numSamples);
+      const view = new DataView(buffer);
+      view.setUint32(0, 0x52494646, false); // 'RIFF'
+      view.setUint32(4, 36 + numSamples, true);
+      view.setUint32(8, 0x57415645, false); // 'WAVE'
+      view.setUint32(12, 0x666d7420, false); // 'fmt '
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM
+      view.setUint16(22, 1, true); // Mono
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate, true);
+      view.setUint16(32, 1, true);
+      view.setUint16(34, 8, true); // 8-bit
+      view.setUint32(36, 0x64617461, false); // 'data'
+      view.setUint32(40, numSamples, true);
+      new Uint8Array(buffer, 44).fill(128); // Midpoint silence
+      return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+    }
+  } catch (_) {}
+  return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+}
 
 export interface WorkoutSessionMetadata {
   workoutTitle: string;
@@ -59,10 +83,13 @@ class WorkoutSessionManager {
   public primeAudio(): void {
     if (Platform.OS !== 'web' || typeof document === 'undefined' || !document.body) return;
 
+    // Prompt for notification permission during the user gesture
+    workoutNotificationManager.requestPermission().catch(() => {});
+
     try {
       if (!this.audioElement) {
         this.audioElement = document.createElement('audio');
-        this.audioElement.src = SILENT_AUDIO_URI;
+        this.audioElement.src = getSilentAudioSource();
         this.audioElement.loop = true;
         this.audioElement.volume = 0.01;
         this.audioElement.setAttribute('playsinline', 'true');
@@ -90,6 +117,10 @@ class WorkoutSessionManager {
 
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
+    // Request notification permission & display initial active workout lock screen card
+    workoutNotificationManager.requestPermission().catch(() => {});
+    workoutNotificationManager.showOrUpdate(initialMetadata);
+
     // 1. Initialize Screen Wake Lock
     await this.requestWakeLock();
 
@@ -109,6 +140,9 @@ class WorkoutSessionManager {
   public updateMediaSession(metadata: WorkoutSessionMetadata): void {
     this.currentMetadata = metadata;
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
+    // Update lock screen system notification
+    workoutNotificationManager.showOrUpdate(metadata);
 
     if (!('mediaSession' in navigator)) return;
 
@@ -195,8 +229,15 @@ class WorkoutSessionManager {
     }
 
     this.visibilityHandler = () => {
-      if (document.visibilityState === 'visible' && this.isRunning) {
+      if (!this.isRunning) return;
+
+      if (document.visibilityState === 'visible') {
         this.requestWakeLock();
+        if (this.currentMetadata) {
+          this.updateMediaSession(this.currentMetadata);
+        }
+      } else if (document.visibilityState === 'hidden') {
+        // Phone screen just locked or user switched apps -> push fresh lock screen update
         if (this.currentMetadata) {
           this.updateMediaSession(this.currentMetadata);
         }
@@ -215,7 +256,7 @@ class WorkoutSessionManager {
     try {
       if (!this.audioElement) {
         this.audioElement = document.createElement('audio');
-        this.audioElement.src = SILENT_AUDIO_URI;
+        this.audioElement.src = getSilentAudioSource();
         this.audioElement.loop = true;
         this.audioElement.volume = 0.01;
         this.audioElement.setAttribute('playsinline', 'true');
@@ -285,6 +326,9 @@ class WorkoutSessionManager {
     this.isRunning = false;
     this.currentMetadata = null;
     this.callbacks = {};
+
+    // Dismiss active workout lock screen notification
+    workoutNotificationManager.clear();
 
     this.releaseWakeLock();
     this.stopAudioKeepAlive();

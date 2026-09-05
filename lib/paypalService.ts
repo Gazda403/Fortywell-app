@@ -4,6 +4,8 @@ export interface CreateOrderParams {
   amount: number | string;
   productName: string;
   productId: string;
+  /** AliExpress product ID for automatic order fulfillment after payment */
+  aliExpressProductId?: string;
 }
 
 export interface PayPalOrderResult {
@@ -72,6 +74,7 @@ export async function createPayPalGuestOrder(
         amount: formattedAmount,
         productName: params.productName,
         productId: params.productId,
+        ...(params.aliExpressProductId ? { aliExpressProductId: params.aliExpressProductId } : {}),
       }),
     });
 
@@ -101,14 +104,22 @@ export async function createPayPalGuestOrder(
 /**
  * Captures an approved PayPal order.
  */
-export async function capturePayPalOrder(orderId: string): Promise<any> {
+export async function capturePayPalOrder(
+  orderId: string,
+  meta?: { productName?: string; productId?: string; amount?: number | string }
+): Promise<any> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/paypal/capture-order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ orderID: orderId }),
+      body: JSON.stringify({
+        orderID: orderId,
+        productName: meta?.productName,
+        productId: meta?.productId,
+        amount: meta?.amount,
+      }),
     });
 
     const data = await safeJson(res);

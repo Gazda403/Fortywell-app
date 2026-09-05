@@ -1282,6 +1282,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({
               price: checkoutProduct.price,
               originalPrice: checkoutProduct.originalPrice,
               image: checkoutProduct.images[0],
+              aliExpressProductId: checkoutProduct.aliExpressProductId,
             }}
           />
         )}

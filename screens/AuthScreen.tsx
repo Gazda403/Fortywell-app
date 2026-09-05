@@ -31,6 +31,10 @@ import { supabase } from '../lib/supabase';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
+const API_BASE_URL = (
+  process.env.EXPO_PUBLIC_API_URL || 'https://fortywell.vercel.app'
+).replace('fortywell-app.vercel.app', 'fortywell.vercel.app');
+
 interface AuthScreenProps {
   onAccountCreated: (firstName: string) => void;
   onLoginSuccess: () => void;
@@ -303,6 +307,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
           updated_at: new Date().toISOString(),
         });
       }
+
+      // Trigger Resend email notification in background (non-blocking)
+      fetch(`${API_BASE_URL}/api/notify/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signupEmail.trim().toLowerCase(),
+          name: trimmedName,
+          userId: data.user?.id,
+          platform: Platform.OS,
+          source: 'FortyWell Mobile App',
+        }),
+      }).catch((notifErr) => console.warn('[AuthScreen] Signup notification trigger error:', notifErr));
 
       try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 

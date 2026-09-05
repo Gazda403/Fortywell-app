@@ -1051,6 +1051,7 @@ export const ActiveWorkoutScreen: React.FC<ActiveWorkoutScreenProps> = ({
         onKeepGoing={() => setShowCancelSheet(false)}
         onDiscard={() => {
           setShowCancelSheet(false);
+          workoutSessionManager.endSession();
           onCancel();
         }}
       />

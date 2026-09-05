@@ -45,6 +45,8 @@ interface PayPalCheckoutModalProps {
     price: number;
     originalPrice?: number;
     image: any;
+    /** AliExpress product ID for auto-fulfillment (omit for handcrafted items) */
+    aliExpressProductId?: string;
   };
   onPaymentComplete?: (orderId: string) => void;
 }
@@ -107,6 +109,7 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
         amount: product.price,
         productName: product.name,
         productId: product.id,
+        aliExpressProductId: product.aliExpressProductId,
       });
 
       if (order.approveUrl) {
