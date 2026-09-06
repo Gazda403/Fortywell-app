@@ -117,6 +117,16 @@ export const CoachLeadModal: React.FC<CoachLeadModalProps> = ({
         console.warn('Lead API submission notice:', networkErr);
       }
 
+      // Meta Pixel: Lead event — coaching inquiry submitted
+      try {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          (window as any).fbq('track', 'Lead', {
+            content_name: '1:1 Coaching — ' + appDisplayName,
+            content_category: 'Coaching',
+          });
+        }
+      } catch (_) {}
+
       // 2. Build Lemon Squeezy checkout link with customer pre-fill
       const params: string[] = [];
       if (email.trim()) {
