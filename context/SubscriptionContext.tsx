@@ -10,6 +10,10 @@ const STORAGE_KEY_TRIAL_START = '@fortywell_trial_start_date';
 const TRIAL_DURATION_DAYS = 7;
 const TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000;
 
+function userKey(base: string, userId?: string | null) {
+  return userId ? `${base}_${userId}` : base;
+}
+
 // Whitelist of test/developer/VIP accounts that are completely immune to paywalls
 const PAYWALL_EXEMPT_EMAILS: string[] = [
   'imenoprezimeno324@gmail.com',
@@ -67,27 +71,56 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return PAYWALL_EXEMPT_EMAILS.some((e) => e.toLowerCase() === email);
   }, [userProfile?.email]);
 
-  // Initialize trial start date and stored subscription state
+  // Clean up any legacy un-scoped subscription status from AsyncStorage & localStorage
   useEffect(() => {
+    AsyncStorage.removeItem(STORAGE_KEY_SUBSCRIPTION).catch(() => {});
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(STORAGE_KEY_SUBSCRIPTION);
+    }
+  }, []);
+
+  // Initialize trial start date for CURRENT user
+  useEffect(() => {
+    let isCancelled = false;
     async function loadSubscriptionState() {
+      if (!userProfile?.id) {
+        setIsSubscribed(false);
+        return;
+      }
       try {
-        const storedSub = await AsyncStorage.getItem(STORAGE_KEY_SUBSCRIPTION);
-        if (storedSub === 'active') {
-          setIsSubscribed(true);
+        const userSubKey = userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id);
+        const storedSub = await AsyncStorage.getItem(userSubKey);
+        if (!isCancelled) {
+          setIsSubscribed(storedSub === 'active');
         }
 
-        const storedStart = await AsyncStorage.getItem(STORAGE_KEY_TRIAL_START);
-        if (storedStart) {
-          setInitialTrialStart(new Date(storedStart));
-        } else {
-          const now = new Date();
-          await AsyncStorage.setItem(STORAGE_KEY_TRIAL_START, now.toISOString());
-          setInitialTrialStart(now);
+        const userTrialKey = userKey(STORAGE_KEY_TRIAL_START, userProfile.id);
+        const storedStart = await AsyncStorage.getItem(userTrialKey);
+        if (!isCancelled) {
+          if (storedStart) {
+            setInitialTrialStart(new Date(storedStart));
+          } else {
+            // Seed from real account creation date so a fresh install
+            // doesn't reset the trial. Fall back to 'now' only if unavailable.
+            const seedDate =
+              userProfile.createdAt && !isNaN(new Date(userProfile.createdAt).getTime())
+                ? new Date(userProfile.createdAt)
+                : new Date();
+            await AsyncStorage.setItem(userTrialKey, seedDate.toISOString());
+            setInitialTrialStart(seedDate);
+          }
         }
-      } catch (_) {}
+      } catch (_) {
+        if (!isCancelled) setIsSubscribed(false);
+      }
     }
+    // Always start isSubscribed as false for non-backend subscriptions
+    setIsSubscribed(false);
     loadSubscriptionState();
-  }, []);
+    return () => {
+      isCancelled = true;
+    };
+  }, [userProfile?.id]);
 
   // Compute effective account creation date
   const accountCreationDate = useMemo(() => {
@@ -235,7 +268,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
 
         // Keep state responsive for the user
-        await AsyncStorage.setItem(STORAGE_KEY_SUBSCRIPTION, 'active');
+        if (userProfile.id) {
+          await AsyncStorage.setItem(userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id), 'active');
+        }
         setIsSubscribed(true);
         closePaywall();
       } catch (e) {
@@ -247,7 +282,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const restoreSubscription = useCallback(async (): Promise<boolean> => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY_SUBSCRIPTION);
+      if (!userProfile.id) return false;
+      const stored = await AsyncStorage.getItem(userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id));
       if (stored === 'active') {
         setIsSubscribed(true);
         return true;
@@ -256,11 +292,12 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (_) {
       return false;
     }
-  }, []);
+  }, [userProfile.id]);
 
   // Sandbox testing helper for easy QA/verification
   const setDevSubscriptionOverride = useCallback((status: 'trial_day_3' | 'trial_day_7' | 'expired_day_8' | 'subscribed' | 'reset') => {
     const now = new Date();
+    const subKey = userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id);
     if (status === 'trial_day_3') {
       const past = new Date(now.getTime() - 2.5 * 24 * 60 * 60 * 1000);
       setDevDateOverride(past);
@@ -273,16 +310,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const past = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
       setDevDateOverride(past);
       setIsSubscribed(false);
-      AsyncStorage.removeItem(STORAGE_KEY_SUBSCRIPTION);
+      AsyncStorage.removeItem(subKey);
     } else if (status === 'subscribed') {
       setIsSubscribed(true);
-      AsyncStorage.setItem(STORAGE_KEY_SUBSCRIPTION, 'active');
+      AsyncStorage.setItem(subKey, 'active');
     } else if (status === 'reset') {
       setDevDateOverride(null);
       setIsSubscribed(false);
-      AsyncStorage.removeItem(STORAGE_KEY_SUBSCRIPTION);
+      AsyncStorage.removeItem(subKey);
     }
-  }, []);
+  }, [userProfile.id]);
 
   return (
     <SubscriptionContext.Provider

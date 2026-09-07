@@ -29,9 +29,39 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageProvider } from './context/LanguageContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { getStoredSettings } from './lib/userSettings';
+import { flushUserCaches } from './hooks/useUserData';
 
 const STORAGE_PROFILE_KEY = '@fortywell_completed_profile';
 const STORAGE_ONBOARDING_COMPLETED_KEY = '@fortywell_onboarding_completed';
+
+const SHARED_KEYS_TO_CLEAR = [
+  STORAGE_PROFILE_KEY,
+  STORAGE_ONBOARDING_COMPLETED_KEY,
+  '@fortywell_subscription_status',
+  '@fortywell_cached_lifetime_stats_v1',
+  '@fortywell_completed_dates_v1',
+  '@fortywell_feeling_checkins_v1',
+  '@fortywell_top_exercises_v1',
+  '@fortywell_pending_workout_logs',
+  '@fortywell_pending_logs_v1',
+  '@fortywell_active_session_v1',
+  '@fortywell_cycle_tracking_v1',
+  '@fortywell_timing_preferences_v1',
+  '@fortywell_has_seen_walkthrough_v1',
+  '@fortywell_trial_start_date',
+];
+
+async function clearSharedStorage() {
+  flushUserCaches();
+  for (const k of SHARED_KEYS_TO_CLEAR) {
+    try {
+      await AsyncStorage.removeItem(k);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(k);
+      }
+    } catch (_) {}
+  }
+}
 
 function checkIsStandalone(): boolean {
   if (Platform.OS !== 'web' || typeof window === 'undefined') {
@@ -188,13 +218,10 @@ export default function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         sessionHandledRef.current = false;
+        await clearSharedStorage();
         if (isMounted) {
           setCompletedProfile(null);
           setUserFirstName('');
-          try {
-            await AsyncStorage.removeItem(STORAGE_PROFILE_KEY);
-            await AsyncStorage.removeItem(STORAGE_ONBOARDING_COMPLETED_KEY);
-          } catch (_) {}
           setActiveScreen('auth');
         }
       } else if (event === 'SIGNED_IN' && session?.user) {
@@ -296,6 +323,7 @@ export default function App() {
 
   const handleSignOut = useCallback(async () => {
     sessionHandledRef.current = false;
+    await clearSharedStorage();
     try {
       await supabase.auth.signOut();
     } catch (err) {

@@ -144,6 +144,10 @@ function getCurrentWeekDates(): {
   return week;
 }
 
+function rhythmUserKey(base: string, userId?: string | null) {
+  return userId ? `${base}_${userId}` : base;
+}
+
 const STORAGE_KEY_CYCLE = '@fortywell_cycle_tracking_v1';
 const STORAGE_KEY_PREFS = '@fortywell_timing_preferences_v1';
 
@@ -167,36 +171,16 @@ function calculatePhaseDetails(
     };
   }
 
-  // Parse YYYY-MM-DD components directly to avoid timezone shifts
-  const [y, m, d] = cycleStartDateStr.split('-').map(Number);
-  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) {
-    return {
-      phase: 'Follicular Phase',
-      dayNumber: 6,
-      headline: 'Energy building — good window for strength work this week.',
-      body: 'Rising estrogen supports muscle protein synthesis and recovery. Optimal for intentional, progressive movement.',
-    };
-  }
-
-  const startDate = new Date(y, m - 1, d);
+  const start = new Date(cycleStartDateStr);
   const now = new Date();
-  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  // Difference in whole calendar days
-  const diffMs = todayDate.getTime() - startDate.getTime();
-  let diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (isNaN(diffDays) || diffDays < 0) {
-    diffDays = 0;
-  }
-
-  const currentCycleDay = (diffDays % safeLength) + 1;
+  const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const currentCycleDay = (Math.max(0, diffDays) % safeLength) + 1;
 
   if (currentCycleDay <= 5) {
     return {
       phase: 'Menstrual Phase',
       dayNumber: currentCycleDay,
-      headline: 'Gentle restoration — prioritize joint mobility and ease.',
+      headline: 'Low hormones — honor restoration and gentle mobility.',
       body: 'Progesterone and estrogen are low. Keep movement low-intensity to honor your body’s natural renewal process.',
     };
   } else if (currentCycleDay <= 13) {
@@ -223,19 +207,21 @@ function calculatePhaseDetails(
   }
 }
 
+const DEFAULT_CYCLE_DATA: CycleTrackingData = {
+  optedIn: false,
+  cycleStartDate: undefined,
+  cycleLengthDays: 28,
+  currentPhase: undefined,
+  cycleDay: undefined,
+  guidanceHeadline: 'Add your cycle or hormonal stage to unlock adaptive pacing and recovery windows.',
+  guidanceBody:
+    'Completely optional. When enabled, your movement pace and recovery recommendations adapt naturally to your hormonal rhythm.',
+};
+
 export function useRhythmData(answers?: any) {
   const [timingPreferences, setTimingPreferences] = useState<ResetTimingPreference[]>(DEFAULT_TIMING_PREFS);
   const [weeklyTheme, setWeeklyTheme] = useState<WeeklyThemePlan>(DEFAULT_WEEKLY_THEME);
-  const [cycleData, setCycleData] = useState<CycleTrackingData>({
-    optedIn: false,
-    cycleStartDate: undefined,
-    cycleLengthDays: 28,
-    currentPhase: undefined,
-    cycleDay: undefined,
-    guidanceHeadline: 'Add your cycle or hormonal stage to unlock adaptive pacing and recovery windows.',
-    guidanceBody:
-      'Completely optional. When enabled, your movement pace and recovery recommendations adapt naturally to your hormonal rhythm.',
-  });
+  const [cycleData, setCycleData] = useState<CycleTrackingData>(DEFAULT_CYCLE_DATA);
 
   const [nightLogsByDate, setNightLogsByDate] = useState<Record<string, NightSessionActivityLog>>({});
   const [slotMetadataByDate, setSlotMetadataByDate] = useState<
@@ -263,7 +249,14 @@ export function useRhythmData(answers?: any) {
   useEffect(() => {
     async function loadLocalCache() {
       try {
-        const cachedCycle = await AsyncStorage.getItem(STORAGE_KEY_CYCLE);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) {
+          setCycleData(DEFAULT_CYCLE_DATA);
+          setTimingPreferences(DEFAULT_TIMING_PREFS);
+          return;
+        }
+
+        const cachedCycle = await AsyncStorage.getItem(rhythmUserKey(STORAGE_KEY_CYCLE, user.id));
         if (cachedCycle) {
           const parsed = JSON.parse(cachedCycle);
           if (parsed && parsed.optedIn) {
@@ -280,7 +273,7 @@ export function useRhythmData(answers?: any) {
           }
         }
 
-        const cachedPrefs = await AsyncStorage.getItem(STORAGE_KEY_PREFS);
+        const cachedPrefs = await AsyncStorage.getItem(rhythmUserKey(STORAGE_KEY_PREFS, user.id));
         if (cachedPrefs) {
           const parsedPrefs = JSON.parse(cachedPrefs);
           if (Array.isArray(parsedPrefs) && parsedPrefs.length > 0) {
@@ -339,7 +332,7 @@ export function useRhythmData(answers?: any) {
               }
               return item;
             });
-            AsyncStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify(updated)).catch(() => {});
+            AsyncStorage.setItem(rhythmUserKey(STORAGE_KEY_PREFS, user.id), JSON.stringify(updated)).catch(() => {});
             return updated;
           });
         }
@@ -364,7 +357,9 @@ export function useRhythmData(answers?: any) {
             guidanceBody: phaseInfo.body,
           };
           setCycleData(nextCycleData);
-          AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
+          AsyncStorage.setItem(rhythmUserKey(STORAGE_KEY_CYCLE, user.id), JSON.stringify(nextCycleData)).catch(() => {});
+        } else {
+          setCycleData(DEFAULT_CYCLE_DATA);
         }
 
         // 4. Workout Logs
@@ -754,11 +749,11 @@ export function useRhythmData(answers?: any) {
         guidanceBody: phaseInfo.body,
       };
       setCycleData(nextCycleData);
-      AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
+          AsyncStorage.setItem(rhythmUserKey(STORAGE_KEY_CYCLE, user.id), JSON.stringify(nextCycleData)).catch(() => {});
           await supabase
             .from('cycle_tracking')
             .upsert(
@@ -792,11 +787,11 @@ export function useRhythmData(answers?: any) {
         guidanceBody: phaseInfo.body,
       };
       setCycleData(nextCycleData);
-      AsyncStorage.setItem(STORAGE_KEY_CYCLE, JSON.stringify(nextCycleData)).catch(() => {});
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
+          AsyncStorage.setItem(rhythmUserKey(STORAGE_KEY_CYCLE, user.id), JSON.stringify(nextCycleData)).catch(() => {});
           await supabase
             .from('cycle_tracking')
             .upsert(

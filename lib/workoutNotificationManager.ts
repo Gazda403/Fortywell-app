@@ -78,7 +78,7 @@ class WorkoutNotificationManager {
 
     const body = bodyParts.join(' • ');
 
-    const options: NotificationOptions = {
+    const options: any = {
       body,
       icon: '/apple-touch-icon.png',
       badge: '/apple-touch-icon.png',
