@@ -249,7 +249,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 
   // Official Lemon Squeezy Checkout URL (configured with Annual & Monthly options)
-  const LEMON_SQUEEZY_CHECKOUT_BASE = 'https://fortywell.lemonsqueezy.com/checkout/buy/3f039828-d006-4d16-8366-97bf8eb733fa';
+  const LEMON_SQUEEZY_CHECKOUT_BASE = 'https://fortywell.lemonsqueezy.com/checkout/buy/cf21dcb5-7248-41f3-80df-e0e58fb6b62e';
 
   // Verify status directly from Supabase
   const verifySubscriptionStatus = useCallback(async (): Promise<boolean> => {
