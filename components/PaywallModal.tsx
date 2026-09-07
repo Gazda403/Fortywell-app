@@ -8,6 +8,7 @@ import {
   Pressable,
   Platform,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +22,8 @@ import {
   ArrowRight,
   X,
   Lock,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
@@ -41,6 +44,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onDismissToGarden })
     subscribe,
     isTrialActive,
     trialDaysRemaining,
+    isAwaitingVerification,
+    isVerifying,
+    verificationMessage,
+    verifySubscriptionStatus,
+    cancelAwaitingVerification,
   } = useSubscription();
 
   const { userProfile, gardenProgress, lifetimeStats, currentWeekDays } = useUserData();
@@ -283,36 +291,126 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onDismissToGarden })
               ))}
             </View>
 
-            {/* ── PRIMARY CTA ── */}
-            <Pressable
-              style={[s.ctaBtn, isProcessing && { opacity: 0.78 }]}
-              onPress={handleSubscribe}
-              disabled={isProcessing}
-              accessibilityRole="button"
-              accessibilityLabel="Subscribe and continue"
-            >
-              <LinearGradient
-                colors={['#C96374', '#A83D52', '#9F4252']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.ctaGradient}
-              >
-                <Text style={s.ctaText}>
-                  {isProcessing ? 'Connecting…' : 'Subscribe & Continue'}
-                </Text>
-                {!isProcessing && <ArrowRight size={20} color="#FFFFFF" strokeWidth={2.3} />}
-              </LinearGradient>
-            </Pressable>
+            {/* ── PRIMARY CTA OR VERIFICATION STATUS ── */}
+            {isAwaitingVerification ? (
+              <View style={s.verificationCard}>
+                <View style={s.verificationHeader}>
+                  <View style={s.verificationSpinnerWrap}>
+                    {isVerifying ? (
+                      <ActivityIndicator size="small" color="#C96374" />
+                    ) : (
+                      <RefreshCw size={18} color="#C96374" strokeWidth={2.2} />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.verificationTitle}>Awaiting Checkout Completion</Text>
+                    <Text style={s.verificationSubtitle}>
+                      Complete your purchase in your browser, then tap below to activate FortyWell Pro.
+                    </Text>
+                  </View>
+                </View>
 
-            {/* ── SECONDARY DISMISS ── */}
-            <Pressable
-              style={s.dismissBtn}
-              onPress={handleDismiss}
-              accessibilityRole="button"
-              accessibilityLabel="Keep garden in read-only mode"
-            >
-              <Text style={s.dismissText}>Not right now — keep my garden in read-only</Text>
-            </Pressable>
+                {verificationMessage ? (
+                  <View
+                    style={[
+                      s.verificationMessageWrap,
+                      verificationMessage.includes('Welcome') && s.verificationSuccessWrap,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        s.verificationMessageText,
+                        verificationMessage.includes('Welcome') && s.verificationSuccessText,
+                      ]}
+                    >
+                      {verificationMessage}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <Pressable
+                  style={[s.ctaBtn, isVerifying && { opacity: 0.78 }]}
+                  onPress={() => {
+                    try {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    } catch (_) {}
+                    verifySubscriptionStatus();
+                  }}
+                  disabled={isVerifying}
+                  accessibilityRole="button"
+                  accessibilityLabel="I have completed payment"
+                >
+                  <LinearGradient
+                    colors={['#C96374', '#A83D52', '#9F4252']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.ctaGradient}
+                  >
+                    {isVerifying ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <CheckCircle2 size={19} color="#FFFFFF" strokeWidth={2.3} />
+                    )}
+                    <Text style={s.ctaText}>
+                      {isVerifying ? 'Checking with Server…' : "I've Completed Payment"}
+                    </Text>
+                  </LinearGradient>
+                </Pressable>
+
+                <View style={s.verificationActionsRow}>
+                  <Pressable
+                    style={s.secondaryActionBtn}
+                    onPress={() => subscribe(selectedInterval)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Re-open checkout"
+                  >
+                    <ExternalLink size={13} color={colors.textSecondary} strokeWidth={2} />
+                    <Text style={s.secondaryActionText}>Re-open Checkout</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={s.secondaryActionBtn}
+                    onPress={cancelAwaitingVerification}
+                    accessibilityRole="button"
+                    accessibilityLabel="Choose another plan"
+                  >
+                    <Text style={s.secondaryActionText}>Change Plan</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <>
+                <Pressable
+                  style={[s.ctaBtn, isProcessing && { opacity: 0.78 }]}
+                  onPress={handleSubscribe}
+                  disabled={isProcessing}
+                  accessibilityRole="button"
+                  accessibilityLabel="Subscribe and continue"
+                >
+                  <LinearGradient
+                    colors={['#C96374', '#A83D52', '#9F4252']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.ctaGradient}
+                  >
+                    <Text style={s.ctaText}>
+                      {isProcessing ? 'Connecting…' : 'Subscribe & Continue'}
+                    </Text>
+                    {!isProcessing && <ArrowRight size={20} color="#FFFFFF" strokeWidth={2.3} />}
+                  </LinearGradient>
+                </Pressable>
+
+                {/* ── SECONDARY DISMISS ── */}
+                <Pressable
+                  style={s.dismissBtn}
+                  onPress={handleDismiss}
+                  accessibilityRole="button"
+                  accessibilityLabel="Keep garden in read-only mode"
+                >
+                  <Text style={s.dismissText}>Not right now — keep my garden in read-only</Text>
+                </Pressable>
+              </>
+            )}
 
             {/* ── TRUST LINE ── */}
             <View style={s.trustRow}>
@@ -680,5 +778,86 @@ const s = StyleSheet.create({
     fontFamily: fontFamilies.sansRegular,
     color: colors.textTertiary,
     textAlign: 'center',
+  },
+
+  // Verification State Card
+  verificationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(201,99,116,0.35)',
+    gap: 14,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primaryDark,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+      },
+      android: { elevation: 2 },
+    }),
+  },
+  verificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  verificationSpinnerWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(201,99,116,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verificationTitle: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sansBold,
+    color: colors.textPrimary,
+  },
+  verificationSubtitle: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansRegular,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  verificationMessageWrap: {
+    backgroundColor: 'rgba(201,99,116,0.08)',
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+  },
+  verificationMessageText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansMedium,
+    color: colors.primaryDark,
+    textAlign: 'center',
+  },
+  verificationSuccessWrap: {
+    backgroundColor: 'rgba(74,138,90,0.1)',
+  },
+  verificationSuccessText: {
+    color: '#2E693D',
+  },
+  verificationActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 4,
+  },
+  secondaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  secondaryActionText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansMedium,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });

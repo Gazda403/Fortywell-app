@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import {
   StyleSheet, View, Text, ScrollView, Pressable,
-  Modal, Switch, Platform, Linking,
+  Modal, Switch, Platform, Linking, Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -122,6 +122,7 @@ export function SettingsModal({
     trialDaysRemaining,
     trialDayNumber,
     openPaywall,
+    restoreSubscription,
     setDevSubscriptionOverride,
   } = useSubscription();
 
@@ -238,6 +239,25 @@ export function SettingsModal({
                         {isPaused ? "Subscribe & Restore Access" : "View Subscription Options"}
                       </Text>
                     </LinearGradient>
+                  </Pressable>
+
+                  <Pressable
+                    style={[sStyles.settingRow, { justifyContent: "center", paddingVertical: 10 }]}
+                    onPress={async () => {
+                      haptic();
+                      const restored = await restoreSubscription();
+                      if (restored) {
+                        Alert.alert("Subscription Active", "Your FortyWell Pro subscription is active.");
+                      } else {
+                        Alert.alert("No Subscription Found", "We could not find an active paid subscription for this account.");
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Restore purchases or check status"
+                  >
+                    <Text style={[sStyles.settingRowSublabel, { color: colors.primary, textDecorationLine: "underline", textAlign: "center" }]}>
+                      Restore Purchases / Check Status
+                    </Text>
                   </Pressable>
                 </>
               )}

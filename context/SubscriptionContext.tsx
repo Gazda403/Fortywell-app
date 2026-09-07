@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { Linking, Platform } from 'react-native';
+import { Linking, Platform, AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserData } from '../hooks/useUserData';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY_SUBSCRIPTION = '@fortywell_subscription_status';
 const STORAGE_KEY_TRIAL_START = '@fortywell_trial_start_date';
@@ -53,17 +54,29 @@ export interface SubscriptionContextType {
   subscribe: (billingInterval: 'monthly' | 'annual') => Promise<void>;
   restoreSubscription: () => Promise<boolean>;
   setDevSubscriptionOverride: (status: 'trial_day_3' | 'trial_day_7' | 'expired_day_8' | 'subscribed' | 'reset') => void;
+
+  // Real-time verification states for checkout
+  isAwaitingVerification: boolean;
+  isVerifying: boolean;
+  verificationMessage: string | null;
+  verifySubscriptionStatus: () => Promise<boolean>;
+  cancelAwaitingVerification: () => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userProfile } = useUserData();
-  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+  const { userProfile, refreshUserData } = useUserData();
+  const [devSubscriptionOverrideState, setDevSubscriptionOverrideState] = useState<boolean | null>(null);
   const [isPaywallVisible, setIsPaywallVisible] = useState<boolean>(false);
   const [paywallSource, setPaywallSource] = useState<string | null>(null);
   const [devDateOverride, setDevDateOverride] = useState<Date | null>(null);
   const [initialTrialStart, setInitialTrialStart] = useState<Date | null>(null);
+
+  // Verification states
+  const [isAwaitingVerification, setIsAwaitingVerification] = useState<boolean>(false);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
 
   // Check if current user is an exempt test/VIP account
   const isExemptAccount = useMemo(() => {
@@ -79,19 +92,18 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  // Initialize trial start date for CURRENT user
+  // Initialize trial start date for CURRENT user & remove any unverified local flags
   useEffect(() => {
     let isCancelled = false;
     async function loadSubscriptionState() {
       if (!userProfile?.id) {
-        setIsSubscribed(false);
         return;
       }
       try {
-        const userSubKey = userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id);
-        const storedSub = await AsyncStorage.getItem(userSubKey);
-        if (!isCancelled) {
-          setIsSubscribed(storedSub === 'active');
+        // If profile status is not active in backend, purge any lingering local cache
+        if (userProfile.subscriptionStatus !== 'active') {
+          const userSubKey = userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id);
+          await AsyncStorage.removeItem(userSubKey).catch(() => {});
         }
 
         const userTrialKey = userKey(STORAGE_KEY_TRIAL_START, userProfile.id);
@@ -110,17 +122,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
             setInitialTrialStart(seedDate);
           }
         }
-      } catch (_) {
-        if (!isCancelled) setIsSubscribed(false);
-      }
+      } catch (_) {}
     }
-    // Always start isSubscribed as false for non-backend subscriptions
-    setIsSubscribed(false);
     loadSubscriptionState();
     return () => {
       isCancelled = true;
     };
-  }, [userProfile?.id]);
+  }, [userProfile?.id, userProfile?.createdAt, userProfile?.subscriptionStatus]);
 
   // Compute effective account creation date
   const accountCreationDate = useMemo(() => {
@@ -132,7 +140,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return initialTrialStart || new Date();
   }, [devDateOverride, userProfile.createdAt, initialTrialStart]);
 
-  // Determine if active from backend database profile status or local storage
+  // Determine if active from backend database profile status
   const hasActiveBackendSubscription = useMemo(() => {
     if (isExemptAccount) return true;
     if (userProfile.subscriptionStatus === 'active') {
@@ -144,7 +152,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return false;
   }, [isExemptAccount, userProfile.subscriptionStatus, userProfile.subscriptionEndsAt]);
 
-  const effectiveIsSubscribed = isExemptAccount || isSubscribed || hasActiveBackendSubscription;
+  const effectiveIsSubscribed = isExemptAccount || (devSubscriptionOverrideState ?? hasActiveBackendSubscription);
 
   // If subscription status is explicitly cancelled, expired, or paused from backend
   const isExplicitlyBlocked = useMemo(() => {
@@ -198,7 +206,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [isExemptAccount, accountCreationDate, effectiveIsSubscribed, isExplicitlyBlocked]);
 
-  // Dynamic pricing calculation (Single Plan: $19.99/mo or $149/yr)
+  // Dynamic pricing configuration
   const pricing: SubscriptionPricing = useMemo(() => {
     return {
       monthlyPrice: 19.99,
@@ -219,6 +227,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const closePaywall = useCallback(() => {
     setIsPaywallVisible(false);
     setPaywallSource(null);
+    setIsAwaitingVerification(false);
+    setVerificationMessage(null);
+  }, []);
+
+  const cancelAwaitingVerification = useCallback(() => {
+    setIsAwaitingVerification(false);
+    setVerificationMessage(null);
   }, []);
 
   // Action guard: blocks actions if paused
@@ -236,7 +251,68 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Official Lemon Squeezy Checkout URL (configured with Annual & Monthly options)
   const LEMON_SQUEEZY_CHECKOUT_BASE = 'https://fortywell.lemonsqueezy.com/checkout/buy/3f039828-d006-4d16-8366-97bf8eb733fa';
 
-  // Subscribe via Lemon Squeezy Checkout
+  // Verify status directly from Supabase
+  const verifySubscriptionStatus = useCallback(async (): Promise<boolean> => {
+    if (!userProfile?.id) return false;
+    setIsVerifying(true);
+    setVerificationMessage(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('subscription_status, subscription_ends_at, subscription_plan')
+        .eq('id', userProfile.id)
+        .maybeSingle();
+
+      if (error) {
+        setVerificationMessage('Connection error. Please check your internet connection.');
+        setIsVerifying(false);
+        return false;
+      }
+
+      const status = data?.subscription_status;
+      const endsAt = data?.subscription_ends_at;
+      const isActive =
+        status === 'active' && (!endsAt || new Date(endsAt) > new Date());
+
+      if (isActive) {
+        await refreshUserData();
+        setIsAwaitingVerification(false);
+        setVerificationMessage('Payment verified! Welcome to FortyWell Pro.');
+        closePaywall();
+        setIsVerifying(false);
+        return true;
+      } else {
+        setVerificationMessage(
+          'No active subscription found yet. If you just completed checkout, please wait 5–10 seconds for payment processing and tap check again.'
+        );
+        setIsVerifying(false);
+        return false;
+      }
+    } catch (e) {
+      setVerificationMessage('Verification check failed. Please try again.');
+      setIsVerifying(false);
+      return false;
+    }
+  }, [userProfile?.id, refreshUserData, closePaywall]);
+
+  // Auto-check status when app resumes focus from browser checkout
+  useEffect(() => {
+    if (!isAwaitingVerification) return;
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        setTimeout(() => {
+          verifySubscriptionStatus();
+        }, 2000);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isAwaitingVerification, verifySubscriptionStatus]);
+
+  // Subscribe via Lemon Squeezy Checkout (Opens checkout, but DOES NOT grant Pro until paid)
   const subscribe = useCallback(
     async (billingInterval: 'monthly' | 'annual') => {
       try {
@@ -258,6 +334,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ? `${LEMON_SQUEEZY_CHECKOUT_BASE}${delimiter}${params.join('&')}`
             : LEMON_SQUEEZY_CHECKOUT_BASE;
 
+        setIsAwaitingVerification(true);
+        setVerificationMessage(null);
+
         // Open in browser (in-app on mobile or new tab on web)
         if (Platform.OS === 'web') {
           if (typeof window !== 'undefined') {
@@ -266,33 +345,17 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         } else {
           await Linking.openURL(finalCheckoutUrl);
         }
-
-        // Keep state responsive for the user
-        if (userProfile.id) {
-          await AsyncStorage.setItem(userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id), 'active');
-        }
-        setIsSubscribed(true);
-        closePaywall();
       } catch (e) {
         console.warn('Subscription checkout error:', e);
+        setIsAwaitingVerification(false);
       }
     },
-    [userProfile, closePaywall]
+    [userProfile]
   );
 
   const restoreSubscription = useCallback(async (): Promise<boolean> => {
-    try {
-      if (!userProfile.id) return false;
-      const stored = await AsyncStorage.getItem(userKey(STORAGE_KEY_SUBSCRIPTION, userProfile.id));
-      if (stored === 'active') {
-        setIsSubscribed(true);
-        return true;
-      }
-      return false;
-    } catch (_) {
-      return false;
-    }
-  }, [userProfile.id]);
+    return await verifySubscriptionStatus();
+  }, [verifySubscriptionStatus]);
 
   // Sandbox testing helper for easy QA/verification
   const setDevSubscriptionOverride = useCallback((status: 'trial_day_3' | 'trial_day_7' | 'expired_day_8' | 'subscribed' | 'reset') => {
@@ -301,22 +364,22 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (status === 'trial_day_3') {
       const past = new Date(now.getTime() - 2.5 * 24 * 60 * 60 * 1000);
       setDevDateOverride(past);
-      setIsSubscribed(false);
+      setDevSubscriptionOverrideState(false);
     } else if (status === 'trial_day_7') {
       const past = new Date(now.getTime() - 6.5 * 24 * 60 * 60 * 1000);
       setDevDateOverride(past);
-      setIsSubscribed(false);
+      setDevSubscriptionOverrideState(false);
     } else if (status === 'expired_day_8') {
       const past = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
       setDevDateOverride(past);
-      setIsSubscribed(false);
+      setDevSubscriptionOverrideState(false);
       AsyncStorage.removeItem(subKey);
     } else if (status === 'subscribed') {
-      setIsSubscribed(true);
+      setDevSubscriptionOverrideState(true);
       AsyncStorage.setItem(subKey, 'active');
     } else if (status === 'reset') {
       setDevDateOverride(null);
-      setIsSubscribed(false);
+      setDevSubscriptionOverrideState(null);
       AsyncStorage.removeItem(subKey);
     }
   }, [userProfile.id]);
@@ -339,6 +402,11 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         subscribe,
         restoreSubscription,
         setDevSubscriptionOverride,
+        isAwaitingVerification,
+        isVerifying,
+        verificationMessage,
+        verifySubscriptionStatus,
+        cancelAwaitingVerification,
       }}
     >
       {children}
