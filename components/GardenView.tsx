@@ -96,6 +96,7 @@ export interface GardenViewProps {
   onOpenStore?: () => void;
   onOpenProfile?: () => void;
   userMonogram?: string;
+  isDesktop?: boolean;
 }
 
 export const GardenView: React.FC<GardenViewProps> = (props) => {
@@ -108,6 +109,7 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
     onOpenStore,
     onOpenProfile,
     userMonogram,
+    isDesktop,
   } = props;
   const { t } = useLanguage();
   const defaultGardenProgress: GardenProgress = {
@@ -326,7 +328,10 @@ export const GardenView: React.FC<GardenViewProps> = (props) => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        isDesktop && styles.contentContainerDesktop,
+      ]}
       showsVerticalScrollIndicator={false}
     >
       {/* ── HEADER TITLE ── */}
@@ -901,6 +906,12 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingTop: 16,
     paddingBottom: 20,
+  },
+  contentContainerDesktop: {
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center' as any,
+    paddingTop: 24,
   },
   header: {
     flexDirection: 'row',

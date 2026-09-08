@@ -65,6 +65,7 @@ interface RhythmScreenProps {
   onOpenStore?: () => void;
   onOpenProfile?: () => void;
   userMonogram?: string;
+  isDesktop?: boolean;
 }
 
 const AVAILABLE_TIMES = [
@@ -79,6 +80,7 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({
   onOpenStore,
   onOpenProfile,
   userMonogram,
+  isDesktop,
 }) => {
   const {
     weekDays,
@@ -260,7 +262,10 @@ export const RhythmScreen: React.FC<RhythmScreenProps> = ({
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isDesktop && styles.scrollContentDesktop,
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── TOP EDITORIAL HEADER ── */}
@@ -1353,6 +1358,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 110,
+  },
+  scrollContentDesktop: {
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center' as any,
+    paddingTop: 24,
   },
 
   // ── HEADER ──

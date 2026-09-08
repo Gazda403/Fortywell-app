@@ -82,6 +82,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { PaywallModal } from '../components/PaywallModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsDesktop } from '../hooks/useIsDesktop';
+
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -156,7 +158,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSignOut,
 }) => {
   const [selectedTab, setSelectedTab] = useState<'today' | 'coach' | 'progress' | 'garden'>('today');
+  const isDesktop = useIsDesktop();
   const { workouts, loading: workoutsLoading } = useWorkouts();
+
   const {
     userProfile,
     currentWeekDays,
@@ -649,7 +653,90 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const weeklyFreq = answers?.weekly_frequency || '3–4 days';
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, isDesktop && deskStyles.safeAreaDesktop]} edges={['top']}>
+
+      {/* ── DESKTOP SIDEBAR NAVIGATION ── */}
+      {isDesktop && (
+        <View style={deskStyles.sidebar}>
+          {/* Brand mark */}
+          <View style={deskStyles.sidebarBrand}>
+            <View style={deskStyles.sidebarDot} />
+            <Text style={deskStyles.sidebarBrandText}>FortyWell</Text>
+          </View>
+
+          {/* Nav items */}
+          <View style={deskStyles.sidebarNav}>
+            <Pressable
+              onPress={() => setSelectedTab('today')}
+              style={[deskStyles.sidebarItem, selectedTab === 'today' && deskStyles.sidebarItemActive]}
+            >
+              <Sparkles size={18} color={selectedTab === 'today' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+              <Text style={[deskStyles.sidebarLabel, selectedTab === 'today' && deskStyles.sidebarLabelActive]}>
+                {t('nav.today')}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setSelectedTab('coach')}
+              style={[deskStyles.sidebarItem, selectedTab === 'coach' && deskStyles.sidebarItemActive]}
+            >
+              <Bot size={18} color={selectedTab === 'coach' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+              <Text style={[deskStyles.sidebarLabel, selectedTab === 'coach' && deskStyles.sidebarLabelActive]}>
+                {t('nav.coach')}
+              </Text>
+            </Pressable>
+
+            {/* New Workout FAB */}
+            <Pressable
+              style={deskStyles.sidebarFab}
+              onPress={() => setQuickLaunchVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Create or add new workout"
+            >
+              <Plus size={18} color="#C9465B" strokeWidth={2.8} />
+              <Text style={deskStyles.sidebarFabLabel}>New Workout</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setSelectedTab('progress')}
+              style={[deskStyles.sidebarItem, selectedTab === 'progress' && deskStyles.sidebarItemActive]}
+            >
+              <HeartPulse size={18} color={selectedTab === 'progress' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+              <Text style={[deskStyles.sidebarLabel, selectedTab === 'progress' && deskStyles.sidebarLabelActive]}>
+                {t('nav.rhythm')}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setSelectedTab('garden')}
+              style={[deskStyles.sidebarItem, selectedTab === 'garden' && deskStyles.sidebarItemActive]}
+            >
+              <Flower2 size={18} color={selectedTab === 'garden' ? '#FFFFFF' : 'rgba(255,255,255,0.7)'} />
+              <Text style={[deskStyles.sidebarLabel, selectedTab === 'garden' && deskStyles.sidebarLabelActive]}>
+                {t('nav.garden')}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Bottom profile / settings */}
+          <View style={deskStyles.sidebarBottom}>
+            <Pressable style={deskStyles.sidebarProfileBtn} onPress={() => setProfileModalVisible(true)}>
+              <View style={deskStyles.sidebarMonogram}>
+                <Text style={deskStyles.sidebarMonogramText}>{userProfile.monogram}</Text>
+              </View>
+              <Text style={deskStyles.sidebarProfileLabel} numberOfLines={1}>{userProfile.greetingName.replace('Hi, ', '')}</Text>
+            </Pressable>
+            <Pressable style={deskStyles.sidebarStoreBtn} onPress={() => setStoreVisible(true)}>
+              <ShoppingBag size={16} color="rgba(255,255,255,0.8)" />
+              <Text style={deskStyles.sidebarLabel}>Store</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* ── CONTENT AREA (fills right of sidebar on desktop, full width on mobile) ── */}
+      <View style={[{ flex: 1 }, isDesktop && deskStyles.contentArea]}>
+
       {/* ── TAB VIEWS (PRESERVED FOR ZERO-LATENCY INSTANT NAVIGATION) ── */}
       <View style={[styles.tabContainer, { display: selectedTab === 'garden' ? 'flex' : 'none' }]}>
         <GardenView
@@ -661,6 +748,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onOpenStore={() => setStoreVisible(true)}
           onOpenProfile={() => setProfileModalVisible(true)}
           userMonogram={userProfile.monogram}
+          isDesktop={isDesktop}
         />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'coach' ? 'flex' : 'none' }]}>
@@ -669,6 +757,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onOpenStore={() => setStoreVisible(true)}
           onOpenProfile={() => setProfileModalVisible(true)}
           userMonogram={userProfile.monogram}
+          isDesktop={isDesktop}
         />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'progress' ? 'flex' : 'none' }]}>
@@ -685,10 +774,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onOpenStore={() => setStoreVisible(true)}
           onOpenProfile={() => setProfileModalVisible(true)}
           userMonogram={userProfile.monogram}
+          isDesktop={isDesktop}
         />
       </View>
       <View style={[styles.tabContainer, { display: selectedTab === 'today' ? 'flex' : 'none' }]}>
-        {/* ── STICKY UPPER NAV BAR ON SCROLL ── */}
+        {/* ── STICKY UPPER NAV BAR ON SCROLL (mobile only — desktop uses sidebar) ── */}
+        {!isDesktop && (
         <Animated.View
           style={[styles.stickyNavBar, stickyNavAnimStyle]}
           pointerEvents={isScrolled ? 'auto' : 'none'}
@@ -709,14 +800,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             />
           </View>
         </Animated.View>
+        )}
 
         <Animated.ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            isDesktop && deskStyles.scrollContentDesktop,
+          ]}
           showsVerticalScrollIndicator={false}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
         >
+          {/* desktop inner max-width centering */}
+          <View style={isDesktop ? deskStyles.todayInner : undefined}>
           {/* ── TOP LUXURY EDITORIAL HEADER ── */}
         <View style={styles.header}>
           <View style={styles.headerTextWrap}>
@@ -1096,6 +1193,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           {/* Bottom padding for floating dock */}
           <View style={{ height: 90 }} />
+          </View>
         </Animated.ScrollView>
       </View>
 
@@ -1138,8 +1236,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }}
       />
 
-
-      {/* ── FLOATING LUXURY BOTTOM NAVIGATION BAR ── */}
+      {/* ── FLOATING LUXURY BOTTOM NAVIGATION BAR (mobile only) ── */}
+      {!isDesktop && (
       <View style={styles.floatingNavWrapper}>
         <View style={styles.floatingNavBar}>
           {/* Rose Gradient Background Wrapper (clipped) */}
@@ -1288,6 +1386,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </Pressable>
         </View>
       </View>
+      )} {/* end !isDesktop bottom nav */}
+
+      </View> {/* end contentArea */}
 
       {/* ── 2/3 HEIGHT QUICK LAUNCH SHEET (EXPANDS FROM PLUS BUTTON) ── */}
       <QuickLaunchSheet
@@ -2620,3 +2721,174 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
 });
+
+// ── DESKTOP STYLES ──────────────────────────────────────────────────────────
+const SIDEBAR_W = 220;
+
+const deskStyles = StyleSheet.create({
+  safeAreaDesktop: {
+    flexDirection: 'row',
+  },
+
+  // ── Sidebar shell ──
+  sidebar: {
+    width: SIDEBAR_W,
+    height: '100%' as any,
+    flexDirection: 'column',
+    backgroundColor: '#C9465B',
+    // rose gradient approximated via solid — LinearGradient would need absolute fill
+    paddingTop: 24,
+    paddingBottom: 20,
+    paddingHorizontal: 14,
+    // web box-shadow equivalent
+    ...Platform.select({
+      default: {
+        shadowColor: '#8B2235',
+        shadowOffset: { width: 2, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+    }),
+  } as any,
+
+  // Brand area at top of sidebar
+  sidebarBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 32,
+    paddingHorizontal: 6,
+  },
+  sidebarDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+  },
+  sidebarBrandText: {
+    fontSize: 18,
+    fontFamily: fontFamilies.soria,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+
+  // Nav item group
+  sidebarNav: {
+    flex: 1,
+    gap: 4,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  sidebarItemActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  sidebarLabel: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: 'rgba(255,255,255,0.75)',
+    letterSpacing: 0.2,
+  },
+  sidebarLabelActive: {
+    color: '#FFFFFF',
+  },
+
+  // New Workout FAB inside sidebar
+  sidebarFab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    marginVertical: 8,
+    ...Platform.select({
+      default: {
+        shadowColor: '#8B2235',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+    }),
+  } as any,
+  sidebarFabLabel: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: '#C9465B',
+  },
+
+  // Bottom section: profile + store
+  sidebarBottom: {
+    gap: 6,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  sidebarProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  sidebarMonogram: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  sidebarMonogramText: {
+    fontSize: 13,
+    fontFamily: fontFamilies.soria,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  sidebarProfileLabel: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  sidebarStoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+
+  // ── Content area right of sidebar ──
+  contentArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+    height: '100%' as any,
+    overflow: 'hidden' as any,
+  },
+  scrollContentDesktop: {
+    paddingHorizontal: 0,
+    maxWidth: 900,
+    alignSelf: 'center' as any,
+    width: '100%',
+  },
+  todayInner: {
+    maxWidth: 860,
+    width: '100%',
+    alignSelf: 'center' as any,
+  },
+});
+
+

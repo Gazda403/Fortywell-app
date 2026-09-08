@@ -31,6 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LanguageProvider } from './context/LanguageContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { getStoredSettings } from './lib/userSettings';
+import { useIsDesktop } from './hooks/useIsDesktop';
 import { flushUserCaches } from './hooks/useUserData';
 
 const STORAGE_PROFILE_KEY = '@fortywell_completed_profile';
@@ -70,6 +71,9 @@ function checkIsStandalone(): boolean {
     return true; // Native apps are always standalone
   }
   try {
+    // Desktop browsers (≥ 900px) always bypass the PWA gate
+    if (window.innerWidth >= 900) return true;
+
     const isStandaloneMatch = window.matchMedia && (
       window.matchMedia('(display-mode: standalone)').matches ||
       window.matchMedia('(display-mode: fullscreen)').matches ||

@@ -121,6 +121,7 @@ interface CoachScreenProps {
   onOpenStore?: () => void;
   onOpenProfile?: () => void;
   userMonogram?: string;
+  isDesktop?: boolean;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -494,6 +495,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
   onOpenStore,
   onOpenProfile,
   userMonogram,
+  isDesktop,
 }) => {
   const { userProfile, feelingCheckins, logFeeling } = useUserData(answers);
   const { isPaused, openPaywall } = useSubscription();
@@ -899,7 +901,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
       <ScrollView
         ref={scrollRef}
         style={s.scroll}
-        contentContainerStyle={s.scrollContent}
+        contentContainerStyle={[
+          s.scrollContent,
+          isDesktop && s.scrollContentDesktop,
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -1907,6 +1912,12 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 16, paddingHorizontal: 24 },
+  scrollContentDesktop: {
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center' as any,
+    paddingTop: 24,
+  },
 
   // ── HEADER ──
   header: {
