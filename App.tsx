@@ -22,6 +22,8 @@ import { AuthScreen } from './screens/AuthScreen';
 import { OnboardingQuizScreen } from './screens/OnboardingQuizScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PwaWelcomeGate } from './components/PwaWelcomeGate';
+import { VercelAnalytics } from './components/VercelAnalytics';
+import { trackScreenView } from './lib/analytics';
 import { OnboardingAnswers } from './types/onboarding';
 import { colors } from './theme/colors';
 import { supabase } from './lib/supabase';
@@ -100,6 +102,13 @@ export default function App() {
   // should not race-navigate again on the same session restore.
   const sessionHandledRef = React.useRef(false);
   const [completedProfile, setCompletedProfile] = useState<OnboardingAnswers | null>(null);
+
+  // Track virtual screen views in Vercel Web Analytics
+  useEffect(() => {
+    if (activeScreen !== 'loading') {
+      trackScreenView(activeScreen);
+    }
+  }, [activeScreen]);
 
   const [fontsLoaded] = useFonts({
     'Soria': require('./assets/fonts/soria-font.ttf'),
@@ -346,6 +355,7 @@ export default function App() {
   if (!isInstalledApp) {
     return (
       <SafeAreaProvider>
+        <VercelAnalytics />
         <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
         <PwaWelcomeGate onEnterApp={() => setIsInstalledApp(true)} />
       </SafeAreaProvider>
@@ -356,6 +366,7 @@ export default function App() {
     <LanguageProvider>
       <SubscriptionProvider>
         <SafeAreaProvider>
+          <VercelAnalytics />
           <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
           {activeScreen === 'auth' && (
