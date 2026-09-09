@@ -273,6 +273,17 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
       setCurrentStepIndex((prev) => prev + 1);
     } else {
       setIsCompleted(true);
+      // Meta Pixel: CompleteRegistration — fires when user completes the onboarding quiz
+      try {
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'CompleteRegistration', {
+            content_name: 'FortyWell Onboarding Quiz',
+            status: 'completed',
+            currency: 'USD',
+            value: 0.0,
+          });
+        }
+      } catch (_) {}
       await saveProfileToSupabase();
     }
   };
@@ -322,6 +333,24 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
       await AsyncStorage.setItem('@fortywell_completed_profile', JSON.stringify(answers));
       await AsyncStorage.setItem('@fortywell_onboarding_completed', 'true');
     } catch (_) {}
+
+    // Meta Pixel: CompleteRegistration & StartTrial — fires right when initial setup finishes
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'FortyWell Initial Setup Complete',
+          status: 'success',
+          currency: 'USD',
+          value: 0.0,
+        });
+        (window as any).fbq('track', 'StartTrial', {
+          content_name: 'FortyWell 7-Day Free Trial',
+          currency: 'USD',
+          value: 0.0,
+        });
+      }
+    } catch (_) {}
+
     if (onFlowCompleted) onFlowCompleted(answers);
   };
 

@@ -337,6 +337,19 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsAwaitingVerification(true);
         setVerificationMessage(null);
 
+        // Meta Pixel: InitiateCheckout — fires the moment checkout opens
+        try {
+          if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+            const pixelValue = billingInterval === 'annual' ? 149.0 : 19.99;
+            (window as any).fbq('track', 'InitiateCheckout', {
+              content_name: 'FortyWell Subscription',
+              content_category: billingInterval === 'annual' ? 'Annual Plan' : 'Monthly Plan',
+              currency: 'USD',
+              value: pixelValue,
+            });
+          }
+        } catch (_) {}
+
         // Open in browser (in-app on mobile or new tab on web)
         if (Platform.OS === 'web') {
           if (typeof window !== 'undefined') {

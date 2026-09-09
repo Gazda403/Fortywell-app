@@ -144,6 +144,18 @@ export const CoachLeadModal: React.FC<CoachLeadModalProps> = ({
       const delimiter = LEMON_SQUEEZY_CHECKOUT_URL.includes('?') ? '&' : '?';
       const checkoutUrl = `${LEMON_SQUEEZY_CHECKOUT_URL}${delimiter}${params.join('&')}`;
 
+      // Meta Pixel: InitiateCheckout — fires right before coaching checkout opens
+      try {
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'InitiateCheckout', {
+            content_name: 'FortyWell 1:1 Coaching',
+            content_category: 'Coaching — ' + appDisplayName,
+            currency: 'USD',
+            value: 55.0,
+          });
+        }
+      } catch (_) {}
+
       // 3. Open checkout in browser
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {

@@ -323,11 +323,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
 
       try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 
-      // Track Meta Pixel CompleteRegistration
+      // Track Meta Pixel CompleteRegistration & StartTrial
       if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
         (window as any).fbq('track', 'CompleteRegistration', {
           content_name: 'FortyWell Member Account',
           status: 'success',
+          currency: 'USD',
+          value: 0.0,
+        });
+        (window as any).fbq('track', 'StartTrial', {
+          content_name: 'FortyWell 7-Day Free Trial',
+          currency: 'USD',
+          value: 0.0,
         });
       }
 
@@ -404,11 +411,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
 
       try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 
-      // Track Meta Pixel CompleteRegistration
+      // Track Meta Pixel CompleteRegistration & StartTrial
       if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
         (window as any).fbq('track', 'CompleteRegistration', {
           content_name: 'FortyWell Member Account',
           status: 'success',
+          currency: 'USD',
+          value: 0.0,
+        });
+        (window as any).fbq('track', 'StartTrial', {
+          content_name: 'FortyWell 7-Day Free Trial',
+          currency: 'USD',
+          value: 0.0,
         });
       }
 

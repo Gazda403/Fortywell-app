@@ -96,9 +96,25 @@ export const OnboardingSummary: React.FC<OnboardingSummaryProps> = ({
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-    } catch {
-      // safe fallback
-    }
+    } catch (_) {}
+
+    // Meta Pixel: CompleteRegistration & StartTrial — fires on tap to start daily rhythm & enter sanctuary
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'CompleteRegistration', {
+          content_name: 'FortyWell Onboarding Setup Complete',
+          status: 'success',
+          currency: 'USD',
+          value: 0.0,
+        });
+        (window as any).fbq('track', 'StartTrial', {
+          content_name: 'FortyWell 7-Day Free Trial',
+          currency: 'USD',
+          value: 0.0,
+        });
+      }
+    } catch (_) {}
+
     onComplete();
   };
 

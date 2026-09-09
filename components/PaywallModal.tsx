@@ -72,6 +72,20 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ onDismissToGarden })
     try {
       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (_) {}
+
+    // Meta Pixel: InitiateCheckout — fires on button tap, before checkout opens
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        const pixelValue = selectedInterval === 'annual' ? pricing.annualPrice : pricing.monthlyPrice;
+        (window as any).fbq('track', 'InitiateCheckout', {
+          content_name: 'FortyWell Subscription',
+          content_category: selectedInterval === 'annual' ? 'Annual Plan' : 'Monthly Plan',
+          currency: 'USD',
+          value: pixelValue,
+        });
+      }
+    } catch (_) {}
+
     setIsProcessing(true);
     try {
       await subscribe(selectedInterval);
