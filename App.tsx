@@ -23,6 +23,7 @@ import { OnboardingQuizScreen } from './screens/OnboardingQuizScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PwaWelcomeGate } from './components/PwaWelcomeGate';
 import { VercelAnalytics } from './components/VercelAnalytics';
+import { MetaPixel } from './components/MetaPixel';
 import { trackScreenView } from './lib/analytics';
 import { OnboardingAnswers } from './types/onboarding';
 import { colors } from './theme/colors';
@@ -360,6 +361,7 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <VercelAnalytics />
+        <MetaPixel />
         <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
         <PwaWelcomeGate onEnterApp={() => setIsInstalledApp(true)} />
       </SafeAreaProvider>
@@ -371,6 +373,7 @@ export default function App() {
       <SubscriptionProvider>
         <SafeAreaProvider>
           <VercelAnalytics />
+          <MetaPixel />
           <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
           {activeScreen === 'auth' && (
