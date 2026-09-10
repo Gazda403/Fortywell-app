@@ -232,6 +232,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const ENABLE_GOOGLE_OAUTH = false;
 
   const emailRef = useRef<TextInput>(null);
   const pwdRef = useRef<TextInput>(null);
@@ -731,30 +732,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
                   )}
                 </Pressable>
 
-                {/* Divider */}
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
+                {/* Google OAuth (Turned off for now) */}
+                {ENABLE_GOOGLE_OAUTH && (
+                  <>
+                    <View style={styles.dividerRow}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>or</Text>
+                      <View style={styles.dividerLine} />
+                    </View>
 
-                {/* Google OAuth */}
-                <Pressable
-                  style={[styles.googleBtn, googleLoading && styles.googleBtnDisabled]}
-                  onPress={handleGoogleOAuth}
-                  disabled={googleLoading}
-                  accessibilityRole="button"
-                  accessibilityLabel="Continue with Google"
-                >
-                  {googleLoading ? (
-                    <ActivityIndicator size="small" color={colors.textSecondary} />
-                  ) : (
-                    <>
-                      <Text style={styles.googleG}>G</Text>
-                      <Text style={styles.googleBtnText}>Continue with Google</Text>
-                    </>
-                  )}
-                </Pressable>
+                    <Pressable
+                      style={[styles.googleBtn, googleLoading && styles.googleBtnDisabled]}
+                      onPress={handleGoogleOAuth}
+                      disabled={googleLoading}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continue with Google"
+                    >
+                      {googleLoading ? (
+                        <ActivityIndicator size="small" color={colors.textSecondary} />
+                      ) : (
+                        <>
+                          <Text style={styles.googleG}>G</Text>
+                          <Text style={styles.googleBtnText}>Continue with Google</Text>
+                        </>
+                      )}
+                    </Pressable>
+                  </>
+                )}
 
                 {/* Footer toggle */}
                 <Pressable
@@ -826,29 +830,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
                   )}
                 </Pressable>
 
-                {/* Divider */}
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
+                {/* Google OAuth (Turned off for now) */}
+                {ENABLE_GOOGLE_OAUTH && (
+                  <>
+                    <View style={styles.dividerRow}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>or</Text>
+                      <View style={styles.dividerLine} />
+                    </View>
 
-                <Pressable
-                  style={[styles.googleBtn, googleLoading && styles.googleBtnDisabled]}
-                  onPress={handleGoogleOAuth}
-                  disabled={googleLoading}
-                  accessibilityRole="button"
-                  accessibilityLabel="Continue with Google"
-                >
-                  {googleLoading ? (
-                    <ActivityIndicator size="small" color={colors.textSecondary} />
-                  ) : (
-                    <>
-                      <Text style={styles.googleG}>G</Text>
-                      <Text style={styles.googleBtnText}>Continue with Google</Text>
-                    </>
-                  )}
-                </Pressable>
+                    <Pressable
+                      style={[styles.googleBtn, googleLoading && styles.googleBtnDisabled]}
+                      onPress={handleGoogleOAuth}
+                      disabled={googleLoading}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continue with Google"
+                    >
+                      {googleLoading ? (
+                        <ActivityIndicator size="small" color={colors.textSecondary} />
+                      ) : (
+                        <>
+                          <Text style={styles.googleG}>G</Text>
+                          <Text style={styles.googleBtnText}>Continue with Google</Text>
+                        </>
+                      )}
+                    </Pressable>
+                  </>
+                )}
 
                 <Pressable
                   style={styles.footerLink}
