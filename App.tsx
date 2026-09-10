@@ -271,6 +271,27 @@ export default function App() {
             await AsyncStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(finalProfile));
             await AsyncStorage.setItem(STORAGE_ONBOARDING_COMPLETED_KEY, 'true');
           } catch (_) {}
+
+          // Track Meta Pixel CompleteRegistration if new signup (e.g. Google OAuth)
+          const isFreshUser = !profile || (user.created_at && (Date.now() - new Date(user.created_at).getTime() < 120000));
+          if (isFreshUser) {
+            try {
+              if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+                (window as any).fbq('track', 'CompleteRegistration', {
+                  content_name: 'FortyWell Member Account (Google)',
+                  status: 'success',
+                  currency: 'USD',
+                  value: 0.0,
+                });
+                (window as any).fbq('track', 'StartTrial', {
+                  content_name: 'FortyWell 7-Day Free Trial',
+                  currency: 'USD',
+                  value: 0.0,
+                });
+              }
+            } catch (_) {}
+          }
+
           sessionHandledRef.current = true;
           setActiveScreen('home');
         }
