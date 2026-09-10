@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -103,7 +103,7 @@ const TOUR_STEPS: TourStep[] = [
     accentColor: ROSE,
     iconBg: 'rgba(201,70,91,0.1)',
     Icon: Sun,
-    tag: '🌅 Morning  •  💪 Main  •  🌙 Night',
+    tag: 'Morning Warmup  •  Main Workout  •  Night Wind-Down',
   },
   {
     id: 2,
@@ -118,7 +118,7 @@ const TOUR_STEPS: TourStep[] = [
     accentColor: AMBER,
     iconBg: 'rgba(176,122,53,0.1)',
     Icon: BarChart2,
-    tag: '🔥 Streak  •  ⏱ Target  •  🎯 Weekly Goal',
+    tag: 'Active Streak  •  Daily Target  •  Weekly Consistency',
   },
   {
     id: 3,
@@ -133,7 +133,7 @@ const TOUR_STEPS: TourStep[] = [
     accentColor: VIOLET,
     iconBg: 'rgba(124,101,165,0.1)',
     Icon: Bot,
-    tag: '🤖 Ask anything about your body',
+    tag: '24/7 Hormone-aware coaching & guidance',
   },
   {
     id: 4,
@@ -148,7 +148,7 @@ const TOUR_STEPS: TourStep[] = [
     accentColor: TEAL,
     iconBg: 'rgba(61,139,139,0.1)',
     Icon: Activity,
-    tag: '📅 Weekly plan  •  🔄 Cycle sync',
+    tag: 'Weekly Rhythm  •  Cycle Phase Sync',
   },
   {
     id: 5,
@@ -163,7 +163,7 @@ const TOUR_STEPS: TourStep[] = [
     accentColor: SAGE,
     iconBg: 'rgba(112,134,85,0.1)',
     Icon: Leaf,
-    tag: '🌱 Grows with every session you complete',
+    tag: 'Visual garden progress with every completed session',
   },
   {
     id: 6,
@@ -176,6 +176,14 @@ const TOUR_STEPS: TourStep[] = [
     iconBg: 'rgba(201,70,91,0.12)',
     Icon: Sparkles,
   },
+];
+
+const INTRO_FEATURES = [
+  { Icon: Sun, color: ROSE, label: 'Your 3 daily sessions' },
+  { Icon: BarChart2, color: AMBER, label: 'Streak & weekly goals' },
+  { Icon: Bot, color: VIOLET, label: '24/7 AI Coach' },
+  { Icon: Activity, color: TEAL, label: 'Rhythm & Cycle view' },
+  { Icon: Leaf, color: SAGE, label: 'Living Garden progress' },
 ];
 
 const FALLBACK_RECTS: Record<SpotlightTargetKey, ElementRect> = {
@@ -393,15 +401,11 @@ export const SpotlightTour: React.FC<SpotlightTourProps> = ({
 
             {currentStep.type === 'intro' && (
               <View style={s.featureList}>
-                {[
-                  { icon: '🌅', label: 'Your 3 daily sessions' },
-                  { icon: '🔥', label: 'Streak & weekly goals' },
-                  { icon: '🤖', label: 'AI Coach' },
-                  { icon: '📅', label: 'Rhythm & Cycle view' },
-                  { icon: '🌱', label: 'Living Garden' },
-                ].map((f) => (
+                {INTRO_FEATURES.map((f) => (
                   <View key={f.label} style={s.featureRow}>
-                    <Text style={s.featureIcon}>{f.icon}</Text>
+                    <View style={[s.featureIconBadge, { backgroundColor: f.color + '18' }]}>
+                      <f.Icon size={13} color={f.color} strokeWidth={2.2} />
+                    </View>
                     <Text style={s.featureLabel}>{f.label}</Text>
                   </View>
                 ))}
@@ -659,10 +663,12 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  featureIcon: {
-    fontSize: 16,
+  featureIconBadge: {
     width: 24,
-    textAlign: 'center',
+    height: 24,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureLabel: {
     fontSize: 13,
