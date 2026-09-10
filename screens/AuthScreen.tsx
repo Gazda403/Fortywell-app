@@ -379,14 +379,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
     setGoogleLoading(true);
     setAuthError(null);
     try {
+      const redirectUrl =
+        Platform.OS === 'web' && typeof window !== 'undefined'
+          ? window.location.origin
+          : 'https://fortywell-app.vercel.app';
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: 'https://yadjzsjfmamckptqotap.supabase.co/auth/v1/callback' },
+        options: {
+          redirectTo: redirectUrl,
+        },
       });
       if (error) throw error;
       // OAuth redirects — onLoginSuccess will be called once session is detected
     } catch (err: any) {
-      setAuthError('Google sign-in is not available right now. Use email instead.');
+      console.error('Google OAuth error:', err);
+      setAuthError(err?.message || 'Google sign-in is not available right now. Use email instead.');
     } finally {
       setGoogleLoading(false);
     }
