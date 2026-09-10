@@ -640,7 +640,7 @@ export function PwaWelcomeGate({ onEnterApp }: PwaWelcomeGateProps) {
               <View style={styles.safariBarPreview}>
                 <View style={styles.safariBarAddress}>
                   <Text style={styles.safariBarAddressText} numberOfLines={1}>
-                    fortywell-mobile.vercel.app
+                    {typeof window !== 'undefined' ? window.location.host : 'fortywell-app.vercel.app'}
                   </Text>
                 </View>
                 <View style={styles.safariBarIcons}>
