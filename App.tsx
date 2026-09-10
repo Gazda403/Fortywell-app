@@ -72,6 +72,12 @@ function checkIsStandalone(): boolean {
     return true; // Native apps are always standalone
   }
   try {
+    const params = new URLSearchParams(window.location.search);
+    // Testing mode: allow forcing the gate on any device or screen width
+    if (params.get('ios') || params.get('gate') || params.get('preview')) {
+      return false;
+    }
+
     // Desktop browsers (≥ 900px) always bypass the PWA gate
     if (window.innerWidth >= 900) return true;
 

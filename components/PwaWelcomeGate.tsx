@@ -46,6 +46,19 @@ interface PwaWelcomeGateProps {
 // ─── iOS detection helpers ────────────────────────────────────────────────────
 function detectIOSInfo(): { isIOS: boolean; isSafari: boolean; isChrome: boolean } {
   if (typeof navigator === 'undefined') return { isIOS: false, isSafari: false, isChrome: false };
+
+  // Testing parameter overrides: allows testing iOS modes on any desktop browser or device
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const testIos = params.get('ios');
+    if (testIos === 'chrome') {
+      return { isIOS: true, isSafari: false, isChrome: true };
+    }
+    if (testIos === '1' || testIos === 'safari' || testIos === 'true' || params.get('preview') === 'ios') {
+      return { isIOS: true, isSafari: true, isChrome: false };
+    }
+  }
+
   const ua = navigator.userAgent.toLowerCase();
   const isIOS =
     /ipad|iphone|ipod/.test(ua) ||
