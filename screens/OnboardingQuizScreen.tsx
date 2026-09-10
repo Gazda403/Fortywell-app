@@ -6,10 +6,10 @@ import {
   ScrollView,
   Pressable,
   Platform,
-  Dimensions,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -40,7 +40,7 @@ import { OnboardingSummary } from '../components/OnboardingSummary';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { height: SCREEN_H } = Dimensions.get('window');
+// NOTE: No static Dimensions — we use useWindowDimensions() inside the component for live values
 
 interface OnboardingQuizScreenProps {
   firstName?: string;
@@ -51,6 +51,10 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
   firstName,
   onFlowCompleted,
 }) => {
+  // Always use live window dimensions — never a stale static capture
+  const { height: SCREEN_H } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -100,12 +104,14 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
     }
   }, [introProgress]);
 
-  // Title translation: glides smoothly from centered position to top
+  // Title translation: glides from center of visible content area to top.
+  // Use a fixed offset (~100px) instead of a screen-height fraction to avoid
+  // misplacement on short/tall screens and web where SCREEN_H can be wrong at paint time.
   const titleAnimatedStyle = useAnimatedStyle(() => {
     const translateY = interpolate(
       introProgress.value,
       [0, 1],
-      [SCREEN_H * 0.16, 0],
+      [Math.min(SCREEN_H * 0.14, 100), 0],
       Extrapolate.CLAMP
     );
 
@@ -944,11 +950,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Footer
+  // Footer — no insets here; SafeAreaView with edges=['bottom'] handles the home indicator
   footer: {
     paddingHorizontal: 24,
     paddingTop: 8,
-    paddingBottom: 20,
+    paddingBottom: 16,
     backgroundColor: colors.background,
   },
   continueButton: {

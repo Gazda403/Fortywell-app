@@ -72,7 +72,9 @@ function checkIsStandalone(): boolean {
     return true; // Native apps are always standalone
   }
   try {
+    // Single URLSearchParams instance reused throughout
     const params = new URLSearchParams(window.location.search);
+
     // Testing mode: allow forcing the gate on any device or screen width
     if (params.get('ios') || params.get('gate') || params.get('preview')) {
       return false;
@@ -90,7 +92,6 @@ function checkIsStandalone(): boolean {
 
     if ((window.navigator as any)?.standalone === true) return true;
 
-    const params = new URLSearchParams(window.location.search);
     if (params.get('mode') === 'standalone' || params.get('pwa') === '1' || params.get('app') === 'true') {
       return true;
     }

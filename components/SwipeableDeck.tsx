@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   Platform,
   Pressable,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -24,9 +24,7 @@ import { colors } from '../theme/colors';
 import { fontFamilies } from '../theme/typography';
 import { QuizOption } from '../types/onboarding';
 
-const { width: W } = Dimensions.get('window');
-
-const SWIPE_THRESHOLD = W * 0.25;
+const SWIPE_THRESHOLD_RATIO = 0.25; // 25% of window width
 const CARD_PEEK = 8; // px each card behind peeks below
 
 // Per-card background tones for deck depth
@@ -55,6 +53,9 @@ const DeckCard = React.memo(function DeckCard({
   onSwipeLeft: () => void;
   entranceDelay: number;
 }) {
+  const { width: W } = useWindowDimensions();
+  const SWIPE_THRESHOLD = W * SWIPE_THRESHOLD_RATIO;
+
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(50);
   const opacity = useSharedValue(0);
@@ -257,6 +258,9 @@ export const SwipeableDeck: React.FC<SwipeableDeckProps> = ({
   onSelect,
   onDeselect,
 }) => {
+  const { height: SCREEN_H } = useWindowDimensions();
+  // Card area height: 32% of screen height, clamped between 180 and 280px
+  const CARD_AREA_H = Math.min(Math.max(Math.round(SCREEN_H * 0.32), 180), 280);
   const [deckOrder, setDeckOrder] = useState<number[]>(
     options.map((_, i) => i)
   );
@@ -298,9 +302,9 @@ export const SwipeableDeck: React.FC<SwipeableDeckProps> = ({
 
   return (
     <View style={styles.deckWrapper}>
-      <View style={styles.row}>
+      <View style={[styles.row, { minHeight: CARD_AREA_H }]}>
         {/* ── CARD DECK ── */}
-        <View style={styles.deckArea}>
+        <View style={[styles.deckArea, { height: CARD_AREA_H }]}>
           {deckOrder.length === 0 ? (
             <View style={styles.emptyDeck}>
               <Text style={styles.emptyDeckText}>
@@ -393,13 +397,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    minHeight: 220,
+    // minHeight and height are injected inline via CARD_AREA_H
   },
 
   // ── DECK AREA ──
   deckArea: {
     flex: 1,
-    height: 220,
+    // height injected inline via CARD_AREA_H
     position: 'relative',
     marginTop: 4,
   },
