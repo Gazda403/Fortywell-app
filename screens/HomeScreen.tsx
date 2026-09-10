@@ -303,6 +303,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [targetRects, setTargetRects] = useState<TargetRectsMap>({});
   // Ensure tour only ever fires ONCE per account mount
   const tourShownRef = React.useRef(false);
+  // Refs for measureInWindow (screen-absolute coordinates)
+  const metricsStripRef = React.useRef<View>(null);
+  const heroSectionRef = React.useRef<View>(null);
+
+  const measureTourTargets = React.useCallback(() => {
+    // Small delay to let layout settle
+    setTimeout(() => {
+      metricsStripRef.current?.measureInWindow((x, y, width, height) => {
+        if (width > 0 && height > 0) {
+          setTargetRects((prev) => ({ ...prev, readinessStrip: { x: Math.max(0, x), y: Math.max(0, y), width, height } }));
+        }
+      });
+      heroSectionRef.current?.measureInWindow((x, y, width, height) => {
+        if (width > 0 && height > 0) {
+          setTargetRects((prev) => ({ ...prev, todaySessions: { x: Math.max(0, x), y: Math.max(0, y), width, height } }));
+        }
+      });
+    }, 400);
+  }, []);
 
   // Automatically trigger first-time guided walkthrough on initial landing
   React.useEffect(() => {
@@ -343,6 +362,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
     checkWalkthrough();
   }, [userLoading, userProfile.hasSeenWalkthrough, userProfile?.id]);
+
+  // Re-measure tour targets every time the tour opens (handles scroll position changes)
+  React.useEffect(() => {
+    if (tourVisible) measureTourTargets();
+  }, [tourVisible, measureTourTargets]);
 
   const handleTourComplete = React.useCallback(() => {
     setTourVisible(false);
@@ -907,19 +931,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             {/* ── METRICS STRIP (3D depth & real transparent stats) ── */}
             <View
+              ref={metricsStripRef}
               style={styles.metricsStrip}
-              onLayout={(e) => {
-                const { x, y, width, height } = e.nativeEvent.layout;
-                setTargetRects((prev) => ({
-                  ...prev,
-                  readinessStrip: {
-                    x: x || 20,
-                    y: Math.max(220, y + 170),
-                    width: width || SCREEN_W - 40,
-                    height: height || 75,
-                  },
-                }));
-              }}
+              onLayout={measureTourTargets}
             >
               {/* Stat 1: Active Streak */}
               <View style={styles.metricCard}>
@@ -959,19 +973,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* ── HERO GRADIENT CARD: START TODAY'S WORKOUT ── */}
         <View
+          ref={heroSectionRef}
           style={styles.heroSection}
-          onLayout={(e) => {
-            const { x, y, width, height } = e.nativeEvent.layout;
-            setTargetRects((prev) => ({
-              ...prev,
-              todaySessions: {
-                x: x || 16,
-                y: Math.max(340, y + 260),
-                width: width || SCREEN_W - 32,
-                height: Math.min(height || 190, 240),
-              },
-            }));
-          }}
         >
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionKicker}>
