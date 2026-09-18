@@ -110,6 +110,8 @@ export default function App() {
   const [isInstalledApp, setIsInstalledApp] = useState<boolean>(() => checkIsStandalone());
   const [activeScreen, setActiveScreen] = useState<AppScreen>('loading');
   const [userFirstName, setUserFirstName] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authInitialMode, setAuthInitialMode] = useState<'signup' | 'login'>('signup');
   // Flag: once checkAuthSession has navigated away from loading, the auth listener
   // should not race-navigate again on the same session restore.
   const sessionHandledRef = React.useRef(false);
@@ -177,13 +179,19 @@ export default function App() {
 
         if (!session?.user) {
           if (isMounted) {
+            setIsAuthenticated(false);
+            if (localProfile) {
+              setCompletedProfile(localProfile);
+            }
             sessionHandledRef.current = true;
-            setActiveScreen('auth');
+            // Reverse flow: Guest users start directly on the Quiz screen
+            setActiveScreen('quiz');
           }
           return;
         }
 
         const user = session.user;
+        setIsAuthenticated(true);
         const name = user.user_metadata?.full_name || '';
         if (name && isMounted) {
           setUserFirstName(name.split(' ')[0]);
@@ -227,8 +235,9 @@ export default function App() {
       } catch (err) {
         console.warn('Auth check notice:', err);
         if (isMounted) {
+          setIsAuthenticated(false);
           sessionHandledRef.current = true;
-          setActiveScreen('auth');
+          setActiveScreen('quiz');
         }
       }
     }
@@ -239,16 +248,18 @@ export default function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         sessionHandledRef.current = false;
+        setIsAuthenticated(false);
         await clearSharedStorage();
         if (isMounted) {
           setCompletedProfile(null);
           setUserFirstName('');
-          setActiveScreen('auth');
+          setActiveScreen('quiz');
         }
       } else if (event === 'SIGNED_IN' && session?.user) {
         // Guard: if checkAuthSession already handled this session (normal page load),
         // don't race-navigate again. Only act on genuine new sign-ins.
         if (isMounted && !sessionHandledRef.current) {
+          setIsAuthenticated(true);
           const user = session.user;
           const name = user.user_metadata?.full_name || '';
           let profile: any = null;
@@ -313,7 +324,9 @@ export default function App() {
 
   const handleAccountCreated = useCallback((firstName: string) => {
     setUserFirstName(firstName);
-    setActiveScreen('quiz');
+    setIsAuthenticated(true);
+    // User already completed the quiz -> go straight into Sanctuary Home!
+    setActiveScreen('home');
   }, []);
 
   const handleLoginSuccess = useCallback(async () => {
@@ -324,6 +337,7 @@ export default function App() {
         return;
       }
 
+      setIsAuthenticated(true);
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -350,31 +364,33 @@ export default function App() {
     }
   }, []);
 
-  const handleFlowCompleted = useCallback((answers: OnboardingAnswers) => {
+  const handleFlowCompleted = useCallback(async (answers: OnboardingAnswers) => {
     setCompletedProfile(answers);
     try {
-      AsyncStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(answers));
-      AsyncStorage.setItem(STORAGE_ONBOARDING_COMPLETED_KEY, 'true');
+      await AsyncStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(answers));
     } catch (_) {}
 
-    // Meta Pixel: CompleteRegistration & StartTrial — fires when onboarding finishes and user enters Home/Sanctuary
-    try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
-        (window as any).fbq('track', 'CompleteRegistration', {
-          content_name: 'FortyWell Onboarding Setup Complete',
-          status: 'success',
-          currency: 'USD',
-          value: 0.0,
-        });
-        (window as any).fbq('track', 'StartTrial', {
-          content_name: 'FortyWell 7-Day Free Trial',
-          currency: 'USD',
-          value: 0.0,
-        });
-      }
-    } catch (_) {}
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      // User is already logged in (e.g. recalibrating from Settings) -> save and return to Home
+      try {
+        await AsyncStorage.setItem(STORAGE_ONBOARDING_COMPLETED_KEY, 'true');
+      } catch (_) {}
+      setActiveScreen('home');
+    } else {
+      // User is a guest who completed the quiz -> prompt account creation to save protocol
+      setAuthInitialMode('signup');
+      setActiveScreen('auth');
+    }
+  }, []);
 
-    setActiveScreen('home');
+  const handleGoToLogin = useCallback(() => {
+    setAuthInitialMode('login');
+    setActiveScreen('auth');
+  }, []);
+
+  const handleBackToQuiz = useCallback(() => {
+    setActiveScreen('quiz');
   }, []);
 
   const handleRetakeQuiz = useCallback(() => {
@@ -383,6 +399,7 @@ export default function App() {
 
   const handleSignOut = useCallback(async () => {
     sessionHandledRef.current = false;
+    setIsAuthenticated(false);
     await clearSharedStorage();
     try {
       await supabase.auth.signOut();
@@ -391,7 +408,7 @@ export default function App() {
     }
     setCompletedProfile(null);
     setUserFirstName('');
-    setActiveScreen('auth');
+    setActiveScreen('quiz');
   }, []);
 
   if (!fontsLoaded || activeScreen === 'loading') {
@@ -422,17 +439,23 @@ export default function App() {
           <MetaPixel />
           <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-          {activeScreen === 'auth' && (
-            <AuthScreen
-              onAccountCreated={handleAccountCreated}
-              onLoginSuccess={handleLoginSuccess}
-            />
-          )}
-
           {activeScreen === 'quiz' && (
             <OnboardingQuizScreen
               firstName={userFirstName}
+              isLoggedIn={isAuthenticated}
+              initialAnswers={completedProfile}
               onFlowCompleted={handleFlowCompleted}
+              onGoToLogin={handleGoToLogin}
+            />
+          )}
+
+          {activeScreen === 'auth' && (
+            <AuthScreen
+              initialMode={authInitialMode}
+              pendingAnswers={completedProfile}
+              onAccountCreated={handleAccountCreated}
+              onLoginSuccess={handleLoginSuccess}
+              onBackToQuiz={handleBackToQuiz}
             />
           )}
 

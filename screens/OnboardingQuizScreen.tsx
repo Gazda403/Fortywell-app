@@ -44,12 +44,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface OnboardingQuizScreenProps {
   firstName?: string;
+  isLoggedIn?: boolean;
+  initialAnswers?: OnboardingAnswers | null;
   onFlowCompleted?: (answers: OnboardingAnswers) => void;
+  onGoToLogin?: () => void;
 }
 
 export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
   firstName,
+  isLoggedIn = false,
+  initialAnswers,
   onFlowCompleted,
+  onGoToLogin,
 }) => {
   // Always use live window dimensions — never a stale static capture
   const { height: SCREEN_H } = useWindowDimensions();
@@ -61,16 +67,16 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 
-  const [answers, setAnswers] = useState<OnboardingAnswers>({
-    first_name: firstName || '',
-    target_focus: [],
-    energy_baseline: null,
-    joint_sensitivities: [],
-    time_commitment: null,
-    weekly_frequency: '',
-    training_location: null,
-    equipment: [],
-  });
+  const [answers, setAnswers] = useState<OnboardingAnswers>(() => ({
+    first_name: firstName || initialAnswers?.first_name || '',
+    target_focus: initialAnswers?.target_focus || [],
+    energy_baseline: initialAnswers?.energy_baseline || null,
+    joint_sensitivities: initialAnswers?.joint_sensitivities || [],
+    time_commitment: initialAnswers?.time_commitment || null,
+    weekly_frequency: initialAnswers?.weekly_frequency || '',
+    training_location: initialAnswers?.training_location || null,
+    equipment: initialAnswers?.equipment || [],
+  }));
 
   const currentStep = QUIZ_STEPS[currentStepIndex];
   const isDeckStep = currentStep.isMultiSelect;
@@ -275,11 +281,17 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
     } catch {
       // safe fallback
     }
+
+    // Save draft answers to AsyncStorage on every step transition
+    try {
+      await AsyncStorage.setItem('@fortywell_completed_profile', JSON.stringify(answers));
+    } catch (_) {}
+
     if (currentStepIndex < QUIZ_STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     } else {
       setIsCompleted(true);
-      // Meta Pixel: CompleteRegistration — fires when user completes the onboarding quiz
+      // Meta Pixel: CompleteRegistration / Quiz Completed
       try {
         if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
           (window as any).fbq('track', 'CompleteRegistration', {
@@ -290,7 +302,10 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
           });
         }
       } catch (_) {}
-      await saveProfileToSupabase();
+
+      if (isLoggedIn) {
+        await saveProfileToSupabase();
+      }
     }
   };
 
@@ -337,10 +352,12 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
   const handleFinalStart = async () => {
     try {
       await AsyncStorage.setItem('@fortywell_completed_profile', JSON.stringify(answers));
-      await AsyncStorage.setItem('@fortywell_onboarding_completed', 'true');
+      if (isLoggedIn) {
+        await AsyncStorage.setItem('@fortywell_onboarding_completed', 'true');
+      }
     } catch (_) {}
 
-    // Meta Pixel: CompleteRegistration & StartTrial — fires right when initial setup finishes
+    // Meta Pixel: CompleteRegistration & StartTrial
     try {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
         (window as any).fbq('track', 'CompleteRegistration', {
@@ -378,6 +395,7 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
             answers={answers}
             isSaving={isSaving}
             saveError={saveError}
+            isLoggedIn={isLoggedIn}
             onComplete={handleFinalStart}
             onReview={() => {
               setIsCompleted(false);
@@ -386,18 +404,9 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
           />
         ) : (
           <Pressable style={styles.container} onPress={handleFastForward}>
-            {/* ── PROGRESS BAR ── */}
-            <Animated.View style={contentAnimatedStyle}>
-              <ProgressBar
-                currentStep={currentStep.stepNumber}
-                totalSteps={currentStep.totalSteps}
-                category={currentStep.category}
-              />
-            </Animated.View>
-
-            {/* ── BACK NAV ── */}
-            {currentStepIndex > 0 && (
-              <Animated.View style={contentAnimatedStyle}>
+            {/* ── TOP NAV BAR (Back button on left + Member Log in on right) ── */}
+            <Animated.View style={[styles.topNavRow, contentAnimatedStyle]}>
+              {currentStepIndex > 0 ? (
                 <Pressable
                   onPress={handleBack}
                   style={styles.backBtn}
@@ -407,8 +416,33 @@ export const OnboardingQuizScreen: React.FC<OnboardingQuizScreenProps> = ({
                 >
                   <Text style={styles.backLabel}>← Back</Text>
                 </Pressable>
-              </Animated.View>
-            )}
+              ) : (
+                <View style={styles.navSpacer} />
+              )}
+
+              {!isLoggedIn && onGoToLogin ? (
+                <Pressable
+                  onPress={onGoToLogin}
+                  style={styles.topLoginBtn}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Log in to existing account"
+                >
+                  <Text style={styles.topLoginText}>
+                    Already a member? <Text style={styles.topLoginTextBold}>Log In</Text>
+                  </Text>
+                </Pressable>
+              ) : null}
+            </Animated.View>
+
+            {/* ── PROGRESS BAR ── */}
+            <Animated.View style={contentAnimatedStyle}>
+              <ProgressBar
+                currentStep={currentStep.stepNumber}
+                totalSteps={currentStep.totalSteps}
+                category={currentStep.category}
+              />
+            </Animated.View>
 
             {/* ── EDITORIAL HEADLINE ── */}
             <View style={styles.titleContainer}>
@@ -647,17 +681,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  topNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  navSpacer: {
+    flex: 1,
+  },
   backBtn: {
-    marginLeft: 24,
-    marginTop: 4,
-    marginBottom: 0,
     alignSelf: 'flex-start',
+    paddingVertical: 4,
   },
   backLabel: {
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: 0.2,
     color: colors.textSecondary,
+  },
+  topLoginBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  topLoginText: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansRegular,
+    color: colors.textSecondary,
+  },
+  topLoginTextBold: {
+    fontFamily: fontFamilies.sansSemiBold,
+    color: colors.primary,
   },
 
   // Title container

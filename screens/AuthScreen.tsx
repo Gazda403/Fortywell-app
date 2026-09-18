@@ -24,10 +24,12 @@ import Animated, {
   SlideOutLeft,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Eye, EyeOff, CheckCircle, AlertCircle, ChevronRight, Mail, RefreshCw, ArrowLeft, Send } from 'lucide-react-native';
+import { Eye, EyeOff, CheckCircle, AlertCircle, ChevronRight, Mail, RefreshCw, ArrowLeft, Send, Sparkles } from 'lucide-react-native';
 import { colors } from '../theme/colors';
 import { typography, fontFamilies } from '../theme/typography';
 import { supabase } from '../lib/supabase';
+import { OnboardingAnswers } from '../types/onboarding';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -38,6 +40,9 @@ const API_BASE_URL = (
 interface AuthScreenProps {
   onAccountCreated: (firstName: string) => void;
   onLoginSuccess: () => void;
+  pendingAnswers?: OnboardingAnswers | null;
+  initialMode?: 'signup' | 'login';
+  onBackToQuiz?: () => void;
 }
 
 type Mode = 'signup' | 'login' | 'verify';
@@ -208,11 +213,17 @@ const ff = StyleSheet.create({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLoginSuccess }) => {
-  const [mode, setMode] = useState<Mode>('signup');
+export const AuthScreen: React.FC<AuthScreenProps> = ({
+  onAccountCreated,
+  onLoginSuccess,
+  pendingAnswers,
+  initialMode = 'signup',
+  onBackToQuiz,
+}) => {
+  const [mode, setMode] = useState<Mode>(initialMode);
 
   // Signup state
-  const [firstName, setFirstName] = useState('');
+  const [firstName, setFirstName] = useState(pendingAnswers?.first_name || '');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [fnTouched, setFnTouched] = useState(false);
@@ -238,6 +249,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
   const pwdRef = useRef<TextInput>(null);
   const loginPwdRef = useRef<TextInput>(null);
   const otpRef = useRef<TextInput>(null);
+
+  // Keep initialMode in sync if parent changes it
+  useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    }
+  }, [initialMode]);
 
   // Derived validation
   const fnError = fnTouched ? validateFirstName(firstName) : null;
@@ -297,16 +315,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
         return;
       }
 
-      // Also update the profile row first_name immediately (trigger may race)
+      // Also update the profile row with first_name and any pending quiz answers
       if (data.user?.id) {
-        await supabase.from('profiles').upsert({
+        const profilePayload = {
           id: data.user.id,
-          first_name: trimmedName,
-          target_focus: [],
-          joint_sensitivities: [],
-          has_completed_onboarding: false,
+          first_name: trimmedName || pendingAnswers?.first_name || null,
+          target_focus: pendingAnswers?.target_focus || [],
+          joint_sensitivities: pendingAnswers?.joint_sensitivities || [],
+          energy_baseline: pendingAnswers?.energy_baseline || null,
+          time_commitment: pendingAnswers?.time_commitment || null,
+          weekly_frequency: pendingAnswers?.weekly_frequency || null,
+          training_location: pendingAnswers?.training_location || null,
+          equipment: pendingAnswers?.equipment || [],
+          has_completed_onboarding: true,
           updated_at: new Date().toISOString(),
-        });
+        };
+        await supabase.from('profiles').upsert(profilePayload);
+        try {
+          if (pendingAnswers) {
+            await AsyncStorage.setItem('@fortywell_completed_profile', JSON.stringify({
+              ...pendingAnswers,
+              first_name: trimmedName,
+            }));
+          }
+          await AsyncStorage.setItem('@fortywell_onboarding_completed', 'true');
+        } catch (_) {}
       }
 
       // Trigger Resend email notification in background (non-blocking)
@@ -339,7 +372,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
         });
       }
 
-      // Proceed into onboarding quiz
+      // Proceed directly into Home Sanctuary
       onAccountCreated(trimmedName);
     } catch (err: any) {
       const msg = err?.message || 'Something went wrong. Please try again.';
@@ -355,7 +388,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
     } finally {
       setLoading(false);
     }
-  }, [firstName, signupEmail, signupPassword, signupReady, onAccountCreated]);
+  }, [firstName, signupEmail, signupPassword, signupReady, pendingAnswers, onAccountCreated]);
 
   const handleLogin = useCallback(async () => {
     if (!loginReady) return;
@@ -418,21 +451,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
       });
       if (error) throw error;
 
-      try { if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-
-      // Track Meta Pixel CompleteRegistration & StartTrial
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
-        (window as any).fbq('track', 'CompleteRegistration', {
-          content_name: 'FortyWell Member Account',
-          status: 'success',
-          currency: 'USD',
-          value: 0.0,
-        });
-        (window as any).fbq('track', 'StartTrial', {
-          content_name: 'FortyWell 7-Day Free Trial',
-          currency: 'USD',
-          value: 0.0,
-        });
+      // Also update the profile row with first_name and any pending quiz answers
+      if (data.user?.id) {
+        const profilePayload = {
+          id: data.user.id,
+          first_name: firstName.trim() || pendingAnswers?.first_name || null,
+          target_focus: pendingAnswers?.target_focus || [],
+          joint_sensitivities: pendingAnswers?.joint_sensitivities || [],
+          energy_baseline: pendingAnswers?.energy_baseline || null,
+          time_commitment: pendingAnswers?.time_commitment || null,
+          weekly_frequency: pendingAnswers?.weekly_frequency || null,
+          training_location: pendingAnswers?.training_location || null,
+          equipment: pendingAnswers?.equipment || [],
+          has_completed_onboarding: true,
+          updated_at: new Date().toISOString(),
+        };
+        await supabase.from('profiles').upsert(profilePayload);
+        try {
+          if (pendingAnswers) {
+            await AsyncStorage.setItem('@fortywell_completed_profile', JSON.stringify({
+              ...pendingAnswers,
+              first_name: firstName.trim(),
+            }));
+          }
+          await AsyncStorage.setItem('@fortywell_onboarding_completed', 'true');
+        } catch (_) {}
       }
 
       onAccountCreated(firstName.trim() || 'Welcome');
@@ -441,7 +484,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
     } finally {
       setLoading(false);
     }
-  }, [otpCode, signupEmail, firstName, onAccountCreated]);
+  }, [otpCode, signupEmail, firstName, pendingAnswers, onAccountCreated]);
 
   const handleResendEmail = useCallback(async () => {
     if (resendCooldown > 0 || resending) return;
@@ -660,9 +703,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
               </Animated.View>
             ) : mode === 'signup' ? (
               <Animated.View key="signup" entering={FadeIn.duration(220)}>
-                <Text style={styles.formHeadline}>Let's get started.</Text>
+                {/* Back to Quiz Button (shown when user arrived after taking quiz) */}
+                {onBackToQuiz ? (
+                  <Pressable
+                    style={styles.backBtn}
+                    onPress={onBackToQuiz}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to quiz summary"
+                  >
+                    <ArrowLeft size={16} color={colors.textSecondary} />
+                    <Text style={styles.backBtnText}>Back to quiz summary</Text>
+                  </Pressable>
+                ) : null}
+
+                {/* Protocol Calibrated Preview Banner */}
+                {pendingAnswers ? (
+                  <View style={styles.protocolBanner}>
+                    <View style={styles.protocolBannerHeader}>
+                      <View style={styles.protocolIconWrap}>
+                        <Sparkles size={14} color={colors.primary} />
+                      </View>
+                      <Text style={styles.protocolBannerKicker}>PROTOCOL CALIBRATED</Text>
+                    </View>
+                    <Text style={styles.protocolBannerTitle}>
+                      Your custom routine is ready to lock in
+                    </Text>
+                    <Text style={styles.protocolBannerDesc}>
+                      Create your free account to save your calibrated joint movements and start your 7-day trial.
+                    </Text>
+                  </View>
+                ) : null}
+
+                <Text style={styles.formHeadline}>
+                  {pendingAnswers ? 'Save Your Protocol' : "Let's get started."}
+                </Text>
                 <Text style={styles.formSubtext}>
-                  Takes 2 minutes. No card required.
+                  {pendingAnswers
+                    ? 'Free 7-day trial • No card required today'
+                    : 'Takes 2 minutes. No card required.'}
                 </Text>
 
                 <FormField
@@ -720,13 +799,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAccountCreated, onLogi
                   onPress={handleSignup}
                   disabled={loading}
                   accessibilityRole="button"
-                  accessibilityLabel="Create My Account"
+                  accessibilityLabel={pendingAnswers ? 'Save Protocol and Enter Sanctuary' : 'Create My Account'}
                 >
                   {loading ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <>
-                      <Text style={styles.primaryBtnText}>Create My Account</Text>
+                      <Text style={styles.primaryBtnText}>
+                        {pendingAnswers ? 'Save Protocol & Enter Sanctuary' : 'Create My Account'}
+                      </Text>
                       <ChevronRight size={16} color="#fff" />
                     </>
                   )}
@@ -980,6 +1061,47 @@ const styles = StyleSheet.create({
       android: { elevation: 4 },
       default: { boxShadow: '0 4px 24px rgba(58,47,42,0.08)' },
     }),
+  },
+  protocolBanner: {
+    backgroundColor: 'rgba(208, 120, 135, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(208, 120, 135, 0.25)',
+    padding: 14,
+    marginBottom: 20,
+  },
+  protocolBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  protocolIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(208, 120, 135, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  protocolBannerKicker: {
+    fontSize: 10,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: colors.primary,
+    letterSpacing: 1.2,
+  },
+  protocolBannerTitle: {
+    fontSize: 15,
+    fontFamily: fontFamilies.soria,
+    color: colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: 3,
+  },
+  protocolBannerDesc: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sansRegular,
+    color: colors.textSecondary,
+    lineHeight: 16,
   },
   formHeadline: {
     fontSize: 24,

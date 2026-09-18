@@ -28,6 +28,7 @@ interface OnboardingSummaryProps {
   answers: OnboardingAnswers;
   isSaving: boolean;
   saveError: string | null;
+  isLoggedIn?: boolean;
   onComplete: () => void;
   onReview: () => void;
 }
@@ -74,6 +75,7 @@ export const OnboardingSummary: React.FC<OnboardingSummaryProps> = ({
   answers,
   isSaving,
   saveError,
+  isLoggedIn = false,
   onComplete,
   onReview,
 }) => {
@@ -274,25 +276,34 @@ export const OnboardingSummary: React.FC<OnboardingSummaryProps> = ({
         )}
       </Animated.View>
 
-      {/* Supabase Save Status Notification */}
+      {/* Save Status Notification */}
       <View style={styles.statusBox}>
-        {isSaving ? (
-          <View style={styles.statusRow}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.statusText}>Saving protocol to your Fortywell profile...</Text>
-          </View>
-        ) : saveError ? (
-          <View style={styles.statusRow}>
-            <RefreshCw size={14} color={colors.error} />
-            <Text style={[styles.statusText, { color: colors.error }]}>
-              {saveError} (Saved locally)
-            </Text>
-          </View>
+        {isLoggedIn ? (
+          isSaving ? (
+            <View style={styles.statusRow}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.statusText}>Saving protocol to your Fortywell profile...</Text>
+            </View>
+          ) : saveError ? (
+            <View style={styles.statusRow}>
+              <RefreshCw size={14} color={colors.error} />
+              <Text style={[styles.statusText, { color: colors.error }]}>
+                {saveError} (Saved locally)
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.statusRow}>
+              <CheckCircle2 size={16} color={colors.sage} />
+              <Text style={[styles.statusText, { color: colors.sageDark }]}>
+                Profile synchronized to Supabase
+              </Text>
+            </View>
+          )
         ) : (
           <View style={styles.statusRow}>
             <CheckCircle2 size={16} color={colors.sage} />
             <Text style={[styles.statusText, { color: colors.sageDark }]}>
-              Profile synchronized to Supabase
+              Protocol calibrated & ready to save
             </Text>
           </View>
         )}
@@ -306,12 +317,20 @@ export const OnboardingSummary: React.FC<OnboardingSummaryProps> = ({
           disabled={isSaving}
           android_ripple={{ color: colors.primaryDark }}
           accessibilityRole="button"
-          accessibilityLabel="Begin my first mobility flow"
+          accessibilityLabel={isLoggedIn ? 'Save and return to sanctuary' : 'Save protocol and create free account'}
           accessibilityState={{ disabled: isSaving }}
         >
-          <Text style={typography.button}>Begin My First Mobility Flow</Text>
+          <Text style={typography.button}>
+            {isLoggedIn ? 'Save & Return to Sanctuary' : 'Save Protocol & Create Free Account'}
+          </Text>
           <ArrowRight size={18} color={colors.textInverse} strokeWidth={2.4} />
         </Pressable>
+
+        {!isLoggedIn && (
+          <Text style={styles.trialSubtext}>
+            🔒 7-Day Free Trial • Instant Access • No Card Needed Today
+          </Text>
+        )}
 
         <Pressable
           onPress={onReview}
@@ -586,5 +605,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     textDecorationLine: 'underline',
+  },
+  trialSubtext: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    letterSpacing: 0.3,
+    marginTop: -2,
+    marginBottom: 4,
   },
 });
