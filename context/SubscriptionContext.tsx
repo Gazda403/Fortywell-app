@@ -18,6 +18,7 @@ function userKey(base: string, userId?: string | null) {
 // Whitelist of test/developer/VIP accounts that are completely immune to paywalls
 const PAYWALL_EXEMPT_EMAILS: string[] = [
   'imenoprezimeno324@gmail.com',
+  'midlifewithautumn@gmail.com',
 ];
 
 export interface SubscriptionPricing {
@@ -253,6 +254,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Verify status directly from Supabase
   const verifySubscriptionStatus = useCallback(async (): Promise<boolean> => {
+    if (isExemptAccount) return true;
     if (!userProfile?.id) return false;
     setIsVerifying(true);
     setVerificationMessage(null);
