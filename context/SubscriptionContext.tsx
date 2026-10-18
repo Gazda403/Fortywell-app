@@ -19,6 +19,7 @@ function userKey(base: string, userId?: string | null) {
 const PAYWALL_EXEMPT_EMAILS: string[] = [
   'imenoprezimeno324@gmail.com',
   'midlifewithautumn@gmail.com',
+  'armstrong0702@sbcglobal.net',
 ];
 
 export interface SubscriptionPricing {
